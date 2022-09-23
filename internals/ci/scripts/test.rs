@@ -24,8 +24,7 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
             .map(|a| a.to_string())
             .collect();
 
-    let args =
-        vec![vec!["test".to_string()], cli_args, cargo_test_args].concat();
+    let args = vec![vec!["test".to_string()], cli_args, cargo_test_args].concat();
 
     Kommand::new(program, args, None)?
         .stdout(Stdio::inherit())

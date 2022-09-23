@@ -1,16 +1,15 @@
 use super::WalletDBSchema;
-use crate::{
-    credential::WalletCredential, wallet::CoinManager, WalletError, APP_NAME,
-};
-use log::info;
+use crate::fs;
+use crate::{credential::WalletCredential, wallet::CoinManager, WalletError};
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_kv_db::{KeyValueDatabase, Options};
+use sak_logger::info;
 use sak_types::CoinStatus;
 use sak_types::Sn;
 use sak_types::{Cm, CmIdx, CoinRecord};
+use std::path::PathBuf;
 use std::{borrow::BorrowMut, collections::HashMap, sync::Arc, time::Duration};
-use std::{fs, path::PathBuf};
 use tokio::sync::RwLockWriteGuard;
 
 pub(crate) struct WalletDB {
@@ -40,7 +39,7 @@ impl WalletDB {
             let db_path = Self::get_db_path(&credential.acc_addr)?;
 
             if !db_path.exists() {
-                fs::create_dir_all(db_path.clone())?;
+                std::fs::create_dir_all(db_path.clone())?;
             }
 
             db_path
@@ -57,17 +56,13 @@ impl WalletDB {
         };
 
         let kv_db = match KeyValueDatabase::new(
-            wallet_db_path,
+            &wallet_db_path,
             options,
             WalletDBSchema::make_cf_descriptors(),
         ) {
             Ok(d) => d,
             Err(err) => {
-                return Err(format!(
-                    "Error initializing key value database, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error initializing key value database, err: {}", err).into());
             }
         };
 
@@ -79,10 +74,12 @@ impl WalletDB {
     }
 
     pub fn get_db_path(acc_addr: &String) -> Result<PathBuf, WalletError> {
-        let app_path =
-            sak_fs::create_or_get_app_path(APP_NAME)?.join(&acc_addr);
+        // let app_path =
+        //     sak_fs::create_or_get_app_path(APP_NAME)?.join(&acc_addr);
 
-        let db_path = app_path.join("db");
+        let acc_dir = fs::acc_dir(acc_addr)?;
+
+        let db_path = acc_dir.join("db");
 
         Ok(db_path)
     }
@@ -100,12 +97,9 @@ impl WalletDB {
                 let resp = match &coin.tx_hash {
                     Some(tx_hash) => {
                         if !ledger_cms.contains(&tx_hash) {
-                            let res = saksaha::get_tx(
-                                saksaha_endpoint.clone(),
-                                tx_hash.clone(),
-                            )
-                            .await?
-                            .result;
+                            let res = saksaha::get_tx(saksaha_endpoint.clone(), tx_hash.clone())
+                                .await?
+                                .result;
 
                             ledger_cms.push(tx_hash);
 
@@ -138,18 +132,14 @@ impl WalletDB {
 
                                 self.schema.raw.put_cm_idx(cm_array, &cmidx)?;
 
-                                self.schema.raw.put_coin_status(
-                                    cm_array,
-                                    &CoinStatus::Unused,
-                                )?;
+                                self.schema
+                                    .raw
+                                    .put_coin_status(cm_array, &CoinStatus::Unused)?;
                             }
                         };
                     }
                     None => {
-                        println!(
-                            "No response with get_tx, {:?}",
-                            &coin.tx_hash
-                        );
+                        println!("No response with get_tx, {:?}", &coin.tx_hash);
                     } // return Err("No response with get_tx".into()),
                 }
             }
@@ -164,9 +154,7 @@ impl WalletDB {
         coins: &Vec<CoinRecord>,
     ) -> Result<(), WalletError> {
         for coin in coins {
-            if let Some(CoinStatus::Unused) =
-                self.schema.raw.get_coin_status(&coin.cm)?
-            {
+            if let Some(CoinStatus::Unused) = self.schema.raw.get_coin_status(&coin.cm)? {
                 {
                     let sn = coin.compute_sn();
 

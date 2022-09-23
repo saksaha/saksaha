@@ -1,9 +1,8 @@
-mod credential;
 mod identity;
 mod utils;
 
-pub use credential::Credential;
 pub use identity::Identity;
+pub use sak_credential::make_public_key_short;
 pub use utils::*;
 
-pub type IDError = Box<dyn std::error::Error + Send + Sync>;
+pub type IdentityError = Box<dyn std::error::Error + Send + Sync>;

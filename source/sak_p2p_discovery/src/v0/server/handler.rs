@@ -2,7 +2,7 @@ use crate::{
     whoareyou::{self, WhoAreYouRecvError},
     AddrTable, Connection, Msg, P2PDiscError,
 };
-use log::warn;
+use sak_logger::warn;
 use sak_p2p_id::Identity;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
@@ -36,10 +36,7 @@ impl Handler {
                     Ok(_) => return Ok(()),
                     Err(way_recv_err) => match way_recv_err {
                         WhoAreYouRecvError::AddrAlreadyMapped { .. } => {
-                            warn!(
-                                "Error receiving whoareyou, err: {}",
-                                way_recv_err,
-                            );
+                            warn!("Error receiving whoareyou, err: {}", way_recv_err,);
                         }
                         _ => return Err(way_recv_err.into()),
                     },

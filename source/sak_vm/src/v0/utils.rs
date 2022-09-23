@@ -1,11 +1,9 @@
 use crate::{VMError, ALLOC_FN, EXECUTE, INIT, MEMORY, QUERY};
-use log::{error, info};
+use sak_logger::{error, info};
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
-    let engine =
-        Engine::new(Config::new().wasm_multi_value(true).debug_info(true))
-            .unwrap();
+    let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true)).unwrap();
 
     let mut store = Store::new(&engine, 3);
 
@@ -63,11 +61,8 @@ pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
     true
 }
 
-pub(crate) fn create_instance(
-    wasm: impl AsRef<[u8]>,
-) -> Result<(Instance, Store<i32>), VMError> {
-    let engine =
-        Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
+pub(crate) fn create_instance(wasm: impl AsRef<[u8]>) -> Result<(Instance, Store<i32>), VMError> {
+    let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
     let mut store = Store::new(&engine, 3);
 
@@ -90,11 +85,7 @@ pub(crate) fn create_instance(
 
     let instance = match linker.instantiate(&mut store, &module) {
         Ok(i) => i,
-        Err(err) => {
-            return Err(
-                format!("Error creating an instance, err: {}", err).into()
-            )
-        }
+        Err(err) => return Err(format!("Error creating an instance, err: {}", err).into()),
     };
 
     return Ok((instance, store));

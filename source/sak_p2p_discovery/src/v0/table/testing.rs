@@ -23,9 +23,7 @@ impl DiscAddr {
                 p2p_port,
                 sig,
                 public_key_str,
-                status: RwLock::new(AddrStatus::WhoAreYouSuccess {
-                    at: Utc::now(),
-                }),
+                status: RwLock::new(AddrStatus::WhoAreYouSuccess { at: Utc::now() }),
                 public_key,
             },
             _addr_slot_guard: SlotGuard {

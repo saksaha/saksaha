@@ -1,18 +1,34 @@
-use crate::CoinProof;
+use crate::{CoinProof, ProofError};
+use bellman::groth16::Proof;
 use bls12_381::Scalar;
-use jni::objects::{JClass, JObject, JValue};
-use jni::JNIEnv;
-use sak_crypto::{MerkleTree, ScalarExt};
+use sak_crypto::MerkleTree;
+use sak_crypto::{Bls12, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
-use std::ffi::CString;
 use std::os::raw::c_char;
 use type_extension::U8Array;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
-pub fn pi_gen_1() -> String {
+pub fn verify_proof_jni(pi_ser: Vec<u8>) -> Result<bool, ProofError> {
+    let test_context = make_test_context_2_to_2();
+    let public_inputs: Vec<Scalar> = vec![
+        test_context.merkle_rt_1,
+        test_context.merkle_rt_2,
+        test_context.sn_1,
+        test_context.sn_2,
+        test_context.cm_1,
+        test_context.cm_2,
+    ];
+
+    let pi_des: Proof<Bls12> = Proof::read(&*pi_ser.clone()).unwrap();
+    let ret = CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &test_context.hasher);
+
+    ret
+}
+
+pub fn pi_gen_1() -> Vec<u8> {
     let test_context = make_test_context_2_to_2();
 
     let coin_1_old = OldCoin {
@@ -53,25 +69,13 @@ pub fn pi_gen_1() -> String {
         v: Some(test_context.v_2),
     };
 
-    let proof = CoinProof::generate_proof_2_to_2(
-        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-    )
-    .expect("proof should be created");
+    let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
+        .expect("proof should be created");
 
     let mut pi_ser = Vec::new();
-    match proof.write(&mut pi_ser) {
-        Ok(_) => {
-            let s: String = match serde_json::to_string(&pi_ser) {
-                Ok(s) => s,
-                Err(err) => format!("serde fail, err: {}", err.to_string()),
-            };
+    proof.write(&mut pi_ser).expect("pi should be serialized");
 
-            return s;
-        }
-        Err(err) => {
-            return format!("pi generate failed, {}", err.to_string());
-        }
-    };
+    pi_ser
 }
 
 pub struct TestContext {
@@ -98,7 +102,7 @@ pub struct TestContext {
     pub v_2_old: Scalar,
     pub cm_2_old: Scalar,
     pub auth_path_2: [(Scalar, bool); CM_TREE_DEPTH as usize],
-    // pub merkle_rt_2: Scalar,
+    pub merkle_rt_2: Scalar,
     pub sn_2: Scalar,
 
     // new coin 1
@@ -123,16 +127,7 @@ pub struct TestContext {
 pub fn make_test_context_2_to_2() -> TestContext {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
             let arr = U8Array::from_int(1);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -171,22 +166,10 @@ pub fn make_test_context_2_to_2() -> TestContext {
         (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let (
-        addr_pk_2_old,
-        addr_sk_2_old,
-        r_2_old,
-        s_2_old,
-        rho_2_old,
-        v_2_old,
-        cm_2_old,
-        sn_2,
-    ) = {
+    let (addr_pk_2_old, addr_sk_2_old, r_2_old, s_2_old, rho_2_old, v_2_old, cm_2_old, sn_2) = {
         let dummy_old_coin = OldCoin::new_dummy().unwrap();
 
-        let sn = hasher.mimc_scalar(
-            dummy_old_coin.addr_sk.unwrap(),
-            dummy_old_coin.rho.unwrap(),
-        );
+        let sn = hasher.mimc_scalar(dummy_old_coin.addr_sk.unwrap(), dummy_old_coin.rho.unwrap());
 
         (
             dummy_old_coin.addr_pk.unwrap(),
@@ -261,7 +244,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(20);
+            let arr = U8Array::from_int(10);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -290,19 +273,15 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node =
-                merkle_nodes_1.get(key.as_str()).expect(&format!(
-                    "value doesn't exist in the merkle node, key: {}",
-                    key
-                ));
+            let merkle_node = merkle_nodes_1.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -322,19 +301,15 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node =
-                merkle_nodes_2.get(key.as_str()).expect(&format!(
-                    "value doesn't exist in the merkle node, key: {}",
-                    key
-                ));
+            let merkle_node = merkle_nodes_2.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -365,6 +340,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
+        merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,

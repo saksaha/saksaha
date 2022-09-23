@@ -1,5 +1,5 @@
 use crate::DistLedgerEvent;
-use log::{debug, warn};
+use sak_logger::{debug, warn};
 use sak_types::{Block, BlockHash, BlockHeight, TxCandidate, TxCtrOp, TxHash};
 use std::{
     collections::{HashMap, HashSet},
@@ -79,10 +79,7 @@ impl SyncPool {
     }
 
     // Returns hashes of transactions that I do not have
-    pub(crate) async fn get_tx_pool_diff(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<String> {
+    pub(crate) async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
         let tx_map_lock = self.tx_map.write().await;
 
         let mut ret = vec![];
@@ -96,10 +93,7 @@ impl SyncPool {
         return ret;
     }
 
-    pub(crate) async fn insert_block(
-        &self,
-        block: &Block,
-    ) -> Result<(), String> {
+    pub(crate) async fn insert_block(&self, block: &Block) -> Result<(), String> {
         let height = block.block_height;
         let block_hash = block.get_block_hash();
 
@@ -142,10 +136,7 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn insert_tx(
-        &self,
-        tc: TxCandidate,
-    ) -> Result<TxHash, String> {
+    pub(crate) async fn insert_tx(&self, tc: TxCandidate) -> Result<TxHash, String> {
         // for test,
 
         {
@@ -198,8 +189,7 @@ impl SyncPool {
             tokio::spawn(async move {
                 tokio::time::sleep(tx_interval).await;
 
-                let tx_hashes: Vec<String> =
-                    new_tx_hashes.write().await.drain().collect();
+                let tx_hashes: Vec<String> = new_tx_hashes.write().await.drain().collect();
 
                 let ev = DistLedgerEvent::TxPoolStat(tx_hashes);
 
@@ -230,10 +220,7 @@ impl SyncPool {
         Ok(txs)
     }
 
-    pub(crate) async fn remove_tcs(
-        &self,
-        txs: &Vec<TxCandidate>,
-    ) -> Result<(), String> {
+    pub(crate) async fn remove_tcs(&self, txs: &Vec<TxCandidate>) -> Result<(), String> {
         let mut tx_map_lock = self.tx_map.write().await;
 
         for tx in txs {
@@ -243,10 +230,7 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn get_txs(
-        &self,
-        tx_hashes: Vec<String>,
-    ) -> Vec<TxCandidate> {
+    pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate> {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
 

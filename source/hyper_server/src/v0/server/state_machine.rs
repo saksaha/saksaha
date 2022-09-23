@@ -1,20 +1,12 @@
 use super::Middleware;
 use futures::Future;
 use hyper::{Body, Request, Response};
-use log::error;
+use sak_logger::error;
 use std::{pin::Pin, sync::Arc};
 
 pub enum MiddlewareResult<C> {
     Passing(Request<Body>, Response<Body>, C),
-    End(
-        Pin<
-            Box<
-                dyn Future<Output = Result<Response<Body>, hyper::Error>>
-                    + Send
-                    + Sync,
-            >,
-        >,
-    ),
+    End(Pin<Box<dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send + Sync>>),
 }
 
 pub struct StateMachine<C> {
@@ -27,13 +19,7 @@ impl<C> StateMachine<C> {
         req: Request<Body>,
         res: Response<Body>,
         ctx: C,
-    ) -> Pin<
-        Box<
-            dyn Future<Output = Result<Response<Body>, hyper::Error>>
-                + Send
-                + Sync,
-        >,
-    > {
+    ) -> Pin<Box<dyn Future<Output = Result<Response<Body>, hyper::Error>> + Send + Sync>> {
         let mut rq = req;
         let mut rs = res;
         let mut ct = ctx;

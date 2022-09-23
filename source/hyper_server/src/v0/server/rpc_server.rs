@@ -1,7 +1,7 @@
 use super::{Middleware, StateMachine};
 use crate::RPCServerError;
 use hyper::{server::conn::AddrIncoming, service, Body, Response, Server};
-use log::{debug, error};
+use sak_logger::{debug, error};
 use std::{convert::Infallible, sync::Arc};
 use tokio::net::TcpListener;
 
@@ -20,11 +20,7 @@ impl RPCServer {
         let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
             Ok(a) => a,
             Err(err) => {
-                return Err(format!(
-                    "Error initializing Addr Incoming, err: {}",
-                    err
-                )
-                .into());
+                return Err(format!("Error initializing Addr Incoming, err: {}", err).into());
             }
         };
 
@@ -54,8 +50,7 @@ impl RPCServer {
                     let resp: Response<Body> = Response::default();
 
                     async move {
-                        let res =
-                            state_machine_clone.run(req, resp, ctx_clone).await;
+                        let res = state_machine_clone.run(req, resp, ctx_clone).await;
 
                         res
                     }

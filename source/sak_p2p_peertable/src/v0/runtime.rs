@@ -1,5 +1,5 @@
 use crate::{PeerMap, PeerStatus, PeerTableError};
-use log::debug;
+use sak_logger::debug;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -14,8 +14,7 @@ const PEER_TABLE_RUNTIME_INTERVAL: u64 = 3000;
 
 impl Runtime {
     pub async fn run(&self) {
-        let peer_table_runtime_interval =
-            Duration::from_millis(PEER_TABLE_RUNTIME_INTERVAL);
+        let peer_table_runtime_interval = Duration::from_millis(PEER_TABLE_RUNTIME_INTERVAL);
 
         loop {
             let time_since = SystemTime::now();
@@ -25,18 +24,12 @@ impl Runtime {
             for pub_key in public_keys {
                 let _ = drop_peer_if_necessary(&self.peer_map, &pub_key).await;
 
-                sak_utils_time::wait_until_min_interval(
-                    time_since,
-                    peer_table_runtime_interval,
-                )
-                .await;
+                sak_utils_time::wait_until_min_interval(time_since, peer_table_runtime_interval)
+                    .await;
             }
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                peer_table_runtime_interval * 5,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, peer_table_runtime_interval * 5)
+                .await;
         }
     }
 }

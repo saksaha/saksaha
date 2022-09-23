@@ -43,9 +43,7 @@ pub(crate) struct P2PHostArgs {
 }
 
 impl P2PHost {
-    pub(crate) async fn init(
-        p2p_host_args: P2PHostArgs,
-    ) -> Result<P2PHost, P2PHostError> {
+    pub(crate) async fn init(p2p_host_args: P2PHostArgs) -> Result<P2PHost, P2PHostError> {
         let (p2p_task_runtime, p2p_task_queue) = {
             let p2p_task_queue = {
                 let capacity = match p2p_host_args.p2p_task_queue_capacity {
@@ -60,6 +58,7 @@ impl P2PHost {
             let runtime = P2PTaskRuntime::new(
                 p2p_task_queue.clone(),
                 p2p_host_args.p2p_task_interval,
+                p2p_host_args.identity.clone(),
             );
 
             (runtime, p2p_task_queue)
@@ -72,8 +71,7 @@ impl P2PHost {
                 disc_dial_interval: p2p_host_args.disc_dial_interval,
                 disc_table_capacity: p2p_host_args.disc_table_capacity,
                 disc_task_interval: p2p_host_args.disc_task_interval,
-                disc_task_queue_capacity: p2p_host_args
-                    .disc_task_queue_capacity,
+                disc_task_queue_capacity: p2p_host_args.disc_task_queue_capacity,
                 identity: p2p_host_args.identity.clone(),
                 udp_socket: p2p_host_args.disc_socket,
                 p2p_port: p2p_host_args.p2p_port,

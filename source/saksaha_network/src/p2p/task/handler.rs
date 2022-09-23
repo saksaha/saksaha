@@ -1,5 +1,6 @@
 use crate::p2p::task::P2PTask;
-use log::{debug, error, warn};
+use sak_logger::{debug, error, warn};
+use sak_p2p_id::Identity;
 use sak_p2p_peertable::{Peer, PeerStatus};
 use sak_p2p_transport::{
     handshake::{self, HandshakeInitArgs},
@@ -8,7 +9,7 @@ use sak_p2p_transport::{
 use std::sync::Arc;
 use tokio::{net::TcpStream, sync::RwLock};
 
-pub(crate) async fn run(task: P2PTask) {
+pub(crate) async fn run(task: P2PTask, my_identity: Arc<Identity>) {
     match task {
         P2PTask::InitiateHandshake {
             addr,
@@ -17,9 +18,7 @@ pub(crate) async fn run(task: P2PTask) {
         } => {
             let known_addr = &addr.known_addr;
 
-            if let Some(p) =
-                peer_table.get_mapped_peer(&known_addr.public_key_str).await
-            {
+            if let Some(p) = peer_table.get_mapped_peer(&known_addr.public_key_str).await {
                 debug!(
                     "Peer already mapped, public_key: {}",
                     p.get_public_key_short()
@@ -54,12 +53,9 @@ pub(crate) async fn run(task: P2PTask) {
 
             let conn = match TcpStream::connect(&endpoint).await {
                 Ok(s) => {
-                    let c = match Conn::new(s, true) {
+                    let c = match Conn::new(s, my_identity.credential.public_key_str.clone()) {
                         Ok(c) => {
-                            debug!(
-                                "Successfully connected to endpoint: {}",
-                                &endpoint,
-                            );
+                            debug!("Successfully connected to endpoint: {}", &endpoint,);
 
                             c
                         }
@@ -92,11 +88,7 @@ pub(crate) async fn run(task: P2PTask) {
                 public_key_str: known_addr.public_key_str.clone(),
             };
 
-            let transport = match handshake::initiate_handshake(
-                handshake_init_args,
-            )
-            .await
-            {
+            let transport = match handshake::initiate_handshake(handshake_init_args).await {
                 Ok(t) => t,
                 Err(err) => {
                     warn!(

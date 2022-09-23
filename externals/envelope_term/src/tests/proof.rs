@@ -1,25 +1,22 @@
 use super::TestUtil;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, Bls12, MerkleTree, Scalar, ScalarExt};
-use sak_dist_ledger::{
-    Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs,
-};
+use sak_dist_ledger::{Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_logger::SakLogger;
 use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
 
 const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 
-const VALIDATOR: &[u8] = include_bytes!(
-    "../../../../source/prebuild/sak_validator.postprocess.wasm"
-);
+const VALIDATOR: &[u8] =
+    include_bytes!("../../../../source/prebuild/sak_validator.postprocess.wasm");
 
 const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
 
-const ENVELOPE: &[u8] = include_bytes!(
-    "../../../../source/prebuild/envelope_contract.postprocess.wasm"
-);
+const ENVELOPE: &[u8] =
+    include_bytes!("../../../../source/prebuild/envelope_contract.postprocess.wasm");
 
 pub struct DummyPos {}
 
@@ -52,13 +49,19 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
 pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = make_dummy_pos();
 
+    let ledger_path = {
+        let config_dir = sak_fs::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("test").join("db/ledger")
+    };
+
     let dist_ledger_args = DistLedgerArgs {
         // app_prefix: String::from("test"),
-        public_key: String::from("test"),
+        // public_key: String::from("test"),
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
         block_sync_interval: None,
+        ledger_path,
     };
 
     let dist_ledger = DistLedger::init(dist_ledger_args)
@@ -124,18 +127,14 @@ fn generate_a_dummy_coin(value: u64) -> Coin {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
 
-    TestUtil::init_test(vec!["test"]);
+    SakLogger::init_test_console().unwrap();
 
     let coin_1_old = generate_a_dummy_coin(100);
 
-    let tx = sak_types::mock_mint_tc(
-        coin_1_old.cm,
-        coin_1_old.v,
-        coin_1_old.k,
-        coin_1_old.s,
-    );
+    let tx = sak_types::mock_mint_tc(coin_1_old.cm, coin_1_old.v, coin_1_old.k, coin_1_old.s);
 
     let genesis_block = make_dummy_genesis_block(tx);
 
@@ -146,8 +145,7 @@ async fn test_generate_a_proof() {
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
     let auth_path_idx = merkle_tree.generate_auth_paths(cm_1_old_idx);
 
-    let mut auth_path =
-        [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+    let mut auth_path = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
     println!("[*] initial auth_path: {:#?}", auth_path);
 
@@ -200,9 +198,7 @@ async fn test_generate_a_proof() {
 
     println!("\n[+] Waiting for generating pi...");
 
-    let pi =
-        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-            .unwrap();
+    let pi = CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     println!("[!] pi: {:#?}", pi);
 
@@ -274,8 +270,7 @@ async fn test_generate_a_proof() {
         let public_inputs = [merkle_rt, sn_1_old, cm_1_new, cm_2_new];
 
         assert_eq!(
-            CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher)
-                .unwrap(),
+            CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher).unwrap(),
             true
         );
     }
@@ -283,9 +278,10 @@ async fn test_generate_a_proof() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_real_generate_a_proof() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
 
-    TestUtil::init_test(vec!["test"]);
+    SakLogger::init_test_console().unwrap();
     let validator_wasm = VALIDATOR.to_vec();
     let envelope_wasm = ENVELOPE.to_vec();
 
@@ -318,8 +314,7 @@ async fn test_real_generate_a_proof() {
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
     let auth_path_idx = merkle_tree.generate_auth_paths(cm_1_old_idx);
 
-    let mut auth_path =
-        [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+    let mut auth_path = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
     println!("[*] initial auth_path: {:#?}", auth_path);
 
@@ -379,8 +374,7 @@ async fn test_real_generate_a_proof() {
         coin_1_old
     };
 
-    let coin_1_new =
-        sak_types::mock_coin_custom(0x111, 0x112, 0x113, 0x114, 90);
+    let coin_1_new = sak_types::mock_coin_custom(0x111, 0x112, 0x113, 0x114, 90);
     println!("coin: {}", coin_1_new);
 
     let coin_2_new = sak_types::mock_coin_custom(0x221, 0x222, 0x223, 0x224, 0);
@@ -404,9 +398,7 @@ async fn test_real_generate_a_proof() {
 
     println!("\n[+] Waiting for generating pi...");
 
-    let pi =
-        CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
-            .unwrap();
+    let pi = CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new).unwrap();
 
     {
         let mut pi_ser = Vec::new();
@@ -482,8 +474,7 @@ async fn test_real_generate_a_proof() {
         let public_inputs = [merkle_rt, sn_1_old, cm_1_new, cm_2_new];
 
         assert_eq!(
-            CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher)
-                .unwrap(),
+            CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher).unwrap(),
             true
         );
     }

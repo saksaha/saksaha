@@ -21,10 +21,7 @@ pub struct CoinProofCircuit2to2 {
 }
 
 impl Circuit<Scalar> for CoinProofCircuit2to2 {
-    fn synthesize<CS: ConstraintSystem<Scalar>>(
-        self,
-        cs: &mut CS,
-    ) -> Result<(), SynthesisError> {
+    fn synthesize<CS: ConstraintSystem<Scalar>>(self, cs: &mut CS) -> Result<(), SynthesisError> {
         let old_coins = vec![self.coin_1_old, self.coin_2_old];
 
         let mut sns: Vec<Option<Scalar>> = Vec::default();
@@ -60,8 +57,7 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
 
             sns.push(sn);
 
-            let merkle_rt =
-                climb_up_tree(cs, cm_old, &old_coin.auth_path, &self.hasher);
+            let merkle_rt = climb_up_tree(cs, cm_old, &old_coin.auth_path, &self.hasher);
 
             merkle_rts.push(merkle_rt);
         }
@@ -73,12 +69,9 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
         let v_1_new = self.coin_1_new.v.or(Some(Scalar::default()));
 
         let cm_1_new = {
-            let k = self.hasher.comm2_scalar_cs(
-                cs,
-                r_1_new,
-                addr_pk_1_new,
-                rho_1_new,
-            );
+            let k = self
+                .hasher
+                .comm2_scalar_cs(cs, r_1_new, addr_pk_1_new, rho_1_new);
             self.hasher.comm2_scalar_cs(cs, s_1_new, v_1_new, k)
         };
 
@@ -100,12 +93,9 @@ impl Circuit<Scalar> for CoinProofCircuit2to2 {
         let v_2_new = self.coin_2_new.v.or(Some(Scalar::default()));
 
         let cm_2_new = {
-            let k = self.hasher.comm2_scalar_cs(
-                cs,
-                r_2_new,
-                addr_pk_2_new,
-                rho_2_new,
-            );
+            let k = self
+                .hasher
+                .comm2_scalar_cs(cs, r_2_new, addr_pk_2_new, rho_2_new);
             self.hasher.comm2_scalar_cs(cs, s_2_new, v_2_new, k)
         };
 
@@ -180,13 +170,10 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
         let xl_value;
         let xr_value;
 
-        let is_right = cur_is_right.get_value().and_then(|v| {
-            if v {
-                Some(true)
-            } else {
-                Some(false)
-            }
-        });
+        let is_right =
+            cur_is_right
+                .get_value()
+                .and_then(|v| if v { Some(true) } else { Some(false) });
 
         let temp = match *merkle_node {
             Some(a) => a,

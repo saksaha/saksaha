@@ -8,9 +8,7 @@ pub struct TxHashSyncMsg {
 }
 
 impl TxHashSyncMsg {
-    pub(crate) fn from_parse(
-        parse: &mut Parse,
-    ) -> Result<TxHashSyncMsg, TrptError> {
+    pub(crate) fn from_parse(parse: &mut Parse) -> Result<TxHashSyncMsg, TrptError> {
         let tx_count = parse.next_int()?;
         let mut tx_hashes = Vec::with_capacity(tx_count as usize);
 

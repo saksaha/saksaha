@@ -1,5 +1,5 @@
 use crate::{DistLedgerEvent, SyncPool};
-use log::{debug, error, warn};
+use sak_logger::{debug, error, warn};
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},

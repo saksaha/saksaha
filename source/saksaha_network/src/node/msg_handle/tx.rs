@@ -2,7 +2,7 @@ use crate::{
     machine::Machine,
     node::{task::NodeTask, SaksahaNodeError},
 };
-use log::{debug, info, warn};
+use sak_logger::{debug, info, warn};
 use sak_p2p_transport::{ErrorMsg, Msg, TxAckMsg, TxSynMsg, UpgradedConn};
 use sak_task_queue::TaskQueue;
 use sak_types::TxHash;

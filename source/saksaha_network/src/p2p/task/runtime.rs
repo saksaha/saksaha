@@ -1,5 +1,6 @@
 use super::{handler, P2PTask};
-use log::{debug, error};
+use sak_logger::{debug, error};
+use sak_p2p_id::Identity;
 use sak_task_queue::TaskQueue;
 use std::{
     sync::Arc,
@@ -11,12 +12,14 @@ const TASK_MIN_INTERVAL: u64 = 1000;
 pub(crate) struct P2PTaskRuntime {
     pub(crate) task_queue: Arc<TaskQueue<P2PTask>>,
     pub(crate) task_min_interval: Duration,
+    pub(crate) identity: Arc<Identity>,
 }
 
 impl P2PTaskRuntime {
     pub(crate) fn new(
         task_queue: Arc<TaskQueue<P2PTask>>,
         disc_task_interval: Option<u16>,
+        identity: Arc<Identity>,
     ) -> P2PTaskRuntime {
         let task_min_interval = match disc_task_interval {
             Some(i) => Duration::from_millis(i.into()),
@@ -26,6 +29,7 @@ impl P2PTaskRuntime {
         P2PTaskRuntime {
             task_queue,
             task_min_interval,
+            identity,
         }
     }
 
@@ -52,13 +56,9 @@ impl P2PTaskRuntime {
                 }
             };
 
-            handler::run(task).await;
+            handler::run(task, self.identity.clone()).await;
 
-            sak_utils_time::wait_until_min_interval(
-                time_since,
-                *task_min_interval,
-            )
-            .await;
+            sak_utils_time::wait_until_min_interval(time_since, *task_min_interval).await;
         }
     }
 }

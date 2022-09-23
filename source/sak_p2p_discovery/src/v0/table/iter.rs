@@ -1,5 +1,5 @@
 use super::DiscAddr;
-use sak_logger::terr;
+use sak_logger::error;
 use sak_p2p_addr::AddrStatus;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -39,9 +39,7 @@ impl AddrsIterator {
                     };
                 }
                 None => {
-                    terr!(
-                        "p2p_discovery",
-                        "table",
+                    error!(
                         "Known addrs queue has been closed. Coudn't retrieve \
                         known address.",
                     );

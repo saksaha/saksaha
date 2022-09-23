@@ -1,7 +1,5 @@
 use super::CmIdx;
-use crate::{
-    Cm, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, TxCandidate,
-};
+use crate::{Cm, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Sn, TxCandidate};
 use serde::{Deserialize, Serialize};
 
 pub const WASM_MAGIC_NUMBER: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];

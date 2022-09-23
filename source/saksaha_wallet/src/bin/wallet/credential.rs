@@ -1,6 +1,6 @@
 use crate::prompt;
 use colored::Colorize;
-use log::info;
+use sak_logger::info;
 use saksaha_wallet::{WalletCredential, WalletError};
 
 pub fn create_or_get_credential(
@@ -33,8 +33,7 @@ pub fn create_or_get_credential(
 
         c
     } else {
-        let public_key =
-            public_key.as_ref().ok_or("Public key should be provided")?;
+        let public_key = public_key.as_ref().ok_or("Public key should be provided")?;
         let secret = secret.as_ref().ok_or("Secret should be provided")?;
 
         let w = WalletCredential::load(public_key, secret)?;

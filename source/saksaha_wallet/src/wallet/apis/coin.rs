@@ -5,6 +5,7 @@ use sak_crypto::encode_hex;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_dist_ledger_meta::GAS;
+use sak_logger::debug;
 use sak_proof::CoinProof;
 use sak_proof::Hasher;
 use sak_proof::NewCoin;
@@ -17,10 +18,7 @@ use sak_types::{CoinRecord, CoinStatus};
 use std::convert::TryInto;
 
 impl Wallet {
-    pub async fn get_balance(
-        &self,
-        acc_addr: &String,
-    ) -> Result<AccountBalance, WalletError> {
+    pub async fn get_balance(&self, acc_addr: &String) -> Result<AccountBalance, WalletError> {
         println!("wallet apis, get_balance, acc_addr: {}", acc_addr);
 
         let cmanager = self.get_credential_manager();
@@ -73,17 +71,11 @@ impl Wallet {
     }
 
     #[inline]
-    pub(crate) async fn prepare_cm_idx(
-        &self,
-        coin: &CoinRecord,
-    ) -> Result<u128, WalletError> {
+    pub(crate) async fn prepare_cm_idx(&self, coin: &CoinRecord) -> Result<u128, WalletError> {
         let cm_idx = {
-            log::debug!("get_cm_idx call");
-            let resp = saksaha::get_cm_idx(
-                self.saksaha_endpoint.clone(),
-                coin.cm.to_bytes(),
-            )
-            .await?;
+            debug!("get_cm_idx call");
+            let resp =
+                saksaha::get_cm_idx(self.saksaha_endpoint.clone(), coin.cm.to_bytes()).await?;
 
             resp.result.ok_or("")?.cm_idx.ok_or("")?
         };
@@ -97,12 +89,9 @@ impl Wallet {
         cm_idx: u128,
     ) -> Result<Vec<([u8; 32], bool)>, WalletError> {
         let auth_path = {
-            let response =
-                saksaha::get_auth_path(self.saksaha_endpoint.clone(), cm_idx)
-                    .await?;
+            let response = saksaha::get_auth_path(self.saksaha_endpoint.clone(), cm_idx).await?;
 
-            let result =
-                response.result.ok_or(format!("cannot get auth path"))?;
+            let result = response.result.ok_or(format!("cannot get auth path"))?;
 
             result.auth_path
         };
@@ -166,12 +155,8 @@ impl Wallet {
         &self,
         old_value: Scalar,
     ) -> Result<(CoinRecord, CoinRecord), WalletError> {
-        let new_coin_1 = CoinRecord::new_random(
-            ScalarExt::into_u64(old_value)? - GAS,
-            None,
-            None,
-            None,
-        )?;
+        let new_coin_1 =
+            CoinRecord::new_random(ScalarExt::into_u64(old_value)? - GAS, None, None, None)?;
 
         let new_coin_2 = CoinRecord::new_random(0, None, None, None)?;
 
@@ -186,8 +171,7 @@ impl Wallet {
     ) -> Result<Vec<u8>, WalletError> {
         println!("[+] making proof...");
 
-        let pi =
-            CoinProof::generate_proof_1_to_2(old_coin, new_coin_1, new_coin_2)?;
+        let pi = CoinProof::generate_proof_1_to_2(old_coin, new_coin_1, new_coin_2)?;
 
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();
@@ -206,9 +190,7 @@ impl Wallet {
     ) -> Result<Vec<u8>, WalletError> {
         println!("[+] making proof...");
 
-        let pi = CoinProof::generate_proof_2_to_2(
-            old_coin_1, old_coin_2, new_coin_1, new_coin_2,
-        )?;
+        let pi = CoinProof::generate_proof_2_to_2(old_coin_1, old_coin_2, new_coin_1, new_coin_2)?;
 
         let mut pi_ser = Vec::new();
         pi.write(&mut pi_ser).unwrap();
@@ -251,15 +233,13 @@ impl Wallet {
 
         let dummy_merkle_rt = DUMMY_MERKLE_RT;
 
-        let dummy_old_coin =
-            self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
+        let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
         let dummy_old_sn_1 = DUMMY_SN;
 
         //
 
-        let (mut new_coin_1, mut new_coin_2) =
-            self.prepare_2_new_coin_records(coin.v)?;
+        let (mut new_coin_1, mut new_coin_2) = self.prepare_2_new_coin_records(coin.v)?;
 
         // let pi = self.prepare_proof_1_to_2(
         //     old_coin,
@@ -327,10 +307,7 @@ impl Wallet {
         Ok("success_power".to_string())
     }
 
-    pub(crate) async fn check_balance(
-        &self,
-        acc_addr: &String,
-    ) -> Result<(), WalletError> {
+    pub(crate) async fn check_balance(&self, acc_addr: &String) -> Result<(), WalletError> {
         let my_balance = self.get_balance(acc_addr).await?;
 
         let is_enough_balalnce = my_balance.val >= GAS;
@@ -390,10 +367,7 @@ impl Wallet {
         sn
     }
 
-    pub async fn update_coin_status(
-        &self,
-        _acc_addr: &String,
-    ) -> Result<(), WalletError> {
+    pub async fn update_coin_status(&self, _acc_addr: &String) -> Result<(), WalletError> {
         let mut coin_manager_lock = self.coin_manager.write().await;
 
         let wallet_db = self.get_db();
@@ -401,10 +375,7 @@ impl Wallet {
             let coins = &coin_manager_lock.coins;
 
             let old_coin_sn_vec = wallet_db
-                .update_coin_status_unconfirmed_to_unused(
-                    &self.saksaha_endpoint,
-                    coins,
-                )
+                .update_coin_status_unconfirmed_to_unused(&self.saksaha_endpoint, coins)
                 .await?;
 
             wallet_db
@@ -415,8 +386,7 @@ impl Wallet {
         for coin in coin_manager_lock.coins.iter_mut() {
             let cm = coin.cm;
 
-            let db_coin_status =
-                wallet_db.schema.raw.get_coin_status(&cm)?.ok_or("FFFF")?;
+            let db_coin_status = wallet_db.schema.raw.get_coin_status(&cm)?.ok_or("FFFF")?;
 
             if coin.coin_status != db_coin_status {
                 coin.coin_status = db_coin_status;

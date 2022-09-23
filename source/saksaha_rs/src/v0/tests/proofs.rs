@@ -1,6 +1,7 @@
 use sak_crypto::{rand, ScalarExt};
 use sak_crypto::{MerkleTree, Scalar};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_logger::SakLogger;
 use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
@@ -8,16 +9,7 @@ use type_extension::U8Array;
 fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
     let hasher = Hasher::new();
 
-    let (
-        addr_pk_1_old,
-        addr_sk_1_old,
-        r_1_old,
-        s_1_old,
-        rho_1_old,
-        v_1_old,
-        cm_1_old,
-        sn_1,
-    ) = {
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
             let arr = U8Array::from_int(1);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -56,15 +48,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
         (addr_pk, addr_sk, r, s, rho, v, cm, sn)
     };
 
-    let (
-        addr_sk_1_new,
-        addr_pk_1_new,
-        r_1_new,
-        s_1_new,
-        rho_1_new,
-        v_1_new,
-        cm_1_new,
-    ) = {
+    let (addr_sk_1_new, addr_pk_1_new, r_1_new, s_1_new, rho_1_new, v_1_new, cm_1_new) = {
         let addr_sk = {
             let arr = U8Array::from_int(11);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -101,15 +85,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let (
-        addr_sk_2_new,
-        addr_pk_2_new,
-        r_2_new,
-        s_2_new,
-        rho_2_new,
-        v_2_new,
-        cm_2_new,
-    ) = {
+    let (addr_sk_2_new, addr_pk_2_new, r_2_new, s_2_new, rho_2_new, v_2_new, cm_2_new) = {
         let addr_sk = {
             let arr = U8Array::from_int(21);
             ScalarExt::parse_arr(&arr).unwrap()
@@ -281,10 +257,7 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let key = format!("{}_{}", idx, p.idx);
@@ -327,7 +300,8 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_make_a_proof_1_to_2_and_verify_it() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let (coin_1_old, coin_1_new, coin_2_new, merkle_rt) = make_test_context();
 
@@ -344,7 +318,8 @@ pub async fn test_make_a_proof_1_to_2_and_verify_it() {
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_get_auth_path() {
-    sak_test_utils::init_test_log();
+    // sak_test_utils::init_test_log();
+    SakLogger::init_test_console().unwrap();
 
     let saksaha_endpoint = "http://localhost:34418/rpc/v0".to_string();
     let idx: u128 = 0;

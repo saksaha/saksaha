@@ -1,6 +1,5 @@
 use crate::{
-    dec, Msg, TrptError, UpgradedP2PCodec, HEADER_CIPHERTEXT_LEN,
-    HEADER_MAC_LEN, HEADER_TOTAL_LEN,
+    dec, Msg, TrptError, UpgradedP2PCodec, HEADER_CIPHERTEXT_LEN, HEADER_MAC_LEN, HEADER_TOTAL_LEN,
 };
 use bytes::{Buf, BytesMut};
 use chacha20::cipher::StreamCipher;
@@ -14,10 +13,7 @@ impl Decoder for UpgradedP2PCodec {
     type Item = Msg;
     type Error = TrptError;
 
-    fn decode(
-        &mut self,
-        src: &mut BytesMut,
-    ) -> Result<Option<Self::Item>, TrptError> {
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, TrptError> {
         // println!(
         //     "\ndecoding!! conn_id: {}, src({}): {:?}",
         //     self.conn_id,
@@ -142,9 +138,7 @@ fn parse_msg_portion(
     let msg = match dec::decode_into_msg(src) {
         Ok(m) => m,
         Err(err) => {
-            return Err(
-                format!("Error decoding a msg body, err: {}", err).into()
-            );
+            return Err(format!("Error decoding a msg body, err: {}", err).into());
         }
     };
 

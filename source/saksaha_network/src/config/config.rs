@@ -1,10 +1,7 @@
-// use super::profiled::ProfiledConfig;
 use super::{dev_local_1, dev_local_2};
-use crate::{
-    pconfig::PConfig, system::SystemRunArgs, PersistedP2PConfig, SaksahaError,
-};
-use log::{info, warn};
+use crate::{system::SystemRunArgs, PConfig, PersistedP2PConfig, SaksahaError};
 use sak_crypto::SakKey;
+use sak_logger::{info, warn};
 use sak_p2p_addr::UnknownAddr;
 
 #[derive(Debug)]
@@ -73,10 +70,7 @@ impl Config {
                 for (idx, addr) in a.iter().enumerate() {
                     let addr = match UnknownAddr::new_from_url(addr.clone()) {
                         Ok(ua) => {
-                            info!(
-                                "-- [{}] Successfully parsed bootstrap url, {}",
-                                idx, addr,
-                            );
+                            info!("-- [{}] Successfully parsed bootstrap url, {}", idx, addr,);
 
                             ua
                         }
@@ -154,8 +148,7 @@ impl Config {
     }
 
     pub fn persist(&self, alias: Option<&String>) -> Result<(), SaksahaError> {
-        let acc_addr =
-            SakKey::create_acc_addr_from_pk_str(&self.p2p.public_key_str);
+        let acc_addr = SakKey::create_acc_addr_from_pk_str(&self.p2p.public_key_str);
 
         let pconfig = PConfig {
             p2p: PersistedP2PConfig {

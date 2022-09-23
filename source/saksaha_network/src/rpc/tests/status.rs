@@ -1,14 +1,22 @@
-use super::utils;
-use crate::{rpc::routes::v0::GetNodeStatusResponse, tests::TestUtil};
+use super::utils::{self, TestContext};
+use crate::{rpc::routes::v0::GetNodeStatusResponse, tests::SaksahaTestUtils};
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_status() {
-    sak_test_utils::init_test_log();
-    TestUtil::init_test(vec!["test"]);
+    // sak_test_utils::init_test_log();
+    // TestUtil::init_test(vec!["test"]);
+    let test_credential_1 = CredentialProfile::test_1();
 
-    let (rpc, rpc_socket_addr, _machine) = utils::make_test_context().await;
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
     let client = Client::new();
 

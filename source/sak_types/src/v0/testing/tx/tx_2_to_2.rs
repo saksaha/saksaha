@@ -1,8 +1,7 @@
 use crate::v0::testing::values;
 use crate::{get_addr_sk_1, MockCoin};
 use crate::{
-    mock_coin_custom, Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR,
-    VALIDATOR_CTR_ADDR,
+    mock_coin_custom, Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
 use sak_crypto::MerkleTree;
@@ -109,22 +108,17 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
 
-        let mut ret =
-            [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+        let mut ret = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let empty_node = ScalarExt::parse_u64(0).unwrap();
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node =
-                merkle_nodes_1.get(key.as_str()).unwrap_or(&empty_node);
+            let merkle_node = merkle_nodes_1.get(key.as_str()).unwrap_or(&empty_node);
 
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
@@ -135,22 +129,17 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     let auth_path_2 = {
         let v = merkle_tree.generate_auth_paths(1);
 
-        let mut ret =
-            [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
+        let mut ret = [Some((Scalar::default(), false)); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
             if idx >= ret.len() {
-                panic!(
-                    "Invalid assignment to a fixed sized array, idx: {}",
-                    idx
-                );
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
             }
 
             let empty_node = ScalarExt::parse_u64(0).unwrap();
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node =
-                merkle_nodes_2.get(key.as_str()).unwrap_or(&empty_node);
+            let merkle_node = merkle_nodes_2.get(key.as_str()).unwrap_or(&empty_node);
 
             // println!("key:{:?}, node: {:?}", key, merkle_node);
             ret[idx] = Some((merkle_node.clone(), p.direction));
@@ -201,10 +190,8 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
     //     CoinProof::generate_proof_1_to_2(coin_1_old, coin_1_new, coin_2_new)
     //         .unwrap();
 
-    let pi = CoinProof::generate_proof_2_to_2(
-        coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-    )
-    .unwrap();
+    let pi =
+        CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new).unwrap();
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
