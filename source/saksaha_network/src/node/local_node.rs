@@ -1,6 +1,6 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
-use sak_logger::{info, warn};
+use sak_logger::{debug, info, warn};
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
@@ -40,7 +40,7 @@ impl LocalNode {
             None => Duration::from_millis(PEER_REGISTER_MIN_INTERVAL),
         };
 
-        info!(
+        debug!(
             "local node is initialized, node_task_interval: {:?},\
             peer_register_interval: {:?}",
             node_task_interval, peer_register_interval,
