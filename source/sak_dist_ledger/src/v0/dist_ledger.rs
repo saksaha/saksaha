@@ -4,6 +4,7 @@ use crate::DistLedgerApis;
 use crate::LedgerDB;
 use crate::LedgerError;
 use crate::SyncPool;
+use colored::Colorize;
 use sak_crypto::MerkleTree;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::info;
@@ -82,12 +83,15 @@ impl DistLedger {
             dist_ledger.apis.insert_genesis_block(bc).await?;
         }
 
-        let latest_height = dist_ledger.apis.ledger_db.get_latest_block_height()?;
+        let latest_height = match dist_ledger.apis.ledger_db.get_latest_block_height()? {
+            Some(h) => h.to_string(),
+            None => "No block yet".to_string(),
+        };
 
         info!(
-            "Initialized Blockchain, latest height (none if genesis \
-                block has not been inserted): {:?}",
-            latest_height,
+            "Initialized Blockchain, latest added height (none if genesis \
+                block has not been inserted): {}",
+            latest_height.green(),
         );
 
         Ok(dist_ledger)

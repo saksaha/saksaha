@@ -48,11 +48,6 @@ impl Discovery {
 
             let udp_conn = Connection::new(disc_args.udp_socket);
 
-            info!(
-                "Bound udp socket for P2P discovery, addr: {}",
-                socket_addr.to_string().yellow(),
-            );
-
             (Arc::new(udp_conn), socket_addr.port())
         };
 

@@ -81,7 +81,7 @@ impl PeerTable {
             peer_queue_iter,
         };
 
-        info!("Initializing peer table, capacity: {}", capacity);
+        debug!("Initialized peer table, capacity: {}", capacity);
 
         Ok(ps)
     }

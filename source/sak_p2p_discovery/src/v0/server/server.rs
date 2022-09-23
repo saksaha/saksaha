@@ -39,8 +39,6 @@ impl Server {
     }
 
     pub async fn run(&self) {
-        info!("P2P discovery server starts to accept requests",);
-
         self.run_loop().await;
     }
 

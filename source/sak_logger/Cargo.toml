@@ -7,7 +7,6 @@ edition = "2018"
 
 [dependencies]
 log = "0.4.0"
-env_logger = "0.9.0"
 chrono = "0.4"
 colored = "2"
 tracing = "0.1.36"

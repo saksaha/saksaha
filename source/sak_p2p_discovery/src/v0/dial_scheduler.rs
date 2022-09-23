@@ -1,5 +1,5 @@
 use super::task::DiscoveryTask;
-use sak_logger::{info, warn};
+use sak_logger::{debug, info, warn};
 use sak_p2p_addr::UnknownAddr;
 use sak_task_queue::TaskQueue;
 use std::{
@@ -38,7 +38,7 @@ impl DialScheduler {
             bootstrap_addrs,
         };
 
-        info!(
+        debug!(
             "Discovery dial scheduler is initialized. Disc dial min \
             interval: {:?}",
             disc_dial_interval,
@@ -70,10 +70,10 @@ impl DialScheduler {
     async fn enqueue_bootstrap_addrs(&self, bootstrap_addrs: &Vec<UnknownAddr>) {
         let total_count = bootstrap_addrs.len();
 
-        info!("Enqueueing bootstrap addrs, total count: {}", total_count,);
+        debug!("Enqueueing bootstrap addrs, total count: {}", total_count,);
 
         for (idx, addr) in bootstrap_addrs.iter().enumerate() {
-            info!(
+            debug!(
                 "-- [{}/{}] enqueueing bootstrap addr, disc_endpoint: {}",
                 idx + 1,
                 total_count,

@@ -23,10 +23,7 @@ impl DistLedgerApis {
         } {
             let block_hash = b.get_block_hash().to_string();
 
-            info!(
-                "Genesis block is already persisted, block_hash: {}",
-                block_hash.green(),
-            );
+            info!("Found genesis block, block_hash: {}", block_hash.green(),);
 
             Some(block_hash)
         } else {

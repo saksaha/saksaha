@@ -2,13 +2,10 @@ mod app;
 mod cli;
 
 use crate::cli::CLIArgs;
-use sak_logger::RUST_LOG_ENV;
 use sak_logger::{error, info};
 use saksaha_network::{System, SystemRunArgs};
 
 fn main() {
-    println!("Saksaha is launching...");
-
     let cli_args: CLIArgs = match cli::get_args() {
         Ok(a) => {
             info!("cli arg parsed: {:?}", a);
@@ -48,7 +45,6 @@ fn main() {
         tx_sync_interval: cli_args.tx_sync_interval,
         block_sync_interval: cli_args.block_sync_interval,
         public_key: cli_args.public_key,
-        // app_prefix: cli_args.app_prefix,
     };
 
     match system.run(sys_run_args) {

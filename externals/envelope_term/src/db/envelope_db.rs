@@ -49,8 +49,6 @@ impl EnvelopeDB {
 
         let database = EnvelopeDB { schema };
 
-        info!("Initialized Database");
-
         Ok(database)
     }
 

@@ -49,18 +49,8 @@ impl LedgerDB {
             db: kv_db.db_instance,
         };
 
-        info!("Initialized Database");
-
         Ok(database)
     }
-
-    // pub fn get_db_path(app_prefix: &str) -> Result<PathBuf, LedgerError> {
-    //     let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
-
-    //     let db_path = app_path.join("db").join("ledger");
-
-    //     Ok(db_path)
-    // }
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![

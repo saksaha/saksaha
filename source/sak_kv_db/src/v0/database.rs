@@ -17,14 +17,12 @@ impl KeyValueDatabase {
         let db_path_str = match db_path.clone().into_os_string().into_string() {
             Ok(s) => s,
             Err(err) => {
-                return Err(format!("Not a valid path, err: {:?}", err,));
+                return Err(format!(
+                    "Not a valid path, path: {:?}, err: {:?}",
+                    db_path, err,
+                ));
             }
         };
-
-        info!(
-            "Try initializing KeyValueDatabase, db_path: {}",
-            db_path_str,
-        );
 
         let db_instance = match DB::open_cf_descriptors(&options, &db_path_str, cf_descriptors) {
             Ok(db) => {
