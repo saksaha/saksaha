@@ -34,20 +34,26 @@ _(____/___/____|_/____\___(____/___/____|_/____/____/____|_
 
 impl Routine {
     pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
-        println!("{}\n", LOGO.magenta());
+        println!("{}", LOGO.magenta());
 
         let config = if let Some(cp) = &sys_run_args.cfg_profile {
-            println!("Loading profiled config, cfg_profile: {}", cp.yellow());
+            println!(
+                "\nLoading Saksaha config. You have provided 'Config profile'. \n\
+                {}: {}",
+                "    Config profile".cyan(),
+                cp,
+            );
 
             let cfg = Config::load_profiled(&cp, &sys_run_args)?;
-
             cfg.persist(Some(cp))?;
             cfg
         } else {
             println!(
-                "Config profile is not given. We will generate a new random\n\
-                config. If you have provided public_key, Saksaha will load \n\
-                persisted config from the designated location.\n"
+                "\nLoading Saksaha config. Config profile is not given. \n\
+                We will generate a new random config. If you have provided \n\
+                public_key, Saksaha will load Persisted config from the \n\
+                designated location. Persisted config shall be used to create\n\
+                Saksaha config.",
             );
 
             let pconfig = PConfig::init(&sys_run_args.public_key)?;
@@ -57,13 +63,13 @@ impl Routine {
             cfg
         };
 
-        println!("{} succesfully loaded\n", "Saksaha config".yellow());
-
         println!(
-            "{}: {} \n{}: {}",
-            "Public key".cyan(),
+            "\n\
+            {} succesfully loaded.\n{}: {} \n{}: {}",
+            "Saksaha config",
+            "    Public key".cyan(),
             config.p2p.public_key_str,
-            "Secret".cyan(),
+            "    Secret".cyan(),
             config.p2p.secret,
         );
 

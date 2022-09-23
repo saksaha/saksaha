@@ -22,16 +22,20 @@ impl SakLogger {
         log_dir_name: &str,
         file_name_prefix: &str,
     ) -> Result<SakLogger, LoggerError> {
-        println!(
-            ":::::::::::::: Sak logger ::::::::::::::\n\
-            sak_logger: initializing, log_root_dir: {:?}, \
-            log_dir_name: {}, file_name_prefix: {}",
-            log_root_dir.as_ref(),
-            log_dir_name,
-            file_name_prefix
-        );
+        let rust_log_env = utils::set_rust_log_env();
 
-        utils::set_rust_log_env();
+        println!(
+            "\n\nInitializing sak_logger\n\
+            {}: {:?}\n{}: {}\n{}: {}\n{}: {}",
+            "    Log root dir".cyan(),
+            log_root_dir.as_ref(),
+            "    Log dir name".cyan(),
+            log_dir_name,
+            "    File name prefix".cyan(),
+            file_name_prefix,
+            "    RUST_LOG_ENV".cyan(),
+            rust_log_env,
+        );
 
         let mut layers = Vec::new();
 
@@ -60,8 +64,10 @@ impl SakLogger {
             layers.push(file_log_layer);
 
             println!(
-                "sak_logger: log will be persisted in dir: {}",
-                log_dir.to_string_lossy().yellow(),
+                "\nLog will be persisted. Log files will be periodically \
+                rotated).\n{}: {}",
+                "    Log dir".cyan(),
+                log_dir.to_string_lossy(),
             );
 
             guard
@@ -69,10 +75,12 @@ impl SakLogger {
 
         tracing_subscriber::registry().with(layers).try_init()?;
 
+        println!("\n\n");
         tracing::info!("sak_logger is initialized");
         tracing::warn!("sak_logger is initialized");
         tracing::error!("sak_logger is initialized");
         tracing::debug!("sak_logger is initialized");
+        tracing::trace!("sak_logger is initialized");
 
         let logger = SakLogger {
             _guards: vec![guard],

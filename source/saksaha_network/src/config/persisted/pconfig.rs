@@ -32,7 +32,7 @@ impl PConfig {
 
             println!(
                 "\nLoading persisted config.\n, 
-                Config file location: {}",
+                Persisted config file: {}",
                 config_file_path.to_string_lossy(),
             );
 
@@ -44,15 +44,31 @@ impl PConfig {
             let index_file_name = INDEX_FILE_ALIAS.to_uppercase();
             let index_file_path = config_dir.join(index_file_name);
 
-            if index_file_path.exists() {
-                info!(
-                    "Found pconfig index file, path: {}",
-                    index_file_path.to_string_lossy().yellow()
-                );
+            println!(
+                "\nLoading persisted config. Since public key is not provided.\n\
+                We will seek the persisted config in the default location. We\n\
+                will also look for index file (s) if any.",
+            );
 
+            println!(
+                "{}: {} \n{}: {}",
+                "    Config directory".cyan(),
+                config_dir.to_string_lossy(),
+                "    Index file".cyan(),
+                index_file_path.to_string_lossy(),
+            );
+
+            if index_file_path.exists() {
                 let pk = std::fs::read_to_string(index_file_path)?;
                 let config_file_path = fs::get_config_file_path(&pk)?;
                 let pconfig = Self::load_pconfig(&config_file_path)?;
+
+                println!(
+                    "\n{} successfully loaded.\n{}: {}",
+                    "Persisted config",
+                    "    Resolved pconfig path".cyan(),
+                    config_file_path.to_string_lossy(),
+                );
 
                 return Ok(pconfig);
             } else {
