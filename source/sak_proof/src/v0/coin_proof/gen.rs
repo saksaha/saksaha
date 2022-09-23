@@ -1,16 +1,32 @@
-use crate::CoinProof;
+use crate::{CoinProof, ProofError};
+use bellman::groth16::Proof;
 use bls12_381::Scalar;
-use jni::objects::{JClass, JObject, JValue};
-use jni::JNIEnv;
-use sak_crypto::{MerkleTree, ScalarExt};
+use sak_crypto::MerkleTree;
+use sak_crypto::{Bls12, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
 use std::collections::HashMap;
-use std::ffi::CString;
 use std::os::raw::c_char;
 use type_extension::U8Array;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
+
+pub fn verify_proof_jni(pi_ser: Vec<u8>) -> Result<bool, ProofError> {
+    let test_context = make_test_context_2_to_2();
+    let public_inputs: Vec<Scalar> = vec![
+        test_context.merkle_rt_1,
+        test_context.merkle_rt_2,
+        test_context.sn_1,
+        test_context.sn_2,
+        test_context.cm_1,
+        test_context.cm_2,
+    ];
+
+    let pi_des: Proof<Bls12> = Proof::read(&*pi_ser.clone()).unwrap();
+    let ret = CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &test_context.hasher);
+
+    ret
+}
 
 pub fn pi_gen_1() -> Vec<u8> {
     let test_context = make_test_context_2_to_2();
@@ -58,6 +74,7 @@ pub fn pi_gen_1() -> Vec<u8> {
 
     let mut pi_ser = Vec::new();
     proof.write(&mut pi_ser).expect("pi should be serialized");
+
     pi_ser
 }
 
