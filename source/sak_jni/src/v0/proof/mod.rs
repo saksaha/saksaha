@@ -14,7 +14,8 @@ pub extern "C" fn Java_jni_saksaha_sakProof_SakProof_generateProof(
     _class: JClass,
     input: JString,
 ) -> jstring {
-    let s = sak_proof::pi_gen_1();
+    // let s = sak_proof::pi_gen_1();
+    let s = sak_proof::pi_gen_1_depth_32();
 
     let input: String = env
         .get_string(input)

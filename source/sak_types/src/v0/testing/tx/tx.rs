@@ -52,12 +52,13 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
     let dummy_auth_path = [
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
-        Some((Scalar::default(), false)),
+        Some((Scalar::default(), false));32
+        // Some((Scalar::default(), false)),
+        // Some((Scalar::default(), false)),
+        // Some((Scalar::default(), false)),
+        // Some((Scalar::default(), false)),
+        // Some((Scalar::default(), false)),
+        // Some((Scalar::default(), false)),
     ];
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {

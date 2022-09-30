@@ -12,6 +12,65 @@ use type_extension::U8Array;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
+pub fn pi_gen_1_depth_32() -> String {
+    let test_context = make_test_context_2_to_2_depth_32();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_1_old),
+        addr_sk: Some(test_context.addr_sk_1_old),
+        rho: Some(test_context.rho_1_old),
+        r: Some(test_context.r_1_old),
+        s: Some(test_context.s_1_old),
+        v: Some(test_context.v_1_old),
+        cm: Some(test_context.cm_1_old),
+        auth_path: test_context.auth_path_1.map(|e| Some(e)),
+    };
+
+    let coin_2_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_2_old),
+        addr_sk: Some(test_context.addr_sk_2_old),
+        rho: Some(test_context.rho_2_old),
+        r: Some(test_context.r_2_old),
+        s: Some(test_context.s_2_old),
+        v: Some(test_context.v_2_old),
+        cm: Some(test_context.cm_2_old),
+        auth_path: test_context.auth_path_2.map(|e| Some(e)),
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_1),
+        rho: Some(test_context.rho_1),
+        r: Some(test_context.r_1),
+        s: Some(test_context.s_1),
+        v: Some(test_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_2),
+        rho: Some(test_context.rho_2),
+        r: Some(test_context.r_2),
+        s: Some(test_context.s_2),
+        v: Some(test_context.v_2),
+    };
+
+    let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
+        .expect("proof should be created");
+
+    let mut pi_ser = Vec::new();
+    match proof.write(&mut pi_ser) {
+        Ok(_) => {
+            let s: String = match serde_json::to_string(&pi_ser) {
+                Ok(s) => s,
+                Err(err) => format!("serde fail, err: {}", err.to_string()),
+            };
+
+            return s;
+        }
+        Err(err) => {
+            return format!("pi generate failed, {}", err.to_string());
+        }
+    };
+}
 pub fn pi_gen_1() -> String {
     let test_context = make_test_context_2_to_2();
 
@@ -57,6 +116,7 @@ pub fn pi_gen_1() -> String {
         .expect("proof should be created");
 
     let mut pi_ser = Vec::new();
+    // proof.write(&mut pi_ser).expect("pi should be serialized")
     match proof.write(&mut pi_ser) {
         Ok(_) => {
             let s: String = match serde_json::to_string(&pi_ser) {
@@ -118,6 +178,241 @@ pub struct TestContext {
     pub cm_2: Scalar,
 }
 
+pub fn make_test_context_2_to_2_depth_32() -> TestContext {
+    let hasher = Hasher::new();
+
+    let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(1);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = {
+            let arr = U8Array::from_int(2);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::from_int(3);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(4);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(100);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        let sn = hasher.mimc_scalar(addr_sk, rho);
+
+        (addr_pk, addr_sk, r, s, rho, v, cm, sn)
+    };
+
+    let (addr_pk_2_old, addr_sk_2_old, r_2_old, s_2_old, rho_2_old, v_2_old, cm_2_old, sn_2) = {
+        let dummy_old_coin = OldCoin::new_dummy().unwrap();
+
+        let sn = hasher.mimc_scalar(dummy_old_coin.addr_sk.unwrap(), dummy_old_coin.rho.unwrap());
+
+        (
+            dummy_old_coin.addr_pk.unwrap(),
+            dummy_old_coin.addr_sk.unwrap(),
+            dummy_old_coin.r.unwrap(),
+            dummy_old_coin.s.unwrap(),
+            dummy_old_coin.rho.unwrap(),
+            dummy_old_coin.v.unwrap(),
+            dummy_old_coin.cm.unwrap(),
+            sn,
+        )
+    };
+
+    let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(21);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = {
+            let arr = U8Array::from_int(22);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::from_int(23);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(24);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(80);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let (addr_sk_2, addr_pk_2, r_2, s_2, rho_2, v_2, cm_2) = {
+        let addr_sk = {
+            let arr = U8Array::from_int(31);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
+
+        let r = {
+            let arr = U8Array::from_int(32);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let s = {
+            let arr = U8Array::from_int(33);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let rho = {
+            let arr = U8Array::from_int(34);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let v = {
+            let arr = U8Array::from_int(20);
+            ScalarExt::parse_arr(&arr).unwrap()
+        };
+
+        let cm = {
+            let k = hasher.comm2_scalar(r, addr_pk, rho);
+
+            hasher.comm2_scalar(s, v, k)
+        };
+
+        (addr_sk, addr_pk, r, s, rho, v, cm)
+    };
+
+    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+
+    let merkle_nodes_1 = mock_merkle_nodes_cm_1_depth_32(&hasher, cm_1_old, cm_2_old);
+
+    println!("{:#?}", merkle_nodes_1);
+
+    let merkle_rt_1 = *merkle_nodes_1
+        .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        .unwrap();
+
+    let auth_path_1 = {
+        let v = merkle_tree.generate_auth_paths(0);
+
+        let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
+
+        v.iter().enumerate().for_each(|(idx, p)| {
+            if idx >= ret.len() {
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
+            }
+
+            let key = format!("{}_{}", idx, p.idx);
+
+            let merkle_node = merkle_nodes_1.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
+
+            ret[idx] = (merkle_node.clone(), p.direction);
+        });
+
+        ret
+    };
+
+    let merkle_nodes_2 = mock_merkle_nodes_cm_2_depth_32(&hasher, cm_1_old, cm_2_old);
+
+    let merkle_rt_2 = *merkle_nodes_2
+        .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        .unwrap();
+
+    let auth_path_2 = {
+        let v = merkle_tree.generate_auth_paths(1);
+
+        let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
+
+        v.iter().enumerate().for_each(|(idx, p)| {
+            if idx >= ret.len() {
+                panic!("Invalid assignment to a fixed sized array, idx: {}", idx);
+            }
+
+            let key = format!("{}_{}", idx, p.idx);
+
+            let merkle_node = merkle_nodes_2.get(key.as_str()).expect(&format!(
+                "value doesn't exist in the merkle node, key: {}",
+                key
+            ));
+
+            ret[idx] = (merkle_node.clone(), p.direction);
+        });
+
+        ret
+    };
+
+    println!("auth_path_1: {:#?}", auth_path_1);
+    println!("auth_path_2: {:#?}", auth_path_2);
+
+    TestContext {
+        hasher,
+        addr_pk_1_old,
+        addr_sk_1_old,
+        r_1_old,
+        s_1_old,
+        rho_1_old,
+        v_1_old,
+        cm_1_old,
+        auth_path_1,
+        merkle_rt_1,
+        sn_1,
+        addr_pk_2_old,
+        addr_sk_2_old,
+        r_2_old,
+        s_2_old,
+        rho_2_old,
+        v_2_old,
+        cm_2_old,
+        auth_path_2,
+        sn_2,
+        addr_sk_1,
+        addr_pk_1,
+        r_1,
+        s_1,
+        rho_1,
+        v_1,
+        cm_1,
+        addr_sk_2,
+        addr_pk_2,
+        r_2,
+        s_2,
+        rho_2,
+        v_2,
+        cm_2,
+    }
+}
 pub fn make_test_context_2_to_2() -> TestContext {
     let hasher = Hasher::new();
 
@@ -263,6 +558,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
     let auth_path_1 = {
         let v = merkle_tree.generate_auth_paths(0);
+
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -291,6 +587,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
     let auth_path_2 = {
         let v = merkle_tree.generate_auth_paths(1);
+
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -311,8 +608,8 @@ pub fn make_test_context_2_to_2() -> TestContext {
         ret
     };
 
-    println!("auth_path_1: {:?}", auth_path_1);
-    println!("auth_path_2: {:?}", auth_path_2);
+    println!("auth_path_1: {:#?}", auth_path_1);
+    println!("auth_path_2: {:#?}", auth_path_2);
 
     TestContext {
         hasher,
@@ -350,6 +647,40 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2,
         cm_2,
     }
+}
+pub fn mock_merkle_nodes_cm_1_depth_32(
+    hasher: &Hasher,
+    cm_old_1: Scalar,
+    cm_old_2: Scalar,
+) -> HashMap<String, Scalar> {
+    let merkle_nodes = {
+        let mut m = HashMap::new();
+
+        let node_0_0 = cm_old_1;
+
+        m.insert("0_0".to_string(), node_0_0);
+
+        for idx in 0..CM_TREE_DEPTH {
+            let loc = format!("{}_1", idx);
+
+            m.insert(loc, ScalarExt::parse_u64(0).unwrap());
+        }
+
+        for idx in 1..=CM_TREE_DEPTH {
+            let loc = format!("{}_0", idx);
+            m.insert(
+                loc,
+                hasher.mimc_scalar(
+                    *m.get(format!("{}_0", idx - 1).as_str()).unwrap(),
+                    *m.get(format!("{}_1", idx - 1).as_str()).unwrap(),
+                ),
+            );
+        }
+
+        m
+    };
+
+    merkle_nodes
 }
 
 pub fn mock_merkle_nodes_cm_1(
@@ -489,6 +820,42 @@ pub fn mock_merkle_nodes_cm_1(
         m.insert("5_1", node_5_1);
         m.insert("5_0", node_5_0);
         m.insert("6_0", node_6_0);
+
+        m
+    };
+
+    merkle_nodes
+}
+pub fn mock_merkle_nodes_cm_2_depth_32(
+    hasher: &Hasher,
+    cm_old_1: Scalar,
+    cm_old_2: Scalar,
+) -> HashMap<String, Scalar> {
+    let merkle_nodes = {
+        let mut m = HashMap::new();
+
+        let node_0_1 = cm_old_2;
+
+        m.insert("0_0".to_string(), ScalarExt::parse_u64(0).unwrap());
+        m.insert("0_1".to_string(), node_0_1);
+
+        for idx in 1..CM_TREE_DEPTH {
+            let loc = format!("{}_1", idx);
+
+            m.insert(loc, ScalarExt::parse_u64(0).unwrap());
+        }
+
+        for idx in 1..=CM_TREE_DEPTH {
+            let loc = format!("{}_0", idx);
+
+            m.insert(
+                loc,
+                hasher.mimc_scalar(
+                    *m.get(format!("{}_0", idx - 1).as_str()).unwrap(),
+                    *m.get(format!("{}_1", idx - 1).as_str()).unwrap(),
+                ),
+            );
+        }
 
         m
     };
