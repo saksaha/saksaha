@@ -13,7 +13,6 @@ use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
 use sak_logger::SakLogger;
-use sak_logger::RUST_LOG_ENV;
 use sak_logger::{debug, error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
@@ -35,10 +34,11 @@ _(____/___/____|_/____\___(____/___/____|_/____/____/____|_
 impl Routine {
     pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
         println!("{}", LOGO.magenta());
+        println!("\n>> Loading Saksaha config...");
 
         let config = if let Some(cp) = &sys_run_args.cfg_profile {
             println!(
-                "\nLoading Saksaha config. You have provided 'Config profile'. \n\
+                "\nYou have provided 'Config profile'. \n\
                 {}: {}",
                 "    Config profile".cyan(),
                 cp,
@@ -46,12 +46,13 @@ impl Routine {
 
             let cfg = Config::load_profiled(&cp, &sys_run_args)?;
             cfg.persist(Some(cp))?;
+
             cfg
         } else {
             println!(
-                "\nLoading Saksaha config. Config profile is not given. \n\
+                "\nConfig profile is not given. \n\
                 We will generate a new random config. If you have provided \n\
-                public_key, Saksaha will load Persisted config from the \n\
+                public_key, Saksaha will load persisted config from the \n\
                 designated location. Persisted config shall be used to create\n\
                 Saksaha config.",
             );
@@ -65,8 +66,7 @@ impl Routine {
 
         println!(
             "\n\
-            {} succesfully loaded.\n{}: {} \n{}: {}",
-            "Saksaha config",
+            Saksaha config succesfully loaded.\n{}: {} \n{}: {}",
             "    Public key".cyan(),
             config.p2p.public_key_str,
             "    Secret".cyan(),
