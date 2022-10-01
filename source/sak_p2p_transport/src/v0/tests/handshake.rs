@@ -142,7 +142,7 @@ async fn handshake_init(
 
     let transport = match initiate_handshake(handshake_init_args).await {
         Ok(t) => {
-            info!("[init] peer successfuly constructs a `shared secret key` after handshaking");
+            info!("[init] peer successfully constructs a `shared secret key` after handshaking");
             t
         }
         Err(err) => {

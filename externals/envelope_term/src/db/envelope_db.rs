@@ -53,7 +53,7 @@ impl EnvelopeDB {
     }
 
     pub fn get_db_path(acc_dir: &PathBuf) -> Result<PathBuf, EnvelopeError> {
-        // let app_path = sak_fs::get_app_root_path(APP_NAME)?.join(app_prefix);
+        // let app_path = sak_dir::get_app_root_path(APP_NAME)?.join(app_prefix);
 
         // let db_path = app_path.join("db");
 

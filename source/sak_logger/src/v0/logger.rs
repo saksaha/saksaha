@@ -25,7 +25,7 @@ impl SakLogger {
         let rust_log_env = utils::set_rust_log_env();
 
         println!(
-            "\n\nInitializing sak_logger\n\
+            "\n\n>> Initializing sak_logger\n\
             {}: {:?}\n{}: {}\n{}: {}\n{}: {}",
             "    Log root dir".cyan(),
             log_root_dir.as_ref(),

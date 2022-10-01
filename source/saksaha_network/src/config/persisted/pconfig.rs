@@ -27,11 +27,13 @@ pub struct PersistedP2PConfig {
 
 impl PConfig {
     pub fn init(public_key: &Option<String>) -> Result<PConfig, SaksahaError> {
+        println!("\n\n>> Initializing persisted config...");
+
         if let Some(pk) = public_key {
             let config_file_path = fs::get_config_file_path(pk)?;
 
             println!(
-                "\nLoading persisted config.\n, 
+                "\n\n, 
                 Persisted config file: {}",
                 config_file_path.to_string_lossy(),
             );
@@ -45,9 +47,9 @@ impl PConfig {
             let index_file_path = config_dir.join(index_file_name);
 
             println!(
-                "\nLoading persisted config. Since public key is not provided.\n\
-                We will seek the persisted config in the default location. We\n\
-                will also look for index file (s) if any.",
+                "\nPublic key is not provided. We will seek the persisted \n\
+                config in the default location. We will also look for index \n\
+                file (s) if any.",
             );
 
             println!(
@@ -59,19 +61,18 @@ impl PConfig {
             );
 
             if index_file_path.exists() {
+                println!("\nFound index file.");
+
                 let pk = std::fs::read_to_string(index_file_path)?;
                 let config_file_path = fs::get_config_file_path(&pk)?;
                 let pconfig = Self::load_pconfig(&config_file_path)?;
 
-                println!(
-                    "\n{} successfully loaded.\n{}: {}",
-                    "Persisted config",
-                    "    Resolved pconfig path".cyan(),
-                    config_file_path.to_string_lossy(),
-                );
+                println!("\nPersisted config successfully loaded.",);
 
                 return Ok(pconfig);
             } else {
+                println!("\nIndex file not found. Creating new persisted config.");
+
                 let pconfig = PConfig::create_new_config();
 
                 Ok(pconfig)
@@ -83,27 +84,26 @@ impl PConfig {
         let acc_dir = crate_fs::acc_dir(&self.p2p.public_key)?;
 
         if acc_dir.exists() {
-            warn!(
-                "PConfig already exists, discard persisting, \
-                acc_dir: {:?}",
+            println!(
+                "{}\n{}: {:?}",
+                "Persisted config exists.",
+                "    Config dir: ".cyan(),
                 acc_dir,
             );
+        } else {
+            let config_file_path = fs::get_config_file_path(&self.p2p.public_key)?;
+            let data = serde_yaml::to_string(&self)?;
+            let _ = std::fs::create_dir_all(acc_dir);
 
-            return Ok(());
+            sak_dir::persist(&data, &config_file_path)?;
+
+            println!(
+                "\n{}\n{}: {}",
+                "Successfully persisted a pconfig.",
+                "    Pconfig path: ".cyan(),
+                config_file_path.to_string_lossy(),
+            );
         }
-
-        let config_file_path = fs::get_config_file_path(&self.p2p.public_key)?;
-
-        let data = serde_yaml::to_string(&self)?;
-
-        let _ = std::fs::create_dir_all(acc_dir);
-
-        sak_fs::persist(&data, &config_file_path)?;
-
-        info!(
-            "Persisted a pconfig, path: {}",
-            config_file_path.to_string_lossy().yellow()
-        );
 
         let index_file_alias = INDEX_FILE_ALIAS.to_string();
         let alias = alias.unwrap_or(&index_file_alias);
@@ -113,13 +113,14 @@ impl PConfig {
     }
 
     fn load_pconfig(config_file_path: &PathBuf) -> Result<PConfig, SaksahaError> {
-        info!(
-            "Try loading config file, path: {}",
-            config_file_path.to_string_lossy().yellow()
+        println!(
+            "\n\n>> Loading persisted config...\n{}: {}",
+            "    Config file path".cyan(),
+            config_file_path.to_string_lossy(),
         );
 
         if config_file_path.exists() {
-            let data = sak_fs::load(config_file_path)?;
+            let data = sak_dir::load(config_file_path)?;
 
             let pconfig = serde_yaml::from_slice::<PConfig>(&data)?;
 
@@ -132,14 +133,14 @@ impl PConfig {
     }
 
     fn persist_index_file(cfg_profile: &str, public_key: &String) -> Result<(), SaksahaError> {
-        let acc_dir = crate_fs::acc_dir(public_key)?;
-
-        let _ = std::fs::create_dir_all(&acc_dir);
+        let config_dir = crate_fs::config_dir()?;
 
         let index_file_name = cfg_profile.to_uppercase();
-        let index_file_path = acc_dir.join(index_file_name);
+        let index_file_path = config_dir.join(index_file_name);
 
         if index_file_path.exists() {
+            println!("Config index file already exists");
+
             let pk = std::fs::read_to_string(&index_file_path)?;
 
             if &pk != public_key {
@@ -150,14 +151,15 @@ impl PConfig {
                 )
                 .into());
             }
+        } else {
+            sak_dir::persist(public_key, &index_file_path)?;
+
+            println!(
+                "\nSuccessfully persisted an index file for pconfig\n{}: {}",
+                "    Index file path".cyan(),
+                index_file_path.to_string_lossy(),
+            );
         }
-
-        sak_fs::persist(public_key, &index_file_path)?;
-
-        info!(
-            "Persisted an index file for pconfig, path: {}",
-            index_file_path.to_string_lossy().yellow(),
-        );
 
         Ok(())
     }

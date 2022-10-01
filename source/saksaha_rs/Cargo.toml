@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 serde_bytes = "0.11.6"
-sak_fs = { path = "../sak_fs" }
+sak_dir = { path = "../sak_dir" }
 sak_logger = { path = "../sak_logger" }
 sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_dist_ledger_meta = { path = "../sak_dist_ledger_meta" }

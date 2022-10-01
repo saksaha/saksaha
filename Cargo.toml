@@ -8,7 +8,7 @@ members = [
   "source/sak_jni",
   "source/sak_proof",
   "source/sak_proof_circuit",
-  "source/sak_fs",
+  "source/sak_dir",
   "source/sak_kv_db",
   "source/sak_rpc_interface",
   "source/sak_p2p_addr",

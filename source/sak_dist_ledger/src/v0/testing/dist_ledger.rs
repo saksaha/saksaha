@@ -7,7 +7,7 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = mock_pos();
 
     let ledger_path = {
-        let config_dir = sak_fs::get_config_dir(APP_NAME).unwrap();
+        let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
         config_dir.join("db/ledger")
     };
 
@@ -31,7 +31,7 @@ pub async fn mock_dist_ledger_1() -> DistLedger {
     let pos = mock_pos();
 
     let ledger_path = {
-        let config_dir = sak_fs::get_config_dir(APP_NAME).unwrap();
+        let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
         config_dir.join("db/ledger")
     };
 
