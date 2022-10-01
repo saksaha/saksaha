@@ -50,7 +50,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = make_dummy_pos();
 
     let ledger_path = {
-        let config_dir = sak_fs::get_config_dir("SAKSAHA").unwrap();
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
         config_dir.join("test").join("db/ledger")
     };
 

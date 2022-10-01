@@ -29,7 +29,7 @@ impl PConfig {
 
     pub fn persist() -> Result<(), WalletError> {
         // let pconfig_fd =
-        //     sak_fs::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
+        //     sak_dir::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
         let pconfig_fd = get_pconfig_file_path()?;
 
         if !pconfig_fd.exists() {
@@ -50,7 +50,7 @@ impl PConfig {
 
     fn get_pconfig_path() -> Result<PathBuf, WalletError> {
         // let pconfig_fd =
-        //     sak_fs::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
+        //     sak_dir::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
         let pconfig_fd = get_pconfig_file_path()?;
 
         Ok(pconfig_fd)

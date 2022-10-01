@@ -23,7 +23,7 @@ saksaha = { path = "../saksaha_rs" }
 saksaha_network = { path = "../saksaha_network" }
 sak_crypto = { path = "../sak_crypto" }
 sak_types = { path = "../sak_types" }
-sak_fs = { path = "../sak_fs" }
+sak_dir = { path = "../sak_dir" }
 sak_logger = { path = "../sak_logger" }
 sak_credential = { path = "../sak_credential" }
 sak_contract_std = { path = "../sak_contract_std" }
