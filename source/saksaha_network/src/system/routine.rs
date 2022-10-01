@@ -34,7 +34,7 @@ _(____/___/____|_/____\___(____/___/____|_/____/____/____|_
 impl Routine {
     pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
         println!("{}", LOGO.magenta());
-        println!("\n>> Loading Saksaha config...");
+        println!("\n\n>> Loading Saksaha config...");
 
         let config = if let Some(cp) = &sys_run_args.cfg_profile {
             println!(
@@ -59,14 +59,14 @@ impl Routine {
 
             let pconfig = PConfig::init(&sys_run_args.public_key)?;
             let cfg = Config::new(&sys_run_args, pconfig)?;
-
             cfg.persist(None)?;
+
             cfg
         };
 
         println!(
             "\n\
-            Saksaha config succesfully loaded.\n{}: {} \n{}: {}",
+            Saksaha config successfully loaded.\n{}: {} \n{}: {}",
             "    Public key".cyan(),
             config.p2p.public_key_str,
             "    Secret".cyan(),
