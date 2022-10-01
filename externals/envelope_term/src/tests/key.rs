@@ -5,7 +5,7 @@ use sak_logger::SakLogger;
 #[test]
 fn test_recover_secret_key_from_the_credential() {
     // init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test_console();
 
     let (secret_key, _public_key) = SakKey::generate();
 

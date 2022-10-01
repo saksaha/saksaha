@@ -12,6 +12,8 @@ use tracing_subscriber::{
     Layer,
 };
 
+static LOGGER: std::sync::Once = std::sync::Once::new();
+
 pub struct SakLogger {
     _guards: Vec<WorkerGuard>,
 }
@@ -64,7 +66,7 @@ impl SakLogger {
             layers.push(file_log_layer);
 
             println!(
-                "\nLog will be persisted. Log files will be periodically \
+                "\nFile logger is attached. Log files will be periodically \
                 rotated).\n{}: {}",
                 "    Log dir".cyan(),
                 log_dir.to_string_lossy(),
@@ -90,7 +92,7 @@ impl SakLogger {
     }
 
     pub fn init_test_console() -> Result<SakLogger, LoggerError> {
-        println!("Initializing sak_logger for test (console)");
+        println!("\nInitializing sak_logger for test (console)");
 
         utils::set_rust_log_env();
 
@@ -104,7 +106,12 @@ impl SakLogger {
 
         layers.push(layer);
 
-        tracing_subscriber::registry().with(layers).try_init()?;
+        match tracing_subscriber::registry().with(layers).try_init() {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Test console logger is already initialized");
+            }
+        };
 
         tracing::info!("sak_logger is initialized");
         tracing::warn!("sak_logger is initialized");
