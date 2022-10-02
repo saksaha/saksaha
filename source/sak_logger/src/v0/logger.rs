@@ -13,6 +13,8 @@ use tracing_subscriber::{
     Layer,
 };
 
+const LOG_FILE_PREFIX: &str = "saksaha.log";
+
 static LOGGER: OnceCell<SakLogger> = OnceCell::new();
 
 pub enum LoggerType {
@@ -26,23 +28,23 @@ pub struct SakLogger {
 }
 
 impl SakLogger {
-    pub fn init<P: AsRef<Path>>(
-        log_root_dir: P,
-        log_dir_name: &str,
-        file_name_prefix: &str,
-    ) -> Result<SakLogger, LoggerError> {
+    pub fn init<P: AsRef<Path>>(log_root_dir: P, log_dir_name: &str) -> Result<(), LoggerError> {
         let rust_log_env = utils::set_rust_log_env();
 
         println!(
-            "\n\n>> Initializing sak_logger\n\
-            {}: {:?}\n{}: {}\n{}: {}\n{}: {}",
-            "    Log root dir".cyan(),
+            "\n{}
+    {}: {:?}
+    {}: {:?}
+    {}: {:?}
+    {}: {:?}",
+            "Initializing sak_logger".magenta().bold(),
+            "Log root dir".cyan().bold(),
             log_root_dir.as_ref(),
-            "    Log dir name".cyan(),
+            "Log dir name".cyan().bold(),
             log_dir_name,
-            "    File name prefix".cyan(),
-            file_name_prefix,
-            "    RUST_LOG_ENV".cyan(),
+            "File name prefix".cyan().bold(),
+            LOG_FILE_PREFIX,
+            "RUST_LOG_ENV".cyan().bold(),
             rust_log_env,
         );
 
@@ -60,7 +62,7 @@ impl SakLogger {
             let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
             std::fs::create_dir_all(&log_dir)?;
 
-            let file_appender = tracing_appender::rolling::daily(&log_dir, file_name_prefix);
+            let file_appender = tracing_appender::rolling::daily(&log_dir, LOG_FILE_PREFIX);
 
             let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
@@ -73,18 +75,24 @@ impl SakLogger {
             layers.push(file_log_layer);
 
             println!(
-                "\nFile logger is attached. Log files will be periodically \
-                rotated).\n{}: {}",
-                "    Log dir".cyan(),
+                "File logger is attached. Log files will be periodically rotated.
+    {}: {}",
+                "Log dir".cyan().bold(),
                 log_dir.to_string_lossy(),
             );
 
             guard
         };
 
+        println!(
+            "    {}\n",
+            "Following log invocation will be handled by global logger"
+                .magenta()
+                .bold()
+        );
+
         tracing_subscriber::registry().with(layers).try_init()?;
 
-        println!("\n\n");
         tracing::info!("sak_logger is initialized");
         tracing::warn!("sak_logger is initialized");
         tracing::error!("sak_logger is initialized");
@@ -96,49 +104,51 @@ impl SakLogger {
             ty: LoggerType::DEFAULT,
         };
 
-        Ok(logger)
+        match LOGGER.set(logger) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(format!("Logger is already initialized").into()),
+        }
     }
 
-    pub fn init_test_console<'a>() -> Result<(), LoggerError> {
-        println!("\nInitializing sak_logger for test (console)");
+    // pub fn init_test_console() -> Result<(), LoggerError> {
+    //     println!("\nInitializing sak_logger for test (console)");
 
-        utils::set_rust_log_env();
+    //     utils::set_rust_log_env();
 
-        let mut layers = Vec::new();
+    //     let mut layers = Vec::new();
 
-        let layer = tracing_subscriber::fmt::layer()
-            .event_format(ConsoleLogFormatter)
-            .with_filter(EnvFilter::from_default_env())
-            .with_filter(LevelFilter::DEBUG)
-            .boxed();
+    //     let layer = tracing_subscriber::fmt::layer()
+    //         .event_format(ConsoleLogFormatter)
+    //         .with_filter(EnvFilter::from_default_env())
+    //         .with_filter(LevelFilter::DEBUG)
+    //         .boxed();
 
-        layers.push(layer);
+    //     layers.push(layer);
 
-        match tracing_subscriber::registry().with(layers).try_init() {
-            Ok(_) => {}
-            Err(err) => {
-                println!("Test console logger is already initialized, err: {}", err);
-            }
-        };
+    //     match tracing_subscriber::registry().with(layers).try_init() {
+    //         Ok(_) => {}
+    //         Err(err) => {
+    //             println!("Test console logger is already initialized, err: {}", err);
+    //         }
+    //     };
 
-        tracing::info!("sak_logger is initialized");
-        tracing::warn!("sak_logger is initialized");
-        tracing::error!("sak_logger is initialized");
-        tracing::debug!("sak_logger is initialized");
+    //     tracing::info!("sak_logger is initialized");
+    //     tracing::warn!("sak_logger is initialized");
+    //     tracing::error!("sak_logger is initialized");
+    //     tracing::debug!("sak_logger is initialized");
 
-        let logger = SakLogger {
-            _guards: vec![],
-            ty: LoggerType::TEST,
-        };
+    //     let logger = SakLogger {
+    //         _guards: vec![],
+    //         ty: LoggerType::TEST,
+    //     };
 
-        Ok(())
-    }
+    //     match LOGGER.set(logger) {
+    //         Ok(_) => Ok(()),
+    //         Err(_) => Err(format!("Logger is already set").into()),
+    //     }
+    // }
 
-    pub fn init_test_persisted<P: AsRef<Path>>(
-        log_root_dir: P,
-        log_dir_names: &[&str],
-        file_name_prefix: &str,
-    ) -> Result<(), LoggerError> {
+    pub fn init_test_persisted<P: AsRef<Path>>(log_root_dir: P) -> Result<(), LoggerError> {
         println!("Initializing sak_logger for test (persisted)");
 
         if let Some(l) = LOGGER.get() {
@@ -148,44 +158,54 @@ impl SakLogger {
 
             let mut layers = Vec::new();
 
-            let layer = tracing_subscriber::fmt::layer()
+            let console_log_layer = tracing_subscriber::fmt::layer()
                 .event_format(ConsoleLogFormatter)
                 .with_filter(EnvFilter::from_default_env())
                 .with_filter(LevelFilter::DEBUG)
                 .boxed();
 
+            layers.push(console_log_layer);
+
+            let test_log_formatter = TestLogFormatter {
+                // log_dir_name: log_dir_name.to_string(),
+            };
+
+            let layer = tracing_subscriber::fmt::layer()
+                .event_format(test_log_formatter)
+                // .with_writer(non_blocking)
+                .with_filter(EnvFilter::from_default_env())
+                .boxed();
+
             layers.push(layer);
 
-            let mut _guards = vec![];
+            // for log_dir_name in log_dir_names {
+            //     let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
+            //     std::fs::create_dir_all(&log_dir)?;
 
-            for log_dir_name in log_dir_names {
-                let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
-                std::fs::create_dir_all(&log_dir)?;
+            //     let file_appender = tracing_appender::rolling::daily(&log_dir, file_name_prefix);
 
-                let file_appender = tracing_appender::rolling::daily(&log_dir, file_name_prefix);
+            //     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
-                let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+            //     println!("sak_logger is writing to log_dir: {:?}", log_dir);
 
-                println!("sak_logger is writing to log_dir: {:?}", log_dir);
+            //     let test_log_formatter = TestLogFormatter {
+            //         log_dir_name: log_dir_name.to_string(),
+            //     };
 
-                let test_log_formatter = TestLogFormatter {
-                    log_dir_name: log_dir_name.to_string(),
-                };
+            //     let layer = tracing_subscriber::fmt::layer()
+            //         .event_format(test_log_formatter)
+            //         .with_writer(non_blocking)
+            //         .with_filter(EnvFilter::from_default_env())
+            //         .boxed();
 
-                let layer = tracing_subscriber::fmt::layer()
-                    .event_format(test_log_formatter)
-                    .with_writer(non_blocking)
-                    .with_filter(EnvFilter::from_default_env())
-                    .boxed();
+            //     layers.push(layer);
+            //     _guards.push(guard);
 
-                layers.push(layer);
-                _guards.push(guard);
-
-                println!(
-                    "sak_logger for test, adding layer, log_dir_name: {}",
-                    log_dir_name
-                );
-            }
+            //     println!(
+            //         "sak_logger for test, adding layer, log_dir_name: {}",
+            //         log_dir_name
+            //     );
+            // }
 
             tracing_subscriber::registry().with(layers).try_init()?;
 
@@ -195,11 +215,14 @@ impl SakLogger {
             tracing::debug!("sak_logger is initialized");
 
             let logger = SakLogger {
-                _guards,
+                _guards: vec![],
                 ty: LoggerType::TEST,
             };
 
-            return Ok(());
+            match LOGGER.set(logger) {
+                Ok(_) => Ok(()),
+                Err(_) => Err(format!("Logger is already initialized").into()),
+            }
         }
     }
 }

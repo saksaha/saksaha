@@ -8,12 +8,19 @@ fn test_test_logger() {
         tempdir
     };
 
-    let _logger =
-        SakLogger::init_test_persisted(&test_dir, &["test_1", "test_2"], "saksaha22.log").unwrap();
+    let pk_1 = "pk_1";
+    let pk_2 = "pk_2";
+    let pk_3 = "pk_3";
 
-    tracing::debug!(public_key = "test_1", "test 1 log");
-    tracing::debug!(public_key = "test_3", "invalid");
-    tracing::debug!(public_key = "test_2", "test 2 log");
+    let _logger =
+        SakLogger::init_test_persisted(&test_dir, &[pk_1, pk_2, pk_3], "saksaha.log").unwrap();
+
+    tracing::debug!(public_key = pk_1, "test 1 log");
+    tracing::error!(public_key = pk_1, "test 1 error");
+    tracing::info!(public_key = pk_1, "test 1 info");
+
+    tracing::debug!(public_key = pk_2, "invalid");
+    tracing::debug!(public_key = pk_3, "test 2 log");
 
     tracing::debug!("22222222222222222222222");
 }

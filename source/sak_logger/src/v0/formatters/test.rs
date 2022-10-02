@@ -19,7 +19,7 @@ use tracing_subscriber::{
 };
 
 pub struct TestLogFormatter {
-    pub log_dir_name: String,
+    // pub log_dir_name: String,
 }
 
 impl<S, N> FormatEvent<S, N> for TestLogFormatter
@@ -38,13 +38,14 @@ where
         let now = Local::now().format("%y-%m-%d %H:%M:%S");
 
         let mut visitor = TestLogVisitor {
-            should_log: false,
-            log_dir_name: &self.log_dir_name,
+            public_key: None,
+            // should_log: false,
+            // log_dir_name: &self.log_dir_name,
         };
 
         event.record(&mut visitor);
 
-        if !visitor.should_log {
+        if let None = visitor.public_key {
             return write!(writer, "");
         }
 
@@ -78,20 +79,26 @@ where
     }
 }
 
-struct TestLogVisitor<'a> {
-    pub should_log: bool,
-    pub log_dir_name: &'a str,
+struct TestLogVisitor {
+    pub public_key: Option<&str>,
+    // pub should_log: bool,
+    // pub log_dir_name: &'a str,
 }
 
-impl<'a> tracing::field::Visit for TestLogVisitor<'a> {
+impl tracing::field::Visit for TestLogVisitor {
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
-        println!("field={} value={}", field.name(), value);
+        println!(
+            "field name: {}, value: {}",
+            field.name(),
+            // self.log_dir_name,
+            value,
+        );
 
         if field.name() == "public_key" {
-            if self.log_dir_name == value {
-                println!("333 field={} value={}", field.name(), value);
-                self.should_log = true;
-            }
+            self.public_key = Some(value);
+            // if self.log_dir_name == value {
+            //     self.should_log = true;
+            // }
         }
     }
 
