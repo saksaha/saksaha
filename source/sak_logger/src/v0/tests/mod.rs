@@ -8,8 +8,6 @@ fn test_test_logger() {
         tempdir
     };
 
-    println!("33333333333");
-
     let _logger =
         SakLogger::init_test_persisted(&test_dir, &["test_1", "test_2"], "saksaha22.log").unwrap();
 
@@ -18,6 +16,4 @@ fn test_test_logger() {
     tracing::debug!(public_key = "test_2", "test 2 log");
 
     tracing::debug!("22222222222222222222222");
-
-    println!("2222");
 }
