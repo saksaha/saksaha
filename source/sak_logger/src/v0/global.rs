@@ -5,5 +5,5 @@ use tracing_appender::non_blocking::{NonBlocking, WorkerGuard};
 
 pub static LOGGER: OnceCell<SakLogger> = OnceCell::new();
 
-pub static mut NON_BLOCKINGS: Lazy<HashMap<String, (NonBlocking, WorkerGuard)>> =
-    Lazy::new(|| HashMap::new());
+// pub static mut NON_BLOCKINGS: Lazy<HashMap<String, (NonBlocking, WorkerGuard)>> =
+//     Lazy::new(|| HashMap::new());

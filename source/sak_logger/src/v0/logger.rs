@@ -14,8 +14,6 @@ use tracing_subscriber::{
     Layer,
 };
 
-use super::global::NON_BLOCKINGS;
-
 const LOG_FILE_PREFIX: &str = "saksaha.log";
 
 pub enum LoggerType {
@@ -149,35 +147,34 @@ impl SakLogger {
     //     }
     // }
 
-    pub fn add_log_dir<P: AsRef<Path>>(
-        log_root_dir: P,
-        log_dir_name: &str,
-    ) -> Result<(), LoggerError> {
-        println!(
-            "\n{}
-    {}: {}
-    {}: {}",
-            "Adding log directory (for testing)".magenta().bold(),
-            "log root dir".cyan().bold(),
-            log_root_dir.as_ref().to_string_lossy(),
-            "log dir name".cyan().bold(),
-            log_dir_name,
-        );
+    // pub fn add_log_dir<P: AsRef<Path>>(
+    //     log_root_dir: P,
+    //     log_dir_name: &str,
+    // ) -> Result<(), LoggerError> {
+    //     println!(
+    //         "\n{}
+    // {}: {}
+    // {}: {}",
+    //         "Adding log directory (for testing)".magenta().bold(),
+    //         "log root dir".cyan().bold(),
+    //         log_root_dir.as_ref().to_string_lossy(),
+    //         "log dir name".cyan().bold(),
+    //         log_dir_name,
+    //     );
 
-        let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
+    //     let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
 
-        let file_appender = tracing_appender::rolling::daily(&log_dir, LOG_FILE_PREFIX);
+    //     let file_appender = tracing_appender::rolling::daily(&log_dir, LOG_FILE_PREFIX);
 
-        let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+    //     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
-        unsafe {
-            NON_BLOCKINGS.insert(log_dir_name.to_string(), (non_blocking, guard));
-        }
+    //     Ok(())
+    // }
 
-        Ok(())
-    }
-
-    pub fn init_test() -> Result<(), LoggerError> {
+    pub fn init_test<P>(log_root_dir: P) -> Result<(), LoggerError>
+    where
+        P: AsRef<Path>,
+    {
         println!("Initializing sak_logger for test (persisted)");
 
         if let Some(_) = LOGGER.get() {
@@ -197,9 +194,13 @@ impl SakLogger {
 
             let test_log_formatter = TestLogFormatter {};
 
+            let log_dir = log_root_dir.as_ref().join("test/logs");
+            let file_appender = tracing_appender::rolling::daily(&log_dir, LOG_FILE_PREFIX);
+            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+
             let layer = tracing_subscriber::fmt::layer()
                 .event_format(test_log_formatter)
-                // .with_writer(non_blocking)
+                .with_writer(non_blocking)
                 .with_filter(EnvFilter::from_default_env())
                 .boxed();
 
@@ -242,7 +243,7 @@ impl SakLogger {
             tracing::debug!("sak_logger is initialized");
 
             let logger = SakLogger {
-                _guards: vec![],
+                _guards: vec![guard],
                 ty: LoggerType::TEST,
             };
 

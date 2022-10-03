@@ -1,9 +1,9 @@
-use crate::v0::global::NON_BLOCKINGS;
 use crate::v0::utils;
 use crate::{LoggerError, RUST_LOG_ENV};
 use chrono::Local;
 use colored::Colorize;
 use std::collections::HashMap;
+use std::fmt::Pointer;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 pub use tracing::{debug, error, info, trace, warn};
@@ -12,9 +12,8 @@ use tracing_appender::non_blocking::NonBlocking;
 pub use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber;
 use tracing_subscriber::filter::Filtered;
-use tracing_subscriber::fmt::{
-    format, FmtContext, FormatEvent, FormatFields, FormattedFields, MakeWriter,
-};
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::{format, FmtContext, FormatEvent, FormatFields, FormattedFields};
 use tracing_subscriber::layer::{Context, Filter};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::{
@@ -78,8 +77,8 @@ where
                 }
             }
 
-            ctx.field_format().format_fields(writer.by_ref(), event)?;
-
+            // ctx.field_format().format_fields(*a, event)?;
+            // let a = ctx.field_format().format_fields(nb, event);
             writeln!(nb);
         }
 
@@ -106,12 +105,6 @@ impl<'a> tracing::field::Visit for TestLogVisitor<'a> {
         if field.name() == "public_key" {
             println!("2222");
 
-            unsafe {
-                if let Some((non_blocking, _)) = NON_BLOCKINGS.get_mut(value) {
-                    println!("1111111111");
-                    self.non_blocking = Some(non_blocking);
-                }
-            }
             // self.public_key = Some(value);
             // if self.log_dir_name == value {
             //     self.should_log = true;

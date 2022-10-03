@@ -1,4 +1,4 @@
-use super::TestUtil;
+use crate::tests::test_utils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, Bls12, MerkleTree, Scalar, ScalarExt};
 use sak_dist_ledger::{Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs};
@@ -127,10 +127,7 @@ fn generate_a_dummy_coin(value: u64) -> Coin {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-
-    SakLogger::init_test().unwrap();
+    test_utils::init_test().unwrap();
 
     let coin_1_old = generate_a_dummy_coin(100);
 
@@ -278,10 +275,8 @@ async fn test_generate_a_proof() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_real_generate_a_proof() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
+    test_utils::init_test().unwrap();
 
-    SakLogger::init_test().unwrap();
     let validator_wasm = VALIDATOR.to_vec();
     let envelope_wasm = ENVELOPE.to_vec();
 
