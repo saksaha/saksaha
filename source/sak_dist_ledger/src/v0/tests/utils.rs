@@ -2,12 +2,8 @@ use crate::LedgerDB;
 use sak_kv_db::{Options, DB};
 use sak_logger::{info, SakLogger};
 
-// Later this could be some path in /tmp/
 const APP_NAME: &str = "saksaha";
 
-// pub(crate) struct TestUtil;
-
-// impl TestUtil {
 pub fn init_test(app_prefixes: Vec<&str>) {
     SakLogger::init_test_console().unwrap();
 
@@ -25,4 +21,3 @@ pub fn init_test(app_prefixes: Vec<&str>) {
 
     info!("Initialized test configurations");
 }
-// }

@@ -34,10 +34,10 @@ where
         let now = Local::now().format("%y-%m-%d %H:%M:%S");
 
         let level = match metadata.level().as_str() {
-            "INFO" => "INFO".green(),
-            "WARN" => "WARN".yellow(),
-            "ERROR" => "ERROR".red(),
-            "DEBUG" => "DEBUG".blue(),
+            "INFO" => "info".green().bold(),
+            "WARN" => "warn".yellow().bold(),
+            "ERROR" => "error".red().bold(),
+            "DEBUG" => "debug".blue().bold(),
             _ => "".green(),
         };
 

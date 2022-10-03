@@ -27,14 +27,13 @@ pub struct PersistedP2PConfig {
 
 impl PConfig {
     pub fn init(public_key: &Option<String>) -> Result<PConfig, SaksahaError> {
-        println!("\n\n>> Initializing persisted config...");
+        println!("\n{}", "Initializing persisted config".magenta().bold());
 
         if let Some(pk) = public_key {
             let config_file_path = fs::get_config_file_path(pk)?;
 
             println!(
-                "\n\n, 
-                Persisted config file: {}",
+                "Persisted config file: {}",
                 config_file_path.to_string_lossy(),
             );
 
@@ -47,31 +46,35 @@ impl PConfig {
             let index_file_path = config_dir.join(index_file_name);
 
             println!(
-                "\nPublic key is not provided. We will seek the persisted \n\
+                "Public key is not provided. We will seek the persisted \n\
                 config in the default location. We will also look for index \n\
                 file (s) if any.",
             );
 
             println!(
-                "{}: {} \n{}: {}",
-                "    Config directory".cyan(),
+                "    {}: {} \n    {}: {}",
+                "Config directory".cyan().bold(),
                 config_dir.to_string_lossy(),
-                "    Index file".cyan(),
+                "Index file".cyan().bold(),
                 index_file_path.to_string_lossy(),
             );
 
             if index_file_path.exists() {
-                println!("\nFound index file.");
+                println!("    {} index file.", "Found".green().bold());
 
                 let pk = std::fs::read_to_string(index_file_path)?;
                 let config_file_path = fs::get_config_file_path(&pk)?;
                 let pconfig = Self::load_pconfig(&config_file_path)?;
 
-                println!("\nPersisted config successfully loaded.",);
+                println!(
+                    "    {} {}",
+                    "Finished".green().bold(),
+                    "loading Persisted config",
+                );
 
                 return Ok(pconfig);
             } else {
-                println!("\nIndex file not found. Creating new persisted config.");
+                println!("Index file not found. Creating new persisted config.");
 
                 let pconfig = PConfig::create_new_config();
 
@@ -84,12 +87,6 @@ impl PConfig {
         let acc_dir = crate_fs::acc_dir(&self.p2p.public_key)?;
 
         if acc_dir.exists() {
-            println!(
-                "{}\n{}: {:?}",
-                "Persisted config exists.",
-                "    Config dir: ".cyan(),
-                acc_dir,
-            );
         } else {
             let config_file_path = fs::get_config_file_path(&self.p2p.public_key)?;
             let data = serde_yaml::to_string(&self)?;
@@ -98,9 +95,10 @@ impl PConfig {
             sak_dir::persist(&data, &config_file_path)?;
 
             println!(
-                "\n{}\n{}: {}",
+                "\n{}
+    {}: {}",
                 "Successfully persisted a pconfig.",
-                "    Pconfig path: ".cyan(),
+                "Pconfig path: ".cyan().bold(),
                 config_file_path.to_string_lossy(),
             );
         }
@@ -114,8 +112,10 @@ impl PConfig {
 
     fn load_pconfig(config_file_path: &PathBuf) -> Result<PConfig, SaksahaError> {
         println!(
-            "\n\n>> Loading persisted config...\n{}: {}",
-            "    Config file path".cyan(),
+            "\n{}
+    {}: {}",
+            "Loading persisted config".magenta().bold(),
+            "Config file path".cyan().bold(),
             config_file_path.to_string_lossy(),
         );
 
@@ -139,8 +139,6 @@ impl PConfig {
         let index_file_path = config_dir.join(index_file_name);
 
         if index_file_path.exists() {
-            println!("Config index file already exists");
-
             let pk = std::fs::read_to_string(&index_file_path)?;
 
             if &pk != public_key {
@@ -156,7 +154,7 @@ impl PConfig {
 
             println!(
                 "\nSuccessfully persisted an index file for pconfig\n{}: {}",
-                "    Index file path".cyan(),
+                "    Index file path".cyan().bold(),
                 index_file_path.to_string_lossy(),
             );
         }

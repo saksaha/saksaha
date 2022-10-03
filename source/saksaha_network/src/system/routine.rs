@@ -33,14 +33,14 @@ _(____/___/____|_/____\___(____/___/____|_/____/____/____|_
 
 impl Routine {
     pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
-        println!("{}", LOGO.magenta());
-        println!("\n\n>> Loading Saksaha config...");
+        println!("{}", LOGO.bright_white().bold());
+        println!("\n{}", "Loading Saksaha config".magenta().bold());
 
         let config = if let Some(cp) = &sys_run_args.cfg_profile {
             println!(
-                "\nYou have provided 'Config profile'. \n\
-                {}: {}",
-                "    Config profile".cyan(),
+                "You have provided 'Config profile'.
+    {}: {}",
+                "Config profile".cyan().bold(),
                 cp,
             );
 
@@ -50,7 +50,7 @@ impl Routine {
             cfg
         } else {
             println!(
-                "\nConfig profile is not given. \n\
+                "Config profile is not given. \n\
                 We will generate a new random config. If you have provided \n\
                 public_key, Saksaha will load persisted config from the \n\
                 designated location. Persisted config shall be used to create\n\
@@ -65,18 +65,21 @@ impl Routine {
         };
 
         println!(
-            "\n\
-            Saksaha config successfully loaded.\n{}: {} \n{}: {}",
-            "    Public key".cyan(),
+            "    {} {}
+    {}: {}
+    {}: {}",
+            "Finished".green().bold(),
+            "loading Saksaha config",
+            "Public key".cyan().bold(),
             config.p2p.public_key_str,
-            "    Secret".cyan(),
+            "Secret".cyan().bold(),
             config.p2p.secret,
         );
 
         let _logger = {
             let public_key = &config.p2p.public_key_str;
             let log_root_dir = fs::config_dir()?;
-            let l = SakLogger::init(&log_root_dir, public_key.as_str(), "saksaha.log")?;
+            let l = SakLogger::init(&log_root_dir, public_key.as_str())?;
 
             l
         };
