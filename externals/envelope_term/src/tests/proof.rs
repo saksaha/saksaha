@@ -130,7 +130,7 @@ async fn test_generate_a_proof() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
 
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     let coin_1_old = generate_a_dummy_coin(100);
 
@@ -281,7 +281,7 @@ async fn test_real_generate_a_proof() {
     // sak_test_utils::init_test_log();
     // TestUtil::init_test(vec!["test"]);
 
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
     let validator_wasm = VALIDATOR.to_vec();
     let envelope_wasm = ENVELOPE.to_vec();
 

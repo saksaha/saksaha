@@ -1,16 +1,20 @@
+use crate::v0::global::NON_BLOCKINGS;
 use crate::v0::utils;
 use crate::{LoggerError, RUST_LOG_ENV};
 use chrono::Local;
 use colored::Colorize;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 pub use tracing::{debug, error, info, trace, warn};
 use tracing::{Event, Metadata, Subscriber};
 use tracing_appender::non_blocking::NonBlocking;
 pub use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber;
 use tracing_subscriber::filter::Filtered;
-use tracing_subscriber::fmt::{format, FmtContext, FormatEvent, FormatFields, FormattedFields};
+use tracing_subscriber::fmt::{
+    format, FmtContext, FormatEvent, FormatFields, FormattedFields, MakeWriter,
+};
 use tracing_subscriber::layer::{Context, Filter};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::{
@@ -18,9 +22,7 @@ use tracing_subscriber::{
     Layer,
 };
 
-pub struct TestLogFormatter {
-    // pub log_dir_name: String,
-}
+pub struct TestLogFormatter;
 
 impl<S, N> FormatEvent<S, N> for TestLogFormatter
 where
@@ -38,54 +40,61 @@ where
         let now = Local::now().format("%y-%m-%d %H:%M:%S");
 
         let mut visitor = TestLogVisitor {
-            public_key: None,
+            non_blocking: None,
+            // public_key: None,
             // should_log: false,
             // log_dir_name: &self.log_dir_name,
         };
 
         event.record(&mut visitor);
 
-        if let None = visitor.public_key {
-            return write!(writer, "");
-        }
+        // if let None = visitor.public_key {
+        //     return write!(writer, "");
+        // }
 
-        write!(
-            &mut writer,
-            "{} {:>5} {}: ",
-            now,
-            metadata.level(),
-            metadata.target()
-        )?;
+        if let Some(nb) = visitor.non_blocking {
+            let _ = write!(
+                nb,
+                "{} {:>5} {}: ",
+                now,
+                metadata.level(),
+                metadata.target()
+            );
 
-        if let Some(scope) = ctx.event_scope() {
-            for span in scope.from_root() {
-                write!(writer, "{}", span.name())?;
+            if let Some(scope) = ctx.event_scope() {
+                for span in scope.from_root() {
+                    write!(nb, "{}", span.name());
 
-                let ext = span.extensions();
-                let fields = &ext
-                    .get::<FormattedFields<N>>()
-                    .expect("will never be `None`");
+                    let ext = span.extensions();
+                    let fields = &ext
+                        .get::<FormattedFields<N>>()
+                        .expect("will never be `None`");
 
-                if !fields.is_empty() {
-                    write!(writer, "{{{}}}", fields)?;
+                    if !fields.is_empty() {
+                        write!(nb, "{{{}}}", fields);
+                    }
+
+                    write!(nb, ": ");
                 }
-                write!(writer, ": ")?;
             }
+
+            ctx.field_format().format_fields(writer.by_ref(), event)?;
+
+            writeln!(nb);
         }
 
-        ctx.field_format().format_fields(writer.by_ref(), event)?;
-
-        writeln!(writer)
+        return write!(writer, "");
     }
 }
 
-struct TestLogVisitor {
-    pub public_key: Option<&str>,
+struct TestLogVisitor<'a> {
+    // pub public_key: Option<&str>,
     // pub should_log: bool,
     // pub log_dir_name: &'a str,
+    pub non_blocking: Option<&'a mut NonBlocking>,
 }
 
-impl tracing::field::Visit for TestLogVisitor {
+impl<'a> tracing::field::Visit for TestLogVisitor<'a> {
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
         println!(
             "field name: {}, value: {}",
@@ -95,7 +104,15 @@ impl tracing::field::Visit for TestLogVisitor {
         );
 
         if field.name() == "public_key" {
-            self.public_key = Some(value);
+            println!("2222");
+
+            unsafe {
+                if let Some((non_blocking, _)) = NON_BLOCKINGS.get_mut(value) {
+                    println!("1111111111");
+                    self.non_blocking = Some(non_blocking);
+                }
+            }
+            // self.public_key = Some(value);
             // if self.log_dir_name == value {
             //     self.should_log = true;
             // }

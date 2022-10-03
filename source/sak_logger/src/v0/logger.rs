@@ -1,4 +1,5 @@
 use crate::v0::formatters::{ConsoleLogFormatter, FileLogFormatter, TestLogFormatter};
+use crate::v0::global::LOGGER;
 use crate::v0::utils;
 use crate::LoggerError;
 use colored::Colorize;
@@ -13,9 +14,9 @@ use tracing_subscriber::{
     Layer,
 };
 
-const LOG_FILE_PREFIX: &str = "saksaha.log";
+use super::global::NON_BLOCKINGS;
 
-static LOGGER: OnceCell<SakLogger> = OnceCell::new();
+const LOG_FILE_PREFIX: &str = "saksaha.log";
 
 pub enum LoggerType {
     DEFAULT,
@@ -148,10 +149,38 @@ impl SakLogger {
     //     }
     // }
 
-    pub fn init_test_persisted<P: AsRef<Path>>(log_root_dir: P) -> Result<(), LoggerError> {
+    pub fn add_log_dir<P: AsRef<Path>>(
+        log_root_dir: P,
+        log_dir_name: &str,
+    ) -> Result<(), LoggerError> {
+        println!(
+            "\n{}
+    {}: {}
+    {}: {}",
+            "Adding log directory (for testing)".magenta().bold(),
+            "log root dir".cyan().bold(),
+            log_root_dir.as_ref().to_string_lossy(),
+            "log dir name".cyan().bold(),
+            log_dir_name,
+        );
+
+        let log_dir = log_root_dir.as_ref().join(log_dir_name).join("logs");
+
+        let file_appender = tracing_appender::rolling::daily(&log_dir, LOG_FILE_PREFIX);
+
+        let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+
+        unsafe {
+            NON_BLOCKINGS.insert(log_dir_name.to_string(), (non_blocking, guard));
+        }
+
+        Ok(())
+    }
+
+    pub fn init_test() -> Result<(), LoggerError> {
         println!("Initializing sak_logger for test (persisted)");
 
-        if let Some(l) = LOGGER.get() {
+        if let Some(_) = LOGGER.get() {
             return Ok(());
         } else {
             utils::set_rust_log_env();
@@ -166,9 +195,7 @@ impl SakLogger {
 
             layers.push(console_log_layer);
 
-            let test_log_formatter = TestLogFormatter {
-                // log_dir_name: log_dir_name.to_string(),
-            };
+            let test_log_formatter = TestLogFormatter {};
 
             let layer = tracing_subscriber::fmt::layer()
                 .event_format(test_log_formatter)

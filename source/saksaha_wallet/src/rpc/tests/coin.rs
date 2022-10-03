@@ -9,7 +9,7 @@ use sak_types::CoinRecord;
 #[tokio::test(flavor = "multi_thread")]
 async fn test_send_tx() {
     // sak_test_utils::init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     let acc_addr = {
         let credential_manager = utils::mock_credential_manager().await;
@@ -35,7 +35,7 @@ async fn test_send_tx() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_update_coin_status() {
     // sak_test_utils::init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     let acc_addr = {
         let credential_manager = utils::mock_credential_manager().await;
@@ -66,7 +66,7 @@ async fn test_update_coin_status() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_print_dummy_merkle_rt() {
     // sak_test_utils::init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     // let test_credential = utils::make_test_credential().await;
 
@@ -92,7 +92,7 @@ async fn test_print_dummy_merkle_rt() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_send_tx_with_2_old_coins() {
     // sak_test_utils::init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     let MockWalletContext { wallet, .. } = utils::mock_wallet_context().await;
 

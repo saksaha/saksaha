@@ -9,7 +9,7 @@ const APP_NAME: &str = "saksaha";
 
 // impl TestUtil {
 pub fn init_test(app_prefixes: Vec<&str>) {
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     for app_prefix in app_prefixes {
         let db_path = {

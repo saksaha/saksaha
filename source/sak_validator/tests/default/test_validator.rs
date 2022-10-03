@@ -68,7 +68,7 @@ fn get_test_validator_state(validators: Vec<String>) -> Storage {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_validator_fn_init() {
     // sak_test_utils::init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     let vm = VM::init().expect("VM should be initiated");
 

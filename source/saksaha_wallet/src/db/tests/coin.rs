@@ -4,7 +4,7 @@ use sak_logger::SakLogger;
 #[tokio::test(flavor = "multi_thread")]
 async fn test_wallet_db_store_coin_record() {
     // sak_test_utils::init_test_log();
-    SakLogger::init_test_console().unwrap();
+    SakLogger::init_test().unwrap();
 
     let db = utils::mock_wallet_db().await;
 
