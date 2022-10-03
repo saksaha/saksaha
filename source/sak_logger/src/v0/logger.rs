@@ -109,43 +109,43 @@ impl SakLogger {
         }
     }
 
-    // pub fn init_test_console() -> Result<(), LoggerError> {
-    //     println!("\nInitializing sak_logger for test (console)");
+    pub fn init_test_console() -> Result<(), LoggerError> {
+        println!("\nInitializing sak_logger for test (console)");
 
-    //     utils::set_rust_log_env();
+        utils::set_rust_log_env();
 
-    //     let mut layers = Vec::new();
+        let mut layers = Vec::new();
 
-    //     let layer = tracing_subscriber::fmt::layer()
-    //         .event_format(ConsoleLogFormatter)
-    //         .with_filter(EnvFilter::from_default_env())
-    //         .with_filter(LevelFilter::DEBUG)
-    //         .boxed();
+        let layer = tracing_subscriber::fmt::layer()
+            .event_format(ConsoleLogFormatter)
+            .with_filter(EnvFilter::from_default_env())
+            .with_filter(LevelFilter::DEBUG)
+            .boxed();
 
-    //     layers.push(layer);
+        layers.push(layer);
 
-    //     match tracing_subscriber::registry().with(layers).try_init() {
-    //         Ok(_) => {}
-    //         Err(err) => {
-    //             println!("Test console logger is already initialized, err: {}", err);
-    //         }
-    //     };
+        match tracing_subscriber::registry().with(layers).try_init() {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Test console logger is already initialized, err: {}", err);
+            }
+        };
 
-    //     tracing::info!("sak_logger is initialized");
-    //     tracing::warn!("sak_logger is initialized");
-    //     tracing::error!("sak_logger is initialized");
-    //     tracing::debug!("sak_logger is initialized");
+        tracing::info!("sak_logger is initialized");
+        tracing::warn!("sak_logger is initialized");
+        tracing::error!("sak_logger is initialized");
+        tracing::debug!("sak_logger is initialized");
 
-    //     let logger = SakLogger {
-    //         _guards: vec![],
-    //         ty: LoggerType::TEST,
-    //     };
+        let logger = SakLogger {
+            _guards: vec![],
+            ty: LoggerType::TEST,
+        };
 
-    //     match LOGGER.set(logger) {
-    //         Ok(_) => Ok(()),
-    //         Err(_) => Err(format!("Logger is already set").into()),
-    //     }
-    // }
+        match LOGGER.set(logger) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(format!("Logger is already set").into()),
+        }
+    }
 
     // pub fn add_log_dir<P: AsRef<Path>>(
     //     log_root_dir: P,
@@ -171,7 +171,7 @@ impl SakLogger {
     //     Ok(())
     // }
 
-    pub fn init_test<P>(log_root_dir: P) -> Result<(), LoggerError>
+    pub fn init_test_persisted<P>(log_root_dir: P) -> Result<(), LoggerError>
     where
         P: AsRef<Path>,
     {

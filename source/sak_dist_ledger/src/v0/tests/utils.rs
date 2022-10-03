@@ -2,14 +2,10 @@ use crate::LedgerDB;
 use sak_kv_db::{Options, DB};
 use sak_logger::{info, SakLogger};
 
-// Later this could be some path in /tmp/
 const APP_NAME: &str = "saksaha";
 
-// pub(crate) struct TestUtil;
-
-// impl TestUtil {
 pub fn init_test(app_prefixes: Vec<&str>) {
-    SakLogger::init_test().unwrap();
+    SakLogger::init_test_console().unwrap();
 
     for app_prefix in app_prefixes {
         let db_path = {

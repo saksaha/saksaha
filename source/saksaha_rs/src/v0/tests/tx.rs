@@ -2,8 +2,7 @@ use sak_logger::SakLogger;
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_sdk_get_tx() {
-    // sak_test_utils::init_test_log();
-    SakLogger::init_test().unwrap();
+    // SakLogger::init_test().unwrap();
 
     let saksaha_endpoint = "http://localhost:34418/rpc/v0".to_string();
 
@@ -14,6 +13,7 @@ pub async fn test_sdk_get_tx() {
         .unwrap()
         .result
         .unwrap();
+
     println!("resp : {:?}", resp);
 }
 
