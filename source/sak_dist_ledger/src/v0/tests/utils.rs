@@ -21,4 +21,3 @@ pub fn init_test(app_prefixes: Vec<&str>) {
 
     info!("Initialized test configurations");
 }
-// }
