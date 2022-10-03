@@ -1,4 +1,4 @@
-use crate::v0::formatters::{ConsoleLogFormatter, FileLogFormatter, TestLogFormatter};
+use crate::v0::formatters::{ConsoleLogFormatter, FileLogFormatter};
 use crate::v0::global::LOGGER;
 use crate::v0::utils;
 use crate::LoggerError;
@@ -195,7 +195,7 @@ impl SakLogger {
 
         layers.push(console_log_layer);
 
-        let test_log_formatter = TestLogFormatter {};
+        let test_log_formatter = FileLogFormatter {};
 
         let log_dir = log_root_dir.as_ref().join("test/logs");
         let file_appender = tracing_appender::rolling::daily(&log_dir, LOG_FILE_PREFIX);
