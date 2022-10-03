@@ -1,10 +1,10 @@
-use crate::tests::test_utils;
+use crate::tests::utils::EnvelopeTermTestUtils;
 use sak_crypto::{decode_hex, PublicKey, SakKey, ScalarBytes, SecretKey, ToEncodedPoint};
 use sak_logger::SakLogger;
 
 #[test]
 fn test_recover_secret_key_from_the_credential() {
-    test_utils::init_test().unwrap();
+    EnvelopeTermTestUtils::init_test().unwrap();
 
     let (secret_key, _public_key) = SakKey::generate();
 
@@ -23,7 +23,7 @@ fn test_recover_secret_key_from_the_credential() {
 
 #[test]
 fn test_recover_public_key_from_the_credential() {
-    test_utils::init_test().unwrap();
+    EnvelopeTermTestUtils::init_test().unwrap();
 
     let (_secret_key, public_key) = SakKey::generate();
 

@@ -1,4 +1,4 @@
-use crate::v0::tests::test_utils;
+use crate::v0::tests::utils::{self, SakCryptoTestUtils};
 use crate::{aes_decrypt, aes_encrypt, derive_aes_key, PublicKey, SakKey};
 use base64ct::{Base64, Encoding};
 use k256::SecretKey;
@@ -29,7 +29,7 @@ fn it_creates_signature() {
 
 #[test]
 fn it_creates_shared_secret() {
-    test_utils::init_test();
+    SakCryptoTestUtils::init_test();
 
     // Alice
     let alice_secret = EphemeralSecret::random(&mut OsRng);
@@ -68,7 +68,7 @@ fn it_creates_shared_secret() {
 
 #[test]
 fn test_ecies_variant() {
-    test_utils::init_test();
+    SakCryptoTestUtils::init_test();
 
     let (bob_pk, bob_sk) = {
         let (sk, pk) = SakKey::generate();

@@ -6,8 +6,7 @@ use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_get_balance_default() {
-    // sak_test_utils::init_test_log();
-    SakLogger::init_test().unwrap();
+    SakLogger::init_test_console().unwrap();
 
     let test_context = utils::mock_wallet_context().await;
 

@@ -1,7 +1,8 @@
 use crate::{
     credential::{self, Credential},
     db::EnvelopeDBSchema,
-    fs, EnvelopeError,
+    fs::{self, FS},
+    EnvelopeError,
 };
 use sak_crypto::{PublicKey, SakKey, SecretKey, SigningKey, ToEncodedPoint, VerifyingKey};
 use sak_kv_db::{KeyValueDatabase, Options};
@@ -15,7 +16,7 @@ pub(crate) struct EnvelopeDB {
 impl EnvelopeDB {
     pub(crate) async fn init(acc_addr: &String) -> Result<EnvelopeDB, EnvelopeError> {
         let envelope_db_path = {
-            let acc_dir = fs::acc_dir(acc_addr)?;
+            let acc_dir = FS::acc_dir(acc_addr)?;
 
             let db_path = Self::get_db_path(&acc_dir)?;
 
