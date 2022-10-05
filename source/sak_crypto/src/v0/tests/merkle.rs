@@ -8,11 +8,11 @@ fn test_merkle_simulator() {
     SakCryptoTestUtils::init_test();
     let hasher = MiMC::new();
 
-    let tree_depth = 32;
+    let tree_depth = 6;
 
     let scalar_zero = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
-    let cm_vec = vec![scalar_zero, scalar_zero];
+    let cm_vec = vec![scalar_zero, scalar_zero, scalar_zero, scalar_zero];
     let cm_vec_len = cm_vec.len() as u32;
 
     let tree = MerkleTreeSim::init(tree_depth, cm_vec);

@@ -14,9 +14,9 @@ type TreeIdx = String;
 // Merkle tree simulator
 pub struct MerkleTreeSim {
     height: u32,
-    nodes: HashMap<TreeIdx, Scalar>,
+    pub nodes: HashMap<TreeIdx, Scalar>,
     leaf_count: u32,
-    merkle_tree: MerkleTree,
+    pub merkle_tree: MerkleTree,
 }
 
 impl MerkleTreeSim {
@@ -27,11 +27,28 @@ impl MerkleTreeSim {
             leaf_count: 0,
             merkle_tree: MerkleTree::new(height),
         };
+        println!("init all nodes start");
+        mk_tree_init.init_all_nodes(leaves.len() as u32);
+        println!("init all nodes finish");
+
         for (leaf_idx, leaf) in leaves.iter().enumerate() {
             mk_tree_init.update_root(leaf_idx.try_into().unwrap(), *leaf);
         }
 
         mk_tree_init
+    }
+
+    pub fn init_all_nodes(&mut self, cm_len: u32) {
+        for i in 1..self.height {
+            let zero_node = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+            let base: u32 = 2;
+            let nodes_len = (cm_len as f32 / (base.pow(i) as f32)).floor() as u32;
+            println!("nodes_len: {}", nodes_len);
+            for j in 1..1 + nodes_len {
+                let tmp_loc = format!("{}_{}", i, j);
+                self.nodes.insert(tmp_loc, zero_node);
+            }
+        }
     }
 
     pub fn get_leaf_count(&self) -> u32 {
@@ -55,6 +72,7 @@ impl MerkleTreeSim {
 
     pub fn update_root(&mut self, leaf_idx: u32, leaf: Scalar) {
         let hahser = MiMC::new();
+        let empty_node = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
         let auth_path = self.merkle_tree.generate_auth_paths(leaf_idx as u128);
 
         self.add_leaf_node(leaf);
@@ -74,7 +92,7 @@ impl MerkleTreeSim {
                 }
                 false => {
                     let ci = sibling_idx - 1;
-                    sibling_node = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+                    sibling_node = empty_node;
                     ci
                 }
             };
