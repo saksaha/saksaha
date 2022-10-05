@@ -1,8 +1,10 @@
 use crate::ProofError;
-use bellman::groth16::{self, Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
-use pairing::MultiMillerLoop;
+use sak_crypto::hasher::MiMC;
+use sak_crypto::{
+    groth16, Groth16VerifyingKey, MultiMillerLoop, Parameters, PreparedVerifyingKey, Proof,
+};
 use sak_crypto::{Bls12, OsRng, Scalar};
-use sak_proof_circuit::{CoinProofCircuit1to2, CoinProofCircuit2to2, MiMC, NewCoin, OldCoin};
+use sak_proof_circuit::{CoinProofCircuit1to2, CoinProofCircuit2to2, NewCoin, OldCoin};
 
 const CIRCUIT_PARAMS_1TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_1to2");
 const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
@@ -42,7 +44,9 @@ pub(crate) fn get_mimc_params_2_to_2(
 }
 
 impl CoinProof {
-    pub fn make_verifying_key<E: MultiMillerLoop>(vk: &VerifyingKey<E>) -> PreparedVerifyingKey<E> {
+    pub fn make_verifying_key<E: MultiMillerLoop>(
+        vk: &Groth16VerifyingKey<E>,
+    ) -> PreparedVerifyingKey<E> {
         groth16::prepare_verifying_key(vk)
     }
 

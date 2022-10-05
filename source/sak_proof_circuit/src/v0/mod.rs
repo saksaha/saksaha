@@ -2,7 +2,7 @@ mod coin_proof;
 mod mimc;
 
 pub use coin_proof::*;
-pub use mimc::*;
+// pub use mimc::*;
 
 pub use bellman::gadgets::boolean::AllocatedBit;
 pub use bellman::groth16::{

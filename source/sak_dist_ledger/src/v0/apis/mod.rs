@@ -4,8 +4,7 @@ mod contract;
 mod pool;
 
 use crate::{Consensus, LedgerDB, SyncPool};
-use sak_crypto::MerkleTree;
-use sak_proof::MiMC;
+use sak_crypto::{hasher::MiMC, MerkleTree};
 use sak_vm::VM;
 use std::sync::Arc;
 

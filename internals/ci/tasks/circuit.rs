@@ -1,9 +1,9 @@
 use crate::{log, paths::Paths, CIError};
 use chrono::Local;
 use colored::Colorize;
-use sak_crypto::OsRng;
+use sak_crypto::{hasher::MiMC, OsRng};
 use sak_proof_circuit::{
-    groth16, Bls12, CoinProofCircuit1to2, CoinProofCircuit2to2, MiMC, NewCoin, OldCoin,
+    groth16, Bls12, CoinProofCircuit1to2, CoinProofCircuit2to2, NewCoin, OldCoin,
 };
 
 pub(crate) fn build_circuit_params() -> Result<(), CIError> {

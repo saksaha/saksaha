@@ -1,6 +1,7 @@
-use crate::{CircuitError, MiMC, NewCoin, OldCoin};
+use crate::{CircuitError, NewCoin, OldCoin};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
 use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
 use type_extension::U8Array;

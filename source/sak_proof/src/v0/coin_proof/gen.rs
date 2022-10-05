@@ -1,10 +1,9 @@
 use crate::CoinProof;
 use bls12_381::Scalar;
-use jni::objects::{JClass, JObject, JValue};
-use jni::JNIEnv;
+use sak_crypto::hasher::MiMC;
 use sak_crypto::{MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{MiMC, NewCoin, OldCoin};
+use sak_proof_circuit::{NewCoin, OldCoin};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;

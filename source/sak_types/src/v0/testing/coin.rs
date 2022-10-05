@@ -1,6 +1,5 @@
 use core::fmt;
-use sak_crypto::ScalarExt;
-use sak_proof::MiMC;
+use sak_crypto::{hasher::MiMC, ScalarExt};
 use type_extension::U8Array;
 
 #[derive(Debug)]

@@ -4,11 +4,11 @@ use crate::{
     VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof::MiMC;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
 use sak_proof::{CoinProof, DUMMY_MERKLE_RT, DUMMY_SN};

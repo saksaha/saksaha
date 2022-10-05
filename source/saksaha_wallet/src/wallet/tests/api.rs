@@ -1,6 +1,6 @@
 use crate::{tests::utils::mock_wallet_context, wallet::tests::utils::mock_open_ch_ctr_request};
-use sak_crypto::{Bls12, ScalarExt};
-use sak_proof::{CoinProof, MiMC, Proof};
+use sak_crypto::{hasher::MiMC, Bls12, Proof, ScalarExt};
+use sak_proof::CoinProof;
 use sak_types::CoinRecord;
 
 #[tokio::test(flavor = "multi_thread")]

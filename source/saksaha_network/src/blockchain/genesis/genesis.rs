@@ -1,5 +1,4 @@
 use crate::SaksahaError;
-use sak_proof::MiMC;
 use sak_types::{BlockCandidate, TxCandidate};
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";

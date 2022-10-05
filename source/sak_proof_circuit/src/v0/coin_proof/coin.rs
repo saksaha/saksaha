@@ -1,5 +1,5 @@
-use crate::{CircuitError, MiMC};
-use sak_crypto::{rand, Scalar, ScalarExt};
+use crate::CircuitError;
+use sak_crypto::{hasher::MiMC, rand, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 
 #[derive(Debug, Copy, Clone)]

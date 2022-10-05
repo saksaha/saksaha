@@ -1,6 +1,6 @@
 mod crypto;
 mod ecies;
-mod hasher;
+pub mod hasher;
 mod key;
 mod merkle;
 mod random;
@@ -29,6 +29,14 @@ pub use k256::{
 use k256::{elliptic_curve::ecdh::SharedSecret as SSecret, Secp256k1};
 pub use sha3;
 
+pub use bellman::gadgets::boolean::AllocatedBit;
+pub use bellman::groth16::{
+    Parameters, PreparedVerifyingKey, Proof, VerifyingKey as Groth16VerifyingKey,
+};
+pub use bellman::{groth16, Circuit, ConstraintSystem, SynthesisError};
+pub use pairing::MultiMillerLoop;
+
+// type aliases
 pub type PublicKey = k256::PublicKey;
 pub type SharedSecret = SSecret<Secp256k1>;
 pub type CryptoError = Box<dyn std::error::Error + Send + Sync>;
