@@ -22,3 +22,12 @@ pub struct Slot {
     pk: PublicKey,
     timestamp: String,
 }
+
+impl Slot {
+    pub fn new() -> Slot {
+        Slot {
+            pk: String::default(),
+            timestamp: String::default(),
+        }
+    }
+}
