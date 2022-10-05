@@ -60,7 +60,6 @@ impl MerkleTreeSim {
         self.add_leaf_node(leaf);
 
         for (height, path) in auth_path.iter().enumerate() {
-            // let curr_idx = path.idx;
             let sibling_idx = path.idx;
 
             let sibling_loc;
