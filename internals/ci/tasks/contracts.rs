@@ -64,10 +64,16 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
 
     let source_path = Paths::source()?;
 
-    let sys_contracts = vec![Contract {
-        name: "sak_validator",
-        path: source_path.join("sak_validator"),
-    }];
+    let sys_contracts = vec![
+        Contract {
+            name: "sak_validator",
+            path: source_path.join("sak_validator"),
+        },
+        Contract {
+            name: "sak_mrs",
+            path: source_path.join("sak_mrs"),
+        },
+    ];
 
     let receipt = sys_contracts
         .into_iter()
