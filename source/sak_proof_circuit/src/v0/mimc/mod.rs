@@ -1,4 +1,6 @@
+mod circuit;
 mod constants;
 mod mimc;
 
-pub(crate) use mimc::*;
+pub(crate) use circuit::*;
+pub use mimc::*;

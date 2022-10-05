@@ -3,7 +3,7 @@ use chrono::Local;
 use colored::Colorize;
 use sak_crypto::OsRng;
 use sak_proof_circuit::{
-    groth16, Bls12, CoinProofCircuit1to2, CoinProofCircuit2to2, Hasher, NewCoin, OldCoin,
+    groth16, Bls12, CoinProofCircuit1to2, CoinProofCircuit2to2, MiMC, NewCoin, OldCoin,
 };
 
 pub(crate) fn build_circuit_params() -> Result<(), CIError> {
@@ -43,7 +43,7 @@ pub(crate) fn build_circuit_params() -> Result<(), CIError> {
 }
 
 fn build_circuit_params_1_to_2() -> Result<(), CIError> {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
     let constants = hasher.get_mimc_constants().to_vec();
     let coin_1_old = OldCoin::default();
     let coin_1_new = NewCoin::default();
@@ -77,7 +77,7 @@ fn build_circuit_params_1_to_2() -> Result<(), CIError> {
 }
 
 fn build_circuit_params_2_to_2() -> Result<(), CIError> {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
     let constants = hasher.get_mimc_constants().to_vec();
     let coin_1_old = OldCoin::default();
     let coin_2_old = OldCoin::default();

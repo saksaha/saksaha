@@ -1,6 +1,6 @@
 use crate::{tests::utils::mock_wallet_context, wallet::tests::utils::mock_open_ch_ctr_request};
 use sak_crypto::{Bls12, ScalarExt};
-use sak_proof::{CoinProof, Hasher, Proof};
+use sak_proof::{CoinProof, MiMC, Proof};
 use sak_types::CoinRecord;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -78,7 +78,7 @@ async fn test_prepare_send_tx_pour_params() {
             new_coin_2.cm,
         ];
 
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let res = CoinProof::verify_proof_1_to_2(pi, &public_inputs, &hasher).unwrap();
 

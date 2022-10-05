@@ -1,6 +1,6 @@
 use core::fmt;
 use sak_crypto::ScalarExt;
-use sak_proof::Hasher;
+use sak_proof::MiMC;
 use type_extension::U8Array;
 
 #[derive(Debug)]
@@ -45,7 +45,7 @@ impl fmt::Display for MockCoin {
 
 impl MockCoin {
     pub fn mock_coin(&self, value: u64) -> MockCoin {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
         let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
@@ -76,22 +76,10 @@ impl MockCoin {
             cm: cm.to_bytes(),
         }
     }
-
-    // pub fn mock_coin_custom(
-    //     &self,
-    //     rho: u64,
-    //     r: u64,
-    //     s: u64,
-    //     addr_sk: u64,
-    //     value: u64,
-    // ) -> MockCoin {
-    //     let mock_coin = mock_coin_custom(rho, r, s, addr_sk, value);
-    //     mock_coin
-    // }
 }
 
 pub fn mock_coin_custom(rho: u64, r: u64, s: u64, addr_sk: u64, value: u64) -> MockCoin {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let addr_sk = U8Array::from_int(addr_sk).to_owned();
     let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
@@ -105,6 +93,7 @@ pub fn mock_coin_custom(rho: u64, r: u64, s: u64, addr_sk: u64, value: u64) -> M
         addr_pk,
         ScalarExt::parse_arr(&rho).unwrap(),
     );
+
     let cm = hasher.comm2_scalar(
         ScalarExt::parse_arr(&s).unwrap(),
         ScalarExt::parse_arr(&v).unwrap(),

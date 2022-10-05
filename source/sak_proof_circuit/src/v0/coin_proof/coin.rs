@@ -1,4 +1,4 @@
-use crate::{CircuitError, Hasher};
+use crate::{CircuitError, MiMC};
 use sak_crypto::{rand, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 
@@ -43,7 +43,7 @@ impl OldCoin {
     }
 
     pub fn new_dummy() -> Result<OldCoin, CircuitError> {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let addr_sk = ScalarExt::parse_u64(0)?;
         let addr_pk = hasher.mimc_single_scalar(addr_sk)?;
@@ -89,7 +89,7 @@ impl OldCoin {
 
             let rho = self.rho.ok_or("Failed to get rho")?;
 
-            let hasher = Hasher::new();
+            let hasher = MiMC::new();
 
             let s = hasher.mimc_scalar(addr_sk, rho);
 
@@ -140,7 +140,7 @@ impl NewCoin {
             }
         }
 
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let k = hasher.comm2_scalar(self.r.unwrap(), self.addr_pk.unwrap(), self.rho.unwrap());
 

@@ -4,12 +4,12 @@ use bellman::groth16::{self, Parameters, Proof};
 use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::debug;
-use sak_proof_circuit::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{CoinProofCircuit1to2, MiMC, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
 pub struct TestContext {
-    pub hasher: Hasher,
+    pub hasher: MiMC,
 
     // old coin 1
     pub addr_pk_1_old: Scalar,
@@ -43,7 +43,7 @@ pub struct TestContext {
 }
 
 pub fn make_test_context() -> TestContext {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
@@ -217,7 +217,7 @@ pub fn make_test_context() -> TestContext {
     }
 }
 
-pub fn mock_merkle_nodes(hasher: &Hasher, cm_old: Scalar) -> HashMap<&'static str, Scalar> {
+pub fn mock_merkle_nodes(hasher: &MiMC, cm_old: Scalar) -> HashMap<&'static str, Scalar> {
     let merkle_nodes = {
         let mut m = HashMap::new();
 
@@ -352,7 +352,7 @@ fn make_proof(
     coin_1_new: NewCoin,
     coin_2_new: NewCoin,
 ) -> Result<Proof<Bls12>, ProofError> {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
     let constants = hasher.get_mimc_constants().to_vec();
     let de_params = CoinProof::get_mimc_params_1_to_2()?;
 
@@ -377,7 +377,7 @@ fn make_proof(
 fn verify_proof(
     proof: Proof<Bls12>,
     public_inputs: &[Scalar],
-    hasher: &Hasher,
+    hasher: &MiMC,
 ) -> Result<bool, ProofError> {
     let de_params = CoinProof::get_mimc_params_1_to_2()?;
     let pvk = groth16::prepare_verifying_key(&de_params.vk);

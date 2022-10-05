@@ -5,7 +5,7 @@ mod pool;
 
 use crate::{Consensus, LedgerDB, SyncPool};
 use sak_crypto::MerkleTree;
-use sak_proof::Hasher;
+use sak_proof::MiMC;
 use sak_vm::VM;
 use std::sync::Arc;
 
@@ -14,6 +14,6 @@ pub struct DistLedgerApis {
     pub vm: VM,
     pub(crate) sync_pool: Arc<SyncPool>,
     pub merkle_tree: MerkleTree,
-    pub hasher: Hasher,
+    pub hasher: MiMC,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
 }

@@ -2,7 +2,7 @@ use crate::ProofError;
 use bellman::groth16::{self, Parameters, PreparedVerifyingKey, Proof, VerifyingKey};
 use pairing::MultiMillerLoop;
 use sak_crypto::{Bls12, OsRng, Scalar};
-use sak_proof_circuit::{CoinProofCircuit1to2, CoinProofCircuit2to2, Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{CoinProofCircuit1to2, CoinProofCircuit2to2, MiMC, NewCoin, OldCoin};
 
 const CIRCUIT_PARAMS_1TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_1to2");
 const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
@@ -58,7 +58,7 @@ impl CoinProof {
     pub fn verify_proof_1_to_2(
         proof: Proof<Bls12>,
         public_inputs: &[Scalar],
-        _hasher: &Hasher,
+        _hasher: &MiMC,
     ) -> Result<bool, ProofError> {
         let de_params = Self::get_mimc_params_1_to_2()?;
         let pvk = groth16::prepare_verifying_key(&de_params.vk);
@@ -86,7 +86,7 @@ impl CoinProof {
         coin_1_new: NewCoin,
         coin_2_new: NewCoin,
     ) -> Result<Proof<Bls12>, ProofError> {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
         let constants = hasher.get_mimc_constants().to_vec();
         let de_params = Self::get_mimc_params_1_to_2()?;
 
@@ -111,7 +111,7 @@ impl CoinProof {
     pub fn verify_proof_2_to_2(
         proof: Proof<Bls12>,
         public_inputs: &[Scalar],
-        hasher: &Hasher,
+        hasher: &MiMC,
     ) -> Result<bool, ProofError> {
         let constants = hasher.get_mimc_constants();
         let de_params = get_mimc_params_2_to_2(&constants)?;
@@ -135,7 +135,7 @@ impl CoinProof {
         coin_1_new: NewCoin,
         coin_2_new: NewCoin,
     ) -> Result<Proof<Bls12>, ProofError> {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
         let constants = hasher.get_mimc_constants().to_vec();
 
         let de_params = get_mimc_params_2_to_2(&constants)?;

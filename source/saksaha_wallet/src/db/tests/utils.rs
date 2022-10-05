@@ -1,6 +1,6 @@
 use crate::{credential::WalletCredential, db::WalletDB};
 use sak_crypto::ScalarExt;
-use sak_proof::Hasher;
+use sak_proof::MiMC;
 use sak_types::{CoinRecord, CoinStatus};
 use type_extension::U8Array;
 
@@ -29,7 +29,7 @@ pub(crate) async fn mock_wallet_db() -> WalletDB {
 }
 
 pub(crate) fn mock_coin_record(value: u64) -> CoinRecord {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
 

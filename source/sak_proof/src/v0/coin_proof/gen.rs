@@ -4,7 +4,7 @@ use jni::objects::{JClass, JObject, JValue};
 use jni::JNIEnv;
 use sak_crypto::{MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{MiMC, NewCoin, OldCoin};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -71,6 +71,7 @@ pub fn pi_gen_1_depth_32() -> String {
         }
     };
 }
+
 pub fn pi_gen_1() -> String {
     let test_context = make_test_context_2_to_2();
 
@@ -133,7 +134,7 @@ pub fn pi_gen_1() -> String {
 }
 
 pub struct TestContext {
-    pub hasher: Hasher,
+    pub hasher: MiMC,
 
     // old coin 1
     pub addr_pk_1_old: Scalar,
@@ -179,7 +180,7 @@ pub struct TestContext {
 }
 
 pub fn make_test_context_2_to_2_depth_32() -> TestContext {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
@@ -414,7 +415,7 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
     }
 }
 pub fn make_test_context_2_to_2() -> TestContext {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
@@ -649,7 +650,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
     }
 }
 pub fn mock_merkle_nodes_cm_1_depth_32(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<String, Scalar> {
@@ -684,7 +685,7 @@ pub fn mock_merkle_nodes_cm_1_depth_32(
 }
 
 pub fn mock_merkle_nodes_cm_1(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {
@@ -827,7 +828,7 @@ pub fn mock_merkle_nodes_cm_1(
     merkle_nodes
 }
 pub fn mock_merkle_nodes_cm_2_depth_32(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<String, Scalar> {
@@ -864,7 +865,7 @@ pub fn mock_merkle_nodes_cm_2_depth_32(
 }
 
 pub fn mock_merkle_nodes_cm_2(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {

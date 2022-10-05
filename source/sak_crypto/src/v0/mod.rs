@@ -11,7 +11,6 @@ mod tests;
 
 pub use crypto::*;
 pub use ecies::*;
-pub use hasher::*;
 pub use key::*;
 pub use merkle::*;
 pub use rand_core::OsRng;
