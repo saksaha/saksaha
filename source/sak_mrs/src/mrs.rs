@@ -2,11 +2,10 @@ use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query,
     ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
 };
-use sak_crypto::SakKey;
-use sak_crypto::ToEncodedPoint;
-use std::collections::HashMap;
 
-use crate::{request_type::RESERVE, MutableRecordStorage, Slot};
+use crate::{
+    request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot,
+};
 
 const SLOT_CAPACITY: usize = 64;
 
@@ -15,7 +14,7 @@ contract_bootstrap!();
 define_init!();
 pub fn init2() -> Result<Storage, ContractError> {
     let evl_storage = MutableRecordStorage {
-        slots: HashMap::new(),
+        slots: vec![Slot::default()],
     };
 
     let v = serde_json::to_vec(&evl_storage)?;
@@ -52,12 +51,13 @@ fn reserve_slot(
     args: RequestArgs,
 ) -> Result<InvokeResult, ContractError> {
     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
+    let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
 
-    let (sk, pk) = SakKey::generate();
-    let public_key =
-        sak_crypto::encode_hex(&pk.to_encoded_point(false).to_bytes());
-
-    mrs.slots.insert(public_key, Slot::new());
+    mrs.slots.push(Slot {
+        pk: reserve_slot_params.public_key,
+        timestamp: String::default(),
+        // timestamp: Local::now().to_string(),
+    });
 
     *storage = serde_json::to_vec(&mrs)?;
 
