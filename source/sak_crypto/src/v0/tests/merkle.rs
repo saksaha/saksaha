@@ -5,7 +5,12 @@ use std::collections::HashMap;
 fn test_merkle_simulator() {
     SakCryptoTestUtils::init_test();
 
-    let tree = MerkleTreeSim::init(5, vec![]);
+    let tree = MerkleTreeSim::init(
+        5,
+        vec![
+            // some element (scalar)
+        ],
+    );
 
     // let merkle_nodes_1 = {
     //     let cm_1 = ScalarExt::parse_arr(&old_coin_1.cm).unwrap();
