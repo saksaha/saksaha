@@ -1,23 +1,24 @@
+use super::circuit;
 use super::mimc;
-use crate::CircuitError;
+use crate::CryptoError;
 use crate::Scalar;
+use crate::ScalarExt;
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::gadgets::boolean::Boolean;
 use bellman::Circuit;
 use bellman::{ConstraintSystem, SynthesisError};
 use ff::PrimeField;
-use sak_crypto::ScalarExt;
 
-pub struct Hasher {
+pub struct MiMC {
     constants: Vec<Scalar>,
 }
 
-impl Hasher {
+impl MiMC {
     #[allow(dead_code)]
-    pub fn new() -> Hasher {
-        let mimc_constants = mimc::get_mimc_constants();
+    pub fn new() -> Self {
+        let mimc_constants = circuit::get_mimc_constants();
 
-        Hasher {
+        Self {
             constants: mimc_constants,
         }
     }
@@ -26,7 +27,7 @@ impl Hasher {
         return &self.constants;
     }
 
-    pub fn mimc(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CircuitError> {
+    pub fn mimc(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = ScalarExt::parse_arr(b)?;
         let h = mimc::mimc(a, b, &self.constants);
@@ -38,7 +39,7 @@ impl Hasher {
         mimc::mimc(a, b, &self.constants)
     }
 
-    pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, CircuitError> {
+    pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = Scalar::zero();
         let h = mimc::mimc(a, b, &self.constants);
@@ -46,7 +47,7 @@ impl Hasher {
         Ok(h)
     }
 
-    pub fn mimc_single_scalar(&self, a: Scalar) -> Result<Scalar, CircuitError> {
+    pub fn mimc_single_scalar(&self, a: Scalar) -> Result<Scalar, CryptoError> {
         let b = Scalar::zero();
         let h = mimc::mimc(a, b, &self.constants);
 
@@ -59,7 +60,7 @@ impl Hasher {
         a: Option<Scalar>,
     ) -> Option<Scalar> {
         let b = Some(Scalar::zero());
-        mimc::mimc_cs(cs, a, b, &self.constants)
+        circuit::mimc_cs(cs, a, b, &self.constants)
     }
 
     pub fn mimc_scalar_cs<CS: ConstraintSystem<Scalar>>(
@@ -68,13 +69,13 @@ impl Hasher {
         a: Option<Scalar>,
         b: Option<Scalar>,
     ) -> Option<Scalar> {
-        mimc::mimc_cs(cs, a, b, &self.constants)
+        circuit::mimc_cs(cs, a, b, &self.constants)
     }
 
-    pub fn prf2(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CircuitError> {
+    pub fn prf2(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let s = ScalarExt::parse_arr_wide(a, b)?;
 
-        let ret = mimc::mimc_single_arg(s, &self.constants);
+        let ret = circuit::mimc_single_arg(s, &self.constants);
 
         Ok(ret)
     }
@@ -94,7 +95,7 @@ impl Hasher {
         self.mimc_scalar_cs(cs, z, x)
     }
 
-    pub fn comm2(&self, a: &[u8; 32], b: &[u8; 32], c: &[u8; 32]) -> Result<Scalar, CircuitError> {
+    pub fn comm2(&self, a: &[u8; 32], b: &[u8; 32], c: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let a = ScalarExt::parse_arr(a)?;
         let b = ScalarExt::parse_arr(b)?;
         let c = ScalarExt::parse_arr(c)?;

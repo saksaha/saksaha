@@ -4,12 +4,12 @@ use crate::{
     mock_coin_custom, Cm, MintTxCandidate, PourTxCandidate, Sn, Tx, VALIDATOR, VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proof::CoinProof;
-use sak_proof::Hasher;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
 use std::collections::HashMap;
@@ -17,10 +17,9 @@ use std::io::Read;
 use type_extension::U8Array;
 
 pub fn mock_pour_tc_2to2_1() -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let old_coin_1 = mock_coin_custom(0x1, 0x2, 0x3, 0x4, 1000);
-
     let old_coin_2 = mock_coin_custom(0, 0, 0, 0, 1000); // dummy coin
 
     let new_coin_1 = mock_coin_custom(0x21, 0x22, 0x23, 0x24, 1990);
@@ -141,7 +140,6 @@ pub fn mock_pour_tc_2to2_1() -> TxCandidate {
             let key = format!("{}_{}", idx, p.idx);
             let merkle_node = merkle_nodes_2.get(key.as_str()).unwrap_or(&empty_node);
 
-            // println!("key:{:?}, node: {:?}", key, merkle_node);
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });
 

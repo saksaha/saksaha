@@ -1,113 +1,136 @@
-use super::constants::ROUND_CONSTANTS;
+use super::circuit;
+use super::mimc;
+use crate::CircuitError;
 use crate::Scalar;
-use bellman::{ConstraintSystem, SynthesisError, Variable};
+use bellman::gadgets::boolean::AllocatedBit;
+use bellman::gadgets::boolean::Boolean;
+use bellman::Circuit;
+use bellman::{ConstraintSystem, SynthesisError};
 use ff::PrimeField;
+use sak_crypto::ScalarExt;
 
-pub const MIMC_ROUNDS: usize = 322;
-
-pub(crate) fn get_mimc_constants() -> Vec<Scalar> {
-    let constants = (0..322)
-        .map(|idx| Scalar::from_bytes(&ROUND_CONSTANTS[idx]).unwrap())
-        .collect::<Vec<_>>();
-    constants
+pub struct MiMC {
+    constants: Vec<Scalar>,
 }
 
-pub(crate) fn mimc_single_arg<S: PrimeField>(xl: S, constants: &[S]) -> S {
-    mimc(xl, S::zero(), constants)
-}
+impl MiMC {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        let mimc_constants = circuit::get_mimc_constants();
 
-pub(crate) fn mimc<S: PrimeField>(mut xl: S, mut xr: S, constants: &[S]) -> S {
-    for c in constants {
-        let mut tmp1 = xl;
-        tmp1.add_assign(c);
-        let mut tmp2 = tmp1.square();
-        tmp2.mul_assign(&tmp1);
-        tmp2.add_assign(&xr);
-        xr = xl;
-        xl = tmp2;
+        Self {
+            constants: mimc_constants,
+        }
     }
 
-    xl
-}
-
-pub(crate) fn mimc_cs<S: PrimeField, CS: ConstraintSystem<S>>(
-    cs: &mut CS,
-    mut xl_value: Option<S>,
-    mut xr_value: Option<S>,
-    round_constants: &[S],
-) -> Option<S> {
-    // Allocate the first component of the preimage.
-    let mut xl = cs
-        .alloc(
-            || "preimage xl",
-            || xl_value.ok_or(SynthesisError::AssignmentMissing),
-        )
-        .unwrap();
-
-    // Allocate the second component of the preimage.
-    let mut xr = cs
-        .alloc(
-            || "preimage xr",
-            || xr_value.ok_or(SynthesisError::AssignmentMissing),
-        )
-        .unwrap();
-
-    for i in 0..MIMC_ROUNDS {
-        // xL, xR := xR + (xL + Ci)^3, xL
-        let cs = &mut cs.namespace(|| format!("round {}", i));
-
-        // tmp = (xL + Ci)^2
-        let tmp_value = xl_value.map(|mut e| {
-            e.add_assign(&round_constants[i]);
-            e.square()
-        });
-
-        let tmp = cs
-            .alloc(
-                || "tmp",
-                || tmp_value.ok_or(SynthesisError::AssignmentMissing),
-            )
-            .unwrap();
-
-        cs.enforce(
-            || "tmp = (xL + Ci)^2",
-            |lc| lc + xl + (round_constants[i], CS::one()),
-            |lc| lc + xl + (round_constants[i], CS::one()),
-            |lc| lc + tmp,
-        );
-
-        // new_xL = xR + (xL + Ci)^3
-        // new_xL = xR + tmp * (xL + Ci)
-        // new_xL - xR = tmp * (xL + Ci)
-        let new_xl_value = xl_value.map(|mut e| {
-            e.add_assign(&round_constants[i]);
-            e.mul_assign(&tmp_value.unwrap());
-            e.add_assign(&xr_value.unwrap());
-            e
-        });
-
-        let new_xl = cs
-            .alloc(
-                || "new_xl",
-                || new_xl_value.ok_or(SynthesisError::AssignmentMissing),
-            )
-            .unwrap();
-
-        cs.enforce(
-            || "new_xL = xR + (xL + Ci)^3",
-            |lc| lc + tmp,
-            |lc| lc + xl + (round_constants[i], CS::one()),
-            |lc| lc + new_xl - xr,
-        );
-
-        // xR = xL
-        xr = xl;
-        xr_value = xl_value;
-
-        // xL = new_xL
-        xl = new_xl;
-        xl_value = new_xl_value;
+    pub fn get_mimc_constants(&self) -> &Vec<Scalar> {
+        return &self.constants;
     }
 
-    xl_value
+    pub fn mimc(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CircuitError> {
+        let a = ScalarExt::parse_arr(a)?;
+        let b = ScalarExt::parse_arr(b)?;
+        let h = mimc::mimc(a, b, &self.constants);
+
+        Ok(h)
+    }
+
+    pub fn mimc_scalar(&self, a: Scalar, b: Scalar) -> Scalar {
+        mimc::mimc(a, b, &self.constants)
+    }
+
+    pub fn mimc_single(&self, a: &[u8; 32]) -> Result<Scalar, CircuitError> {
+        let a = ScalarExt::parse_arr(a)?;
+        let b = Scalar::zero();
+        let h = mimc::mimc(a, b, &self.constants);
+
+        Ok(h)
+    }
+
+    pub fn mimc_single_scalar(&self, a: Scalar) -> Result<Scalar, CircuitError> {
+        let b = Scalar::zero();
+        let h = mimc::mimc(a, b, &self.constants);
+
+        Ok(h)
+    }
+
+    pub fn mimc_single_scalar_cs<CS: ConstraintSystem<Scalar>>(
+        &self,
+        cs: &mut CS,
+        a: Option<Scalar>,
+    ) -> Option<Scalar> {
+        let b = Some(Scalar::zero());
+        circuit::mimc_cs(cs, a, b, &self.constants)
+    }
+
+    pub fn mimc_scalar_cs<CS: ConstraintSystem<Scalar>>(
+        &self,
+        cs: &mut CS,
+        a: Option<Scalar>,
+        b: Option<Scalar>,
+    ) -> Option<Scalar> {
+        circuit::mimc_cs(cs, a, b, &self.constants)
+    }
+
+    pub fn prf2(&self, a: &[u8; 32], b: &[u8; 32]) -> Result<Scalar, CircuitError> {
+        let s = ScalarExt::parse_arr_wide(a, b)?;
+
+        let ret = circuit::mimc_single_arg(s, &self.constants);
+
+        Ok(ret)
+    }
+
+    pub fn prf(&self, z: Scalar, x: Scalar) -> Scalar {
+        mimc::mimc(z, x, &self.constants)
+    }
+
+    /// pseudo random function for constraint system
+    #[allow(dead_code)]
+    pub fn prf_cs<CS: ConstraintSystem<Scalar>>(
+        &self,
+        cs: &mut CS,
+        z: Option<Scalar>,
+        x: Option<Scalar>,
+    ) -> Option<Scalar> {
+        self.mimc_scalar_cs(cs, z, x)
+    }
+
+    pub fn comm2(&self, a: &[u8; 32], b: &[u8; 32], c: &[u8; 32]) -> Result<Scalar, CircuitError> {
+        let a = ScalarExt::parse_arr(a)?;
+        let b = ScalarExt::parse_arr(b)?;
+        let c = ScalarExt::parse_arr(c)?;
+
+        let r1 = mimc::mimc(b, c, &self.constants);
+        let r2 = mimc::mimc(a, r1, &self.constants);
+
+        Ok(r2)
+    }
+
+    pub fn comm2_scalar(&self, a: Scalar, b: Scalar, c: Scalar) -> Scalar {
+        let r1 = mimc::mimc(b, c, &self.constants);
+
+        let r2 = mimc::mimc(a, r1, &self.constants);
+
+        r2
+    }
+
+    pub fn a() {}
+
+    pub fn comm2_scalar_cs<CS: ConstraintSystem<Scalar>>(
+        &self,
+        cs: &mut CS,
+        a: Option<Scalar>,
+        b: Option<Scalar>,
+        c: Option<Scalar>,
+    ) -> Option<Scalar> {
+        let r1 = self.mimc_scalar_cs(cs, b, c);
+
+        let r2 = self.mimc_scalar_cs(cs, a, r1);
+
+        r2
+    }
+
+    pub fn comm(&self, r: Scalar, x: Scalar) -> Scalar {
+        mimc::mimc(r, x, &self.constants)
+    }
 }

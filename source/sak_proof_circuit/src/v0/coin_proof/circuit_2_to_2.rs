@@ -1,13 +1,14 @@
-use crate::{CircuitError, Hasher, NewCoin, OldCoin};
+use crate::{CircuitError, NewCoin, OldCoin};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, OsRng, Scalar};
 use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
 use type_extension::U8Array;
 
 pub struct CoinProofCircuit2to2 {
-    pub hasher: Hasher,
+    pub hasher: MiMC,
 
     pub coin_1_old: OldCoin,
 
@@ -152,7 +153,7 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     leaf: Option<Scalar>,
     auth_path: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-    hasher: &Hasher,
+    hasher: &MiMC,
 ) -> Option<Scalar> {
     let mut curr = leaf;
 
@@ -170,10 +171,9 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
         let xl_value;
         let xr_value;
 
-        let is_right =
-            cur_is_right
-                .get_value()
-                .and_then(|v| if v { Some(true) } else { Some(false) });
+        let is_right = cur_is_right
+            .get_value()
+            .and_then(|v| if v { Some(true) } else { Some(false) });
 
         let temp = match *merkle_node {
             Some(a) => a,
@@ -197,109 +197,6 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     return curr;
 }
 
-// pub fn climb_up_tree_2_to_2<CS: ConstraintSystem<Scalar>>(
-//     cs: &mut CS,
-//     leaf_1: Option<Scalar>,
-//     // leaf_2: Option<Scalar>,
-//     auth_path_1: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-//     // auth_path_2: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-//     hasher: &Hasher,
-// ) -> Option<Scalar> {
-//     let leaves = [leaf_1, leaf_2];
-//     let auth_paths = [auth_path_1, auth_path_2];
-
-//     let mut curr = Scalar::default();
-
-//     for leaf in leaves {
-//         let mut curr = leaf;
-
-//         for (idx, merkle_node) in auth_path_1.iter().enumerate() {
-//             // println!("idx: {}, sibling: {:?}", idx, merkle_node);
-
-//             let cs = &mut cs.namespace(|| format!("height {}", idx));
-
-//             let cur_is_right = AllocatedBit::alloc(
-//                 cs.namespace(|| "cur is right"),
-//                 merkle_node.as_ref().map(|&(_, d)| d),
-//             )
-//             .expect("cur_is_right");
-
-//             let xl_value;
-//             let xr_value;
-
-//             let is_right = cur_is_right.get_value().and_then(|v| {
-//                 if v {
-//                     Some(true)
-//                 } else {
-//                     Some(false)
-//                 }
-//             });
-
-//             let temp = match *merkle_node {
-//                 Some(a) => a,
-//                 None => (Scalar::default(), false),
-//             };
-
-//             if match is_right {
-//                 Some(a) => a,
-//                 None => false,
-//             } {
-//                 xl_value = Some(temp.0);
-//                 xr_value = curr;
-//             } else {
-//                 xl_value = curr;
-//                 xr_value = Some(temp.0);
-//             }
-
-//             curr = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
-//         }
-//     }
-
-//     // let mut curr_2 = leaf_2;
-
-//     // for (idx, merkle_node) in auth_path_2.iter().enumerate() {
-//     //     // println!("idx: {}, sibling: {:?}", idx, merkle_node);
-
-//     //     let cs = &mut cs.namespace(|| format!("height {}", idx));
-
-//     //     let cur_is_right = AllocatedBit::alloc(
-//     //         cs.namespace(|| "cur is right"),
-//     //         merkle_node.as_ref().map(|&(_, d)| d),
-//     //     )
-//     //     .expect("cur_is_right");
-
-//     //     let xl_value;
-//     //     let xr_value;
-
-//     //     let is_right = cur_is_right.get_value().and_then(|v| {
-//     //         if v {
-//     //             Some(true)
-//     //         } else {
-//     //             Some(false)
-//     //         }
-//     //     });
-
-//     //     let temp = match *merkle_node {
-//     //         Some(a) => a,
-//     //         None => (Scalar::default(), false),
-//     //     };
-
-//     //     if match is_right {
-//     //         Some(a) => a,
-//     //         None => false,
-//     //     } {
-//     //         xl_value = Some(temp.0);
-//     //         xr_value = curr_2;
-//     //     } else {
-//     //         xl_value = curr_2;
-//     //         xr_value = Some(temp.0);
-//     //     }
-
-//     //     curr_2 = hasher.mimc_scalar_cs(cs, xl_value, xr_value);
-//     // }
-//     Some(curr)
-// }
-
 pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     cm_old: Option<Scalar>,
@@ -308,7 +205,7 @@ pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
     r: Option<Scalar>,
     s: Option<Scalar>,
     v: Option<Scalar>,
-    hasher: &Hasher,
+    hasher: &MiMC,
 ) {
     {
         let k = hasher.comm2_scalar_cs(cs, r, addr_pk, rho);

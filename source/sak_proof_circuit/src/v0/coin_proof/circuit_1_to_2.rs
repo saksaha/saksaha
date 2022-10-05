@@ -1,12 +1,13 @@
-use crate::{CircuitError, Hasher, NewCoin, OldCoin};
+use crate::{CircuitError, NewCoin, OldCoin};
 use bellman::gadgets::boolean::AllocatedBit;
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
 use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
 use type_extension::U8Array;
 
 pub struct CoinProofCircuit1to2 {
-    pub hasher: Hasher,
+    pub hasher: MiMC,
 
     pub coin_1_old: OldCoin,
 
@@ -122,7 +123,7 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
     cs: &mut CS,
     leaf: Option<Scalar>,
     auth_path: &[Option<(Scalar, bool)>; CM_TREE_DEPTH as usize],
-    hasher: &Hasher,
+    hasher: &MiMC,
 ) -> Option<Scalar> {
     let mut curr = leaf;
 
@@ -140,10 +141,9 @@ pub fn climb_up_tree<CS: ConstraintSystem<Scalar>>(
         let xl_value;
         let xr_value;
 
-        let is_right =
-            cur_is_right
-                .get_value()
-                .and_then(|v| if v { Some(true) } else { Some(false) });
+        let is_right = cur_is_right
+            .get_value()
+            .and_then(|v| if v { Some(true) } else { Some(false) });
 
         let temp = match *merkle_node {
             Some(a) => a,
@@ -175,7 +175,7 @@ pub fn check_cm_commitments<CS: ConstraintSystem<Scalar>>(
     r: Option<Scalar>,
     s: Option<Scalar>,
     v: Option<Scalar>,
-    hasher: &Hasher,
+    hasher: &MiMC,
 ) {
     {
         let k = hasher.comm2_scalar_cs(cs, r, addr_pk, rho);

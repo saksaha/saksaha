@@ -1,4 +1,4 @@
-use super::utils;
+use super::utils::DistLedgerTestUtils;
 use crate::v0::testing;
 use sak_types::{Block, BlockCandidate};
 
@@ -6,9 +6,7 @@ pub const REPEAT_NUM: u128 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -38,9 +36,7 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_genesis_block() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -49,9 +45,7 @@ async fn test_write_a_genesis_block() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_new_block_after_genesis() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -66,9 +60,7 @@ async fn test_write_a_new_block_after_genesis() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block_1() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -89,9 +81,7 @@ async fn test_sequential_write_block_1() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block_and_get_tx_height() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -123,9 +113,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_block_and_check_merkle_rt_changed() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -155,9 +143,7 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_sync_block_if_block_is_correct() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    utils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_test(vec!["test"]);
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 

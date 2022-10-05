@@ -1,13 +1,14 @@
+use sak_crypto::hasher::MiMC;
 use sak_crypto::{rand, ScalarExt};
 use sak_crypto::{MerkleTree, Scalar};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
-use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin};
+use sak_proof::{CoinProof, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
 fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
