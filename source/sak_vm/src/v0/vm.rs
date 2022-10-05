@@ -66,6 +66,7 @@ fn invoke_query(
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
         { instance.get_typed_func(&mut store, QUERY)? };
 
+    println!("query!!!!");
     let (request_bytes, request_len) = {
         let str = serde_json::to_value(request)?.to_string();
 
@@ -87,8 +88,12 @@ fn invoke_query(
             request_len as i32,
         ),
     ) {
-        Ok(r) => r,
+        Ok(r) => {
+            println!("result 2222: {:?}", r);
+            r
+        }
         Err(err) => {
+            println!("aaaaaaaaaaaaaaA");
             return Err(format!(
                 "Error invoking query() of wasm, request_bytes: {:?}, \
                 storage: {:?}, original err: {}",
@@ -97,11 +102,14 @@ fn invoke_query(
             .into());
         }
     };
+    println!("query!!!!");
 
     let result: Vec<u8>;
     unsafe {
         result = wasm_bootstrap::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
     }
+
+    println!("aaa: {:?}", String::from_utf8(result.clone())?);
 
     let receipt = InvokeReceipt::from_query(result)?;
 
@@ -172,6 +180,7 @@ fn init_module(contract_wasm: impl AsRef<[u8]>) -> Result<(Instance, Store<i32>,
     let (instance, mut store) = match utils::create_instance(contract_wasm) {
         Ok(r) => r,
         Err(err) => {
+            println!("1111111111, err: {:?}", err);
             return Err(format!("Error creating an instance, err: {}", err).into());
         }
     };

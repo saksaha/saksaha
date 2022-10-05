@@ -14,6 +14,12 @@ pub struct OpenChReq {}
 
 contract_bootstrap!();
 
+#[link(wasm_import_module = "host")]
+extern "C" {
+    fn hello(param1: i32, param2: i32) -> i32;
+    // fn hello(param1: i32) -> i32;
+}
+
 define_init!();
 pub fn init2() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
@@ -33,6 +39,12 @@ pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, Contract
             return get_msgs(storage, request.args);
         }
         GET_CH_LIST => {
+            unsafe {
+                let a = hello(33, 44);
+
+                // let a = hello(33);
+                return Err(format!("ooo result: {:?}", a).into());
+            }
             return get_ch_list(storage, request.args);
         }
         _ => {
