@@ -18,7 +18,7 @@ pub struct MerkleTreeSim {
 }
 
 impl MerkleTreeSim {
-    pub fn new(height: u32) -> MerkleTreeSim {
+    pub fn init(height: u32, leaves: Vec<Scalar>) -> MerkleTreeSim {
         MerkleTreeSim {
             height,
             nodes: HashMap::new(),

@@ -4,11 +4,11 @@ use crate::{
     VALIDATOR_CTR_ADDR,
 };
 use crate::{TxCandidate, TypesError};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof::Hasher;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
 use sak_proof::{CoinProof, DUMMY_MERKLE_RT, DUMMY_SN};
@@ -48,7 +48,7 @@ pub fn mock_pour_tx_custom(
 
 // TODO This should change
 pub fn mock_pour_tc_random() -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
     let dummy_auth_path = [
@@ -130,13 +130,6 @@ pub fn mock_pour_tc_random() -> TxCandidate {
     };
 
     let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
-
-    let mut mt_sim = MerkleTreeSim::new(CM_TREE_DEPTH as u32);
-
-    {
-        let node_0_1 = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
-        mt_sim.add_leaf_node(node_0_1);
-    };
 
     let merkle_nodes = {
         let mut m = HashMap::new();
@@ -252,7 +245,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 }
 
 pub fn mock_pour_tc_1() -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = values::get_addr_sk_1();
@@ -435,7 +428,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
 }
 
 pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = ScalarExt::parse_arr(&U8Array::from_int(0)).unwrap();
@@ -622,7 +615,7 @@ pub fn mock_mint_tc(cm: [u8; 32], v: [u8; 32], k: [u8; 32], s: [u8; 32]) -> TxCa
 }
 
 pub fn mock_mint_tc_random() -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let v = ScalarExt::parse_arr(&U8Array::from_int(400)).unwrap();
 
@@ -657,7 +650,7 @@ pub fn mock_mint_tc_random() -> TxCandidate {
 pub fn mock_mint_tc_1() -> TxCandidate {
     let validator_wasm = VALIDATOR.to_vec();
 
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let v = U8Array::from_int(1000);
 
@@ -692,8 +685,7 @@ pub fn mock_mint_tc_1() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_2() -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_2();
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let v = U8Array::from_int(1000);
 
@@ -728,8 +720,7 @@ pub fn mock_mint_tc_2() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_3() -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_3();
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let rho = U8Array::from_int(0x11);
 
@@ -764,8 +755,7 @@ pub fn mock_mint_tc_3() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_4() -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_4();
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let rho = U8Array::from_int(0x21);
 
@@ -800,7 +790,7 @@ pub fn mock_mint_tc_4() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_5() -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let rho = U8Array::from_int(0x31);
 
@@ -835,8 +825,7 @@ pub fn mock_mint_tc_5() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_6() -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_4();
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let rho = U8Array::from_int(0x41);
 
@@ -871,8 +860,7 @@ pub fn mock_mint_tc_6() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
-    // let tx_candidate = MintTxCandidate::new_dummy_4();
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let rho = U8Array::from_int(0);
 
@@ -909,7 +897,7 @@ pub fn mock_mint_tc_dummy_old_coin() -> TxCandidate {
 }
 
 pub fn mock_mint_tc_deploying_contract(contract_data: Vec<u8>, ctrt_addr: String) -> TxCandidate {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let rho = U8Array::new_empty_32();
 

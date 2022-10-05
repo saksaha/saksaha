@@ -1,8 +1,9 @@
 use crate::{CoinProof, ProofError};
-use bellman::groth16::{self, Parameters, Proof};
+use sak_crypto::groth16::{self, Parameters, Proof};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{CoinProofCircuit1to2, Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{CoinProofCircuit1to2, NewCoin, OldCoin};
 use std::collections::HashMap;
 use type_extension::U8Array;
 
@@ -10,7 +11,7 @@ use type_extension::U8Array;
 pub async fn test_123() {
     println!("poower");
 
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_sk_1, addr_pk_1, r_1, s_1, rho_1, v_1, cm_1) = {
         let addr_sk = {

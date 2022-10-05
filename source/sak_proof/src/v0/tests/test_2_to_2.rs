@@ -1,18 +1,19 @@
 use super::utils;
 use crate::CoinProof;
 use crate::ProofError;
-use bellman::groth16::{self, Parameters, Proof};
+use sak_crypto::groth16::{self, Parameters, Proof};
+use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{CoinProofCircuit2to2, Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{CoinProofCircuit2to2, NewCoin, OldCoin};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use type_extension::U8Array;
 
 pub struct TestContext {
-    pub hasher: Hasher,
+    pub hasher: MiMC,
 
     // old coin 1
     pub addr_pk_1_old: Scalar,
@@ -58,7 +59,7 @@ pub struct TestContext {
 }
 
 pub fn make_test_context_2_to_2() -> TestContext {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
@@ -325,7 +326,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 }
 
 pub fn mock_merkle_nodes_cm_1(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {
@@ -469,7 +470,7 @@ pub fn mock_merkle_nodes_cm_1(
 }
 
 pub fn mock_merkle_nodes_cm_2(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {

@@ -1,9 +1,9 @@
 use crate::{cfs, keys, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
+use sak_crypto::Proof;
 use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
 use sak_kv_db::DB;
-use sak_proof::{Hasher, Proof};
 use sak_types::{
     BlockHash, BlockHeight, Cm, CmIdx, MerkleRt, MintTx, MintTxCandidate, PourTx, PourTxCandidate,
     Sn, Tx, TxCtrOp, TxHash, TxHeight, TxType,
@@ -123,25 +123,6 @@ impl LedgerDB {
             }
         }
     }
-
-    // pub(crate) fn get_block_cm_count(
-    //     &self,
-    //     // db: &DB,
-    //     key: &BlockHash,
-    // ) -> Result<Option<u128>, LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
-
-    //     match self.db.get_cf(&cf, key)? {
-    //         Some(v) => {
-    //             let val = type_extension::convert_u8_slice_into_u128(&v)?;
-
-    //             return Ok(Some(val));
-    //         }
-    //         None => {
-    //             return Ok(None);
-    //         }
-    //     }
-    // }
 
     pub(crate) fn get_block_merkle_rt(
         &self,
@@ -267,22 +248,6 @@ impl LedgerDB {
 
         Ok(())
     }
-
-    // pub(crate) fn batch_put_block_cm_count(
-    //     &self,
-    //     // db: &DB,
-    //     batch: &mut WriteBatch,
-    //     block_hash: &BlockHash,
-    //     cm_count: u128,
-    // ) -> Result<(), LedgerError> {
-    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CM_COUNT)?;
-
-    //     let v = cm_count.to_be_bytes();
-
-    //     batch.put_cf(&cf, block_hash, &v);
-
-    //     Ok(())
-    // }
 
     pub(crate) fn batch_put_block_hash(
         &self,
