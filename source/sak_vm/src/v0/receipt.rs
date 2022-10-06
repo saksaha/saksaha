@@ -1,6 +1,5 @@
-use sak_contract_std::{InvokeResult, Storage, ERROR_PLACEHOLDER};
-
 use crate::VMError;
+use sak_contract_std::{InvokeResult, Storage, ERROR_PLACEHOLDER};
 
 #[derive(Debug)]
 pub enum FnType {

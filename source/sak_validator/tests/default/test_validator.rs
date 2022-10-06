@@ -1,7 +1,7 @@
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_logger::SakLogger;
 use sak_validator::{AddValidatorParams, ValidatorStorage};
-use sak_vm::{CtrFn, VM};
+use sak_vm::{CtrFn, SakVM};
 use std::collections::HashMap;
 
 pub(crate) const VALIDATOR: &[u8] =
@@ -17,6 +17,7 @@ fn get_dummy_validator_1() -> String {
             ",
     )
 }
+
 fn get_dummy_validator_2() -> String {
     String::from(
         "\
@@ -27,6 +28,7 @@ fn get_dummy_validator_2() -> String {
             ",
     )
 }
+
 fn get_dummy_validator_3() -> String {
     String::from(
         "\
@@ -37,6 +39,7 @@ fn get_dummy_validator_3() -> String {
             ",
     )
 }
+
 fn get_dummy_validator_4() -> String {
     String::from(
         "\
@@ -67,10 +70,9 @@ fn get_test_validator_state(validators: Vec<String>) -> Storage {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_validator_fn_init() {
-    // sak_test_utils::init_test_log();
     SakLogger::init_test_console().unwrap();
 
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let ctr_wasm = VALIDATOR.to_vec();
     let ctr_fn = CtrFn::Init;
@@ -99,8 +101,7 @@ async fn test_call_ctr_validator_fn_init() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_validator_fn_query() {
-    // init();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let test_validator_vec = vec![
         get_test_validator(),
@@ -136,8 +137,7 @@ async fn test_call_ctr_validator_fn_query() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_validator_fn_execute_add_validator() {
-    // init();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let test_validator_vec = vec![
         get_test_validator(),

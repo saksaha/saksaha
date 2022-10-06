@@ -3,14 +3,14 @@ use super::{
         ARG_CH_ID, ARG_DST_PK, ARG_SERIALIZED_INPUT, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2,
         DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
     },
-    utils::init_test_log,
+    utils::EnvelopeTestUtils,
 };
 use envelope_contract::{
     request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EncryptedChatMessage, EnvelopeStorage,
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
-use sak_vm::{CtrFn, VM};
+use sak_vm::{CtrFn, SakVM};
 use std::collections::HashMap;
 
 fn get_single_message() -> String {
@@ -105,10 +105,9 @@ fn make_mock_open_ch() -> Channel {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_msgs() {
-    // sak_test_utils::init_test_log();
-    init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let test_dummy_messege = get_multi_messages();
 
@@ -150,10 +149,9 @@ async fn test_messenger_get_msgs() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_ch_list() {
-    // sak_test_utils::init_test_log();
-    init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let her_pk = get_her_pk();
 
@@ -201,10 +199,9 @@ async fn test_messenger_get_ch_list() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel() {
-    // sak_test_utils::init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    init_test_log();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let new_pk = "abcdef".to_string();
 
@@ -275,10 +272,9 @@ async fn test_messenger_open_channel() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_send_msg() {
-    // sak_test_utils::init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    init_test_log();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let dummy_messeges = get_multi_messages();
 
@@ -346,10 +342,9 @@ async fn test_messenger_send_msg() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel_me_and_you() {
-    // sak_test_utils::init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    init_test_log();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let my_pk = "my_pk".to_string();
     let your_pk = "your_pk".to_string();
