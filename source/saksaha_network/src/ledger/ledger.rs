@@ -1,12 +1,12 @@
 use super::{consensus::Pos, genesis::GenesisBlock};
 use crate::{fs, SaksahaError};
-use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
+use sak_dist_ledger::{Consensus, SakDistLedger, SakDistLedgerArgs};
 use sak_p2p_id::Identity;
 use sak_proof::CoinProof;
 use std::sync::Arc;
 
 pub(crate) struct Ledger {
-    pub(crate) dist_ledger: DistLedger,
+    pub(crate) dist_ledger: SakDistLedger,
 }
 
 impl Ledger {
@@ -42,8 +42,7 @@ impl Ledger {
             acc_dir.join("db/ledger")
         };
 
-        let dist_ledger_args = DistLedgerArgs {
-            // public_key,
+        let dist_ledger_args = SakDistLedgerArgs {
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
             consensus,
@@ -52,7 +51,7 @@ impl Ledger {
         };
 
         let dist_ledger = {
-            let d = DistLedger::init(dist_ledger_args).await?;
+            let d = SakDistLedger::init(dist_ledger_args).await?;
 
             d
         };

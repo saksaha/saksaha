@@ -18,12 +18,12 @@ use tokio::sync::broadcast::Sender;
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
-pub struct DistLedger {
+pub struct SakDistLedger {
     pub apis: DistLedgerApis,
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
 }
 
-pub struct DistLedgerArgs {
+pub struct SakDistLedgerArgs {
     pub tx_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
     pub consensus: Box<dyn Consensus + Send + Sync>,
@@ -31,10 +31,9 @@ pub struct DistLedgerArgs {
     pub ledger_path: PathBuf,
 }
 
-impl DistLedger {
-    pub async fn init(dist_ledger_args: DistLedgerArgs) -> Result<DistLedger, LedgerError> {
-        let DistLedgerArgs {
-            // public_key,
+impl SakDistLedger {
+    pub async fn init(dist_ledger_args: SakDistLedgerArgs) -> Result<Self, LedgerError> {
+        let SakDistLedgerArgs {
             tx_sync_interval,
             genesis_block,
             consensus,
@@ -73,7 +72,7 @@ impl DistLedger {
             consensus,
         };
 
-        let dist_ledger = DistLedger {
+        let dist_ledger = SakDistLedger {
             apis,
             ledger_event_tx,
         };

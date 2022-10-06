@@ -1,9 +1,9 @@
-use crate::{mock_pos, DistLedger, DistLedgerArgs};
+use crate::{mock_pos, SakDistLedger, SakDistLedgerArgs};
 use sak_types::BlockCandidate;
 
 const APP_NAME: &str = "saksaha";
 
-pub async fn mock_dist_ledger(block: BlockCandidate) -> DistLedger {
+pub async fn mock_dist_ledger(block: BlockCandidate) -> SakDistLedger {
     let pos = mock_pos();
 
     let ledger_path = {
@@ -11,8 +11,7 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> DistLedger {
         config_dir.join("db/ledger")
     };
 
-    let dist_ledger_args = DistLedgerArgs {
-        // public_key: String::from("test"),
+    let dist_ledger_args = SakDistLedgerArgs {
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
@@ -20,14 +19,14 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> DistLedger {
         ledger_path,
     };
 
-    let dist_ledger = DistLedger::init(dist_ledger_args)
+    let dist_ledger = SakDistLedger::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 
     dist_ledger
 }
 
-pub async fn mock_dist_ledger_1() -> DistLedger {
+pub async fn mock_dist_ledger_1() -> SakDistLedger {
     let pos = mock_pos();
 
     let ledger_path = {
@@ -35,8 +34,7 @@ pub async fn mock_dist_ledger_1() -> DistLedger {
         config_dir.join("db/ledger")
     };
 
-    let dist_ledger_args = DistLedgerArgs {
-        // public_key: String::from("test"),
+    let dist_ledger_args = SakDistLedgerArgs {
         tx_sync_interval: None,
         genesis_block: Some(sak_types::mock_block_1()),
         consensus: pos,
@@ -44,7 +42,7 @@ pub async fn mock_dist_ledger_1() -> DistLedger {
         ledger_path,
     };
 
-    let dist_ledger = DistLedger::init(dist_ledger_args)
+    let dist_ledger = SakDistLedger::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 

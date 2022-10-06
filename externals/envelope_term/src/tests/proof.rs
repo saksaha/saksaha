@@ -1,7 +1,9 @@
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
-use sak_dist_ledger::{Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs};
+use sak_dist_ledger::{
+    Consensus, ConsensusError, DistLedgerApis, SakDistLedger, SakDistLedgerArgs,
+};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
 use sak_proof::{CoinProof, NewCoin, OldCoin};
@@ -46,7 +48,7 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
     Box::new(DummyPos {})
 }
 
-pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
+pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakDistLedger {
     let pos = make_dummy_pos();
 
     let ledger_path = {
@@ -54,9 +56,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
         config_dir.join("test").join("db/ledger")
     };
 
-    let dist_ledger_args = DistLedgerArgs {
-        // app_prefix: String::from("test"),
-        // public_key: String::from("test"),
+    let dist_ledger_args = SakDistLedgerArgs {
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
@@ -64,7 +64,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
         ledger_path,
     };
 
-    let dist_ledger = DistLedger::init(dist_ledger_args)
+    let dist_ledger = SakDistLedger::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 
