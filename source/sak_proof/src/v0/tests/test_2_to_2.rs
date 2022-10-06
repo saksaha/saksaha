@@ -192,7 +192,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let tree = MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1_old, cm_2_old]);
+    let tree = MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1_old, cm_2_old]).unwrap();
 
     let merkle_rt_1 = tree.get_merkle_rt();
 
@@ -207,10 +207,10 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = tree.nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match tree.nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -231,18 +231,16 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = tree.nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match tree.nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
 
         ret
     };
-
-    println!("auth_path_1: {:?}", auth_path_1);
 
     TestContext {
         hasher,

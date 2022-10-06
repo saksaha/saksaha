@@ -18,7 +18,7 @@ fn test_merkle_simulator() {
 
     let cm_vec_len = cm_vec.len() as u32;
 
-    let tree = MerkleTreeSim::init(tree_depth, cm_vec);
+    let tree = MerkleTreeSim::init(tree_depth, cm_vec).unwrap();
     let leaf_count = tree.get_leaf_count();
     let merkle_rt = tree.get_merkle_rt();
 
