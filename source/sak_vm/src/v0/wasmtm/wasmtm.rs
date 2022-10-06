@@ -4,10 +4,7 @@ use crate::{
 };
 use sak_logger::{error, info};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use wasmtime::{
-    Caller, Config, Engine, Extern, Func, Instance, Linker, Module, Store, TypedFunc, Val,
-};
+use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 #[derive(Serialize, Deserialize)]
 pub struct Data {
@@ -59,7 +56,7 @@ impl Wasmtime {
             "host",
             "get_mrs_data",
             |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-                let mut state = caller.data_mut();
+                let state = caller.data_mut();
                 println!("state: {:?}", state);
 
                 let data = Data { d: 123 };
@@ -117,6 +114,7 @@ impl Wasmtime {
 
         return Ok((instance, store));
     }
+
     pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true)).unwrap();
 
