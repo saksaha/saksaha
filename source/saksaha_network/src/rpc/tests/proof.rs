@@ -10,9 +10,6 @@ use sak_types::{BlockCandidate, MintTxCandidate, PourTxCandidate, Tx, TxCandidat
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_handle_get_cm_idx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -22,7 +19,6 @@ async fn test_rpc_client_handle_get_cm_idx() {
             utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
                 .await;
 
-        // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
 
         let cms = dummy_tx.get_cms().clone();
@@ -110,7 +106,6 @@ async fn test_rpc_client_handle_get_cm_idx() {
     let tx_from_res = json_response.result.unwrap();
 
     let res = tx_from_res.cm_idx;
-    println!("powww, {:?}", res);
 
     // assert_eq!(&expected_tx_hash, tx_hash_from_res);
 }

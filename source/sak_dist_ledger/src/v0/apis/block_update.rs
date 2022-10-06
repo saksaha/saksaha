@@ -47,8 +47,6 @@ impl SakDistLedger {
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
-        // lock();
-
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -322,7 +320,6 @@ impl SakDistLedger {
     }
 
     async fn process_ctr_state_update(
-        // apis: &DistLedgerApis,
         &self,
         ctr_addr: &String,
         data: &[u8],
@@ -391,7 +388,6 @@ impl SakDistLedger {
     }
 
     async fn handle_mint_tx_candidate(
-        // apis: &DistLedgerApis,
         &self,
         tc: &MintTxCandidate,
         ctr_state_update: &mut CtrStateUpdate,
@@ -414,7 +410,6 @@ impl SakDistLedger {
     }
 
     async fn handle_pour_tx_candidate(
-        // apis: &DistLedgerApis,
         &self,
         tc: &PourTxCandidate,
         ctr_state_update: &mut CtrStateUpdate,
@@ -436,7 +431,6 @@ impl SakDistLedger {
     }
 
     async fn process_merkle_update(
-        // apis: &DistLedgerApis,
         &self,
         merkle_update: &mut MerkleUpdate,
         cms: &Vec<[u8; 32]>,

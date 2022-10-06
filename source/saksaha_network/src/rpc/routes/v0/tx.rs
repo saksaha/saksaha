@@ -85,7 +85,6 @@ pub struct GetTxRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTxResponse {
-    //
     pub tx: Option<Tx>,
 }
 

@@ -176,8 +176,6 @@ async fn test_call_get_block_with_wrong_params() {
         block_acquired.get_block_hash(),
         &original_block_hash.unwrap()
     );
-
-    //
 }
 
 #[tokio::test(flavor = "multi_thread")]

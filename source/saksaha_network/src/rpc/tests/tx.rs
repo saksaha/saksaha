@@ -118,7 +118,6 @@ async fn test_rpc_client_request_wrong_get_tx() {
             utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
                 .await;
 
-        // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
 
         let old_tx_hash = (&dummy_tx).get_tx_hash();
@@ -356,7 +355,6 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
-    // let tc_dummy = MintTxCandidate::new_dummy_2();
     let tc_dummy = sak_types::mock_mint_tc_1()
         .into_mint_tx_candidate()
         .unwrap();
