@@ -1,6 +1,7 @@
 mod constants;
 mod ctr_fn;
 mod receipt;
+mod state;
 mod utils;
 mod vm;
 pub(crate) mod wasm_bootstrap;

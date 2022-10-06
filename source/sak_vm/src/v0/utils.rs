@@ -1,6 +1,17 @@
-use crate::{VMError, ALLOC_FN, EXECUTE, INIT, MEMORY, QUERY};
+use crate::{
+    v0::state::InstanceState, wasm_bootstrap, VMError, ALLOC_FN, EXECUTE, INIT, MEMORY, QUERY,
+};
 use sak_logger::{error, info};
-use wasmtime::{Caller, Config, Engine, Func, Instance, Linker, Module, Store, TypedFunc, Val};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use wasmtime::{
+    Caller, Config, Engine, Extern, Func, Instance, Linker, Module, Store, TypedFunc, Val,
+};
+
+#[derive(Serialize, Deserialize)]
+pub struct Data {
+    d: usize,
+}
 
 pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
     let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true)).unwrap();
@@ -61,10 +72,13 @@ pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
     true
 }
 
-pub(crate) fn create_instance(wasm: impl AsRef<[u8]>) -> Result<(Instance, Store<i32>), VMError> {
+pub(crate) fn create_instance(
+    wasm: impl AsRef<[u8]>,
+) -> Result<(Instance, Store<InstanceState>), VMError> {
     let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
-    let mut store = Store::new(&engine, 3);
+    let instance_state = InstanceState { len: 0 };
+    let mut store = Store::new(&engine, instance_state);
 
     let module = match Module::new(&engine, &wasm) {
         Ok(m) => {
@@ -83,41 +97,69 @@ pub(crate) fn create_instance(wasm: impl AsRef<[u8]>) -> Result<(Instance, Store
 
     let mut linker = Linker::new(&engine);
 
-    // linker.func_wrap(
-    //     "envelope_import_module",
-    //     "log",
-    //     |param3: i32, param4: i32| {
-    //         println!("log 33: {} ", param3);
-    //         println!("log 44: {} ", param4);
-    //     },
-    // )?;
+    linker.func_wrap(
+        "host",
+        "hello",
+        |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+            let state = caller.data_mut();
+            println!("state: {:?}", state);
+            println!("hello(): param1: {}", param);
+            println!("hello(): param2: {}", param2);
 
-    // (import "host" "hello" (func $host_hello (param i32 i32) (return i32)))
+            param * 2
+        },
+    )?;
 
-    // let wat = r#"
-    //     (module
-    //         (import "host" "hello" (func $host_hello (param i32) (result i32)))
+    linker.func_wrap(
+        "host",
+        "get_mrs_data",
+        |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+            let mut state = caller.data_mut();
+            println!("state: {:?}", state);
 
-    //         (func (export "hello")
-    //             i32.const 5
-    //             call $host_hello)
-    //     )
-    // "#;
+            let data = Data { d: 123 };
+            let data_bytes = match serde_json::to_vec(&data) {
+                Ok(b) => b,
+                Err(err) => {
+                    error!("Error serializing mrs data, err: {}", err);
 
-    // println!("5555");
-    // let module = Module::new(&engine, wat)?;
+                    vec![]
+                }
+            };
 
-    // linker.func_wrap("host", "hello", |param: i32, param2: i32| {
-    //     println!("Got {:?} from WebAssembly", param);
-    //     println!("Got {:?} from WebAssembly 222", param2);
-    // })?;
+            println!(
+                "get_mrs_data(): data: {:?}, getting memory allocation",
+                &data_bytes,
+            );
 
-    linker.func_wrap("host", "hello", |param: i32, param2: i32| {
-        println!("Got {:?} from WebAssembly", param);
-        println!("Got {:?} from WebAssembly 222", param2);
+            let alloc = caller.get_export(ALLOC_FN).unwrap().into_func().unwrap();
+            let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
 
-        param * 2
-    })?;
+            let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
+
+            println!("get_mrs_data(): param: {}", param);
+            println!("get_mrs_data(): param2: {}", param2);
+            println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
+
+            param * 2
+        },
+    )?;
+
+    linker.func_wrap(
+        "host",
+        "get_latest_len",
+        |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+            let mut state = caller.data_mut();
+            println!("state: {:?}", state);
+            println!("get_latest_len(): returning get latest len");
+
+            let ret = state.len as i32;
+
+            state.len = 0;
+
+            ret
+        },
+    )?;
 
     println!("6666");
 

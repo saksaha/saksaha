@@ -1,3 +1,4 @@
+use super::state::InstanceState;
 use super::utils;
 use crate::{wasm_bootstrap, InvokeReceipt};
 use crate::{CtrFn, VMError, EXECUTE, INIT, MEMORY, QUERY};
@@ -38,7 +39,7 @@ impl VM {
 
 fn invoke_init(
     instance: Instance,
-    mut store: Store<i32>,
+    mut store: Store<InstanceState>,
     memory: Memory,
 ) -> Result<InvokeReceipt, VMError> {
     let contract_fn: TypedFunc<(), (i32, i32)> = { instance.get_typed_func(&mut store, INIT)? };
@@ -58,7 +59,7 @@ fn invoke_init(
 
 fn invoke_query(
     instance: Instance,
-    mut store: Store<i32>,
+    mut store: Store<InstanceState>,
     memory: Memory,
     request: CtrRequest,
     storage: Storage,
@@ -66,7 +67,6 @@ fn invoke_query(
     let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
         { instance.get_typed_func(&mut store, QUERY)? };
 
-    println!("query!!!!");
     let (request_bytes, request_len) = {
         let str = serde_json::to_value(request)?.to_string();
 
@@ -88,12 +88,8 @@ fn invoke_query(
             request_len as i32,
         ),
     ) {
-        Ok(r) => {
-            println!("result 2222: {:?}", r);
-            r
-        }
+        Ok(r) => r,
         Err(err) => {
-            println!("aaaaaaaaaaaaaaA");
             return Err(format!(
                 "Error invoking query() of wasm, request_bytes: {:?}, \
                 storage: {:?}, original err: {}",
@@ -102,14 +98,11 @@ fn invoke_query(
             .into());
         }
     };
-    println!("query!!!!");
 
     let result: Vec<u8>;
     unsafe {
         result = wasm_bootstrap::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
     }
-
-    println!("aaa: {:?}", String::from_utf8(result.clone())?);
 
     let receipt = InvokeReceipt::from_query(result)?;
 
@@ -118,7 +111,7 @@ fn invoke_query(
 
 fn invoke_execute(
     instance: Instance,
-    mut store: Store<i32>,
+    mut store: Store<InstanceState>,
     memory: Memory,
     request: CtrRequest,
     storage: Storage,
@@ -176,7 +169,9 @@ fn invoke_execute(
     Ok(receipt)
 }
 
-fn init_module(contract_wasm: impl AsRef<[u8]>) -> Result<(Instance, Store<i32>, Memory), VMError> {
+fn init_module(
+    contract_wasm: impl AsRef<[u8]>,
+) -> Result<(Instance, Store<InstanceState>, Memory), VMError> {
     let (instance, mut store) = match utils::create_instance(contract_wasm) {
         Ok(r) => r,
         Err(err) => {

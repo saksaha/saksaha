@@ -1,8 +1,9 @@
+use super::state::InstanceState;
 use crate::{VMError, ALLOC_FN, MEMORY};
 use wasmtime::*;
 
 pub(crate) unsafe fn read_memory(
-    store: &Store<i32>,
+    store: &Store<InstanceState>,
     memory: &Memory,
     data_ptr: u32,
     len: u32,
@@ -28,7 +29,7 @@ pub(crate) unsafe fn read_memory(
 pub(crate) fn copy_memory(
     bytes: &Vec<u8>,
     instance: &Instance,
-    store: &mut Store<i32>,
+    store: &mut Store<InstanceState>,
 ) -> Result<isize, VMError> {
     // Get the "memory" export of the module.
     // If the module does not export it, just panic,
