@@ -1,22 +1,22 @@
-use super::{genesis::GenesisBlock, Pos};
+use super::{consensus::Pos, genesis::GenesisBlock};
 use crate::{fs, SaksahaError};
 use sak_dist_ledger::{Consensus, DistLedger, DistLedgerArgs};
 use sak_p2p_id::Identity;
 use sak_proof::CoinProof;
 use std::sync::Arc;
 
-pub(crate) struct Blockchain {
+pub(crate) struct Ledger {
     pub(crate) dist_ledger: DistLedger,
 }
 
-impl Blockchain {
+impl Ledger {
     pub(crate) async fn init(
         public_key: &String,
         tx_sync_interval: Option<u64>,
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
         identity: Arc<Identity>,
-    ) -> Result<Blockchain, SaksahaError> {
+    ) -> Result<Self, SaksahaError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
                 Some(b) => b,
@@ -57,7 +57,7 @@ impl Blockchain {
             d
         };
 
-        let blockchain = Blockchain { dist_ledger };
+        let blockchain = Ledger { dist_ledger };
 
         Ok(blockchain)
     }

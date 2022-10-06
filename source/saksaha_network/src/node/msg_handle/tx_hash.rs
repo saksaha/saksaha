@@ -40,7 +40,7 @@ pub(in crate::node) async fn recv_tx_hash_syn(
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaNodeError> {
     let txs_to_request = machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_tx_pool_diff(tx_hash_syn_msg.tx_hashes)

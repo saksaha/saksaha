@@ -95,7 +95,7 @@ async fn test_block_sync_true() {
     println!("Sending a tx1 to a node_1");
 
     machine_1
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .send_tx(dummy_tx1.clone())
@@ -108,7 +108,7 @@ async fn test_block_sync_true() {
         println!("check if node1 has tx1: {}", dummy_tx1.get_tx_hash());
 
         let tx_pool_1_contains_tx1 = machine_1
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
@@ -123,7 +123,7 @@ async fn test_block_sync_true() {
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         let tx_pool_2_contains_tx1 = machine_2
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
@@ -139,7 +139,7 @@ async fn test_block_sync_true() {
     {
         local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .write_block(None)
@@ -148,7 +148,7 @@ async fn test_block_sync_true() {
 
         let last_height_1 = local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .get_latest_block_height()
@@ -163,7 +163,7 @@ async fn test_block_sync_true() {
 
         let last_height_2 = local_node_2
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .get_latest_block_height()
@@ -270,7 +270,7 @@ async fn test_late_block_sync_true() {
         println!("Sending a tx1 to a node_1 at a first time");
 
         machine_1
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(dummy_tx1.clone())
@@ -281,7 +281,7 @@ async fn test_late_block_sync_true() {
 
         local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .write_block(None)
@@ -290,7 +290,7 @@ async fn test_late_block_sync_true() {
 
         let last_height_1 = local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .get_latest_block_height()
@@ -308,7 +308,7 @@ async fn test_late_block_sync_true() {
         println!("Sending a tx1 to a node_1 at a second time");
 
         machine_1
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(dummy_tx2.clone())
@@ -319,7 +319,7 @@ async fn test_late_block_sync_true() {
 
         local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .write_block(None)
@@ -328,7 +328,7 @@ async fn test_late_block_sync_true() {
 
         let last_height_1 = local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .get_latest_block_height()
@@ -348,7 +348,7 @@ async fn test_late_block_sync_true() {
         println!("Sending a tx1 to a node_1 at a third time");
 
         machine_1
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(dummy_tx3.clone())
@@ -359,7 +359,7 @@ async fn test_late_block_sync_true() {
 
         local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .write_block(None)
@@ -368,7 +368,7 @@ async fn test_late_block_sync_true() {
 
         let last_height_1 = local_node_1
             .machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .get_latest_block_height()
@@ -394,7 +394,7 @@ async fn test_late_block_sync_true() {
 
     let last_height_2 = local_node_2
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_latest_block_height()

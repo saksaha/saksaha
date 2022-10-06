@@ -34,7 +34,7 @@ impl PeerNode {
             let ledger_event_rx = {
                 let rx = self
                     .machine
-                    .blockchain
+                    .ledger
                     .dist_ledger
                     .ledger_event_tx
                     .clone()
@@ -67,14 +67,7 @@ impl PeerNode {
 
         {
             // Late sync routine
-            if let Ok(new_blocks) = self
-                .machine
-                .blockchain
-                .dist_ledger
-                .apis
-                .get_all_blocks()
-                .await
-            {
+            if let Ok(new_blocks) = self.machine.ledger.dist_ledger.apis.get_all_blocks().await {
                 if new_blocks.len() > 1 {
                     node_task_queue
                         .push_back(NodeTask::SendBlockHashSyn { new_blocks })

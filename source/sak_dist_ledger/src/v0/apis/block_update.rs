@@ -11,7 +11,7 @@ use sak_types::{
     Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate,
     TxCtrOp,
 };
-use sak_vm::CtrFn;
+use sak_vm::ContractFn;
 
 impl DistLedgerApis {
     pub async fn insert_genesis_block(
@@ -335,7 +335,7 @@ async fn process_ctr_state_update(
 
     match tx_ctr_op {
         TxCtrOp::ContractDeploy => {
-            let receipt = vm.invoke(&data, CtrFn::Init)?;
+            let receipt = vm.invoke(&data, ContractFn::Init)?;
             let storage = receipt
                 .updated_storage
                 .ok_or("Contract state needs to be initialized")?;
@@ -362,7 +362,7 @@ async fn process_ctr_state_update(
                                 .await?
                                 .ok_or("ctr data (wasm) should exist")?;
 
-                            let ctr_fn = CtrFn::Execute(req, previous_state.to_vec());
+                            let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
 
                             let receipt = vm.invoke(ctr_wasm, ctr_fn)?;
 

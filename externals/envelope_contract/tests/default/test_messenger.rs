@@ -10,7 +10,7 @@ use envelope_contract::{
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
-use sak_vm::{CtrFn, SakVM};
+use sak_vm::{ContractFn, SakVM};
 use std::collections::HashMap;
 
 fn get_single_message() -> String {
@@ -129,7 +129,7 @@ async fn test_messenger_get_msgs() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Query(request, messages_state);
+        let ctr_fn = ContractFn::Query(request, messages_state);
 
         let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -180,7 +180,7 @@ async fn test_messenger_get_ch_list() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Query(request, storage);
+        let ctr_fn = ContractFn::Query(request, storage);
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
@@ -242,7 +242,7 @@ async fn test_messenger_open_channel() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
@@ -311,7 +311,7 @@ async fn test_messenger_send_msg() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -402,7 +402,7 @@ async fn test_messenger_open_channel_me_and_you() {
         // let storage = make_mock_storage(&dummy_messeges);
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage.clone());
+        let ctr_fn = ContractFn::Execute(request, storage.clone());
 
         vm.invoke(ctr_wasm, ctr_fn).unwrap()
     };
@@ -428,7 +428,7 @@ async fn test_messenger_open_channel_me_and_you() {
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         vm.invoke(ctr_wasm, ctr_fn).unwrap()
     };

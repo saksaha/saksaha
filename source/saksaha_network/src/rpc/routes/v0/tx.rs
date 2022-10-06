@@ -32,7 +32,7 @@ pub(in crate::rpc) async fn send_mint_tx(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .send_tx(tx_candidate)
@@ -69,7 +69,7 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .send_tx(tx_candidate)
@@ -102,7 +102,7 @@ pub(in crate::rpc) async fn get_tx(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_tx(&rb.hash)

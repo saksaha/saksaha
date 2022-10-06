@@ -29,7 +29,7 @@ pub(in crate::rpc) async fn get_auth_path(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_auth_path(&rb.cm_idx)
@@ -67,7 +67,7 @@ pub(in crate::rpc) async fn get_cm_idx(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_cm_idx_by_cm(&rb.cm)

@@ -1,5 +1,5 @@
 use super::{constants::Constants, state::InstanceState};
-use crate::{wasm_bootstrap, wasm_time::Wasmtime, CtrFn, InvokeReceipt, VMError};
+use crate::{wasm_bootstrap, wasm_time::Wasmtime, ContractFn, InvokeReceipt, VMError};
 use sak_contract_std::{CtrRequest, InvokeResult, Storage, ERROR_PLACEHOLDER};
 use sak_logger::{error, info};
 use serde::{Deserialize, Serialize};
@@ -17,18 +17,18 @@ impl SakVM {
     pub fn invoke(
         &self,
         contract_wasm: impl AsRef<[u8]>,
-        ctr_fn: CtrFn,
+        ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMError> {
         let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
         match ctr_fn {
-            CtrFn::Init => {
+            ContractFn::Init => {
                 return Self::invoke_init(instance, store, memory);
             }
-            CtrFn::Query(request, storage) => {
+            ContractFn::Query(request, storage) => {
                 return Self::invoke_query(instance, store, memory, request, storage)
             }
-            CtrFn::Execute(request, storage) => {
+            ContractFn::Execute(request, storage) => {
                 return Self::invoke_execute(instance, store, memory, request, storage);
             }
         };

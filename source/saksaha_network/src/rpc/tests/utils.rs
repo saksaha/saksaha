@@ -1,7 +1,8 @@
+use crate::ledger::Ledger;
+use crate::machine::Machine;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::rpc::{RPCArgs, RPC};
 use crate::system::SystemHandle;
-use crate::{blockchain::Blockchain, machine::Machine};
 use colored::*;
 use sak_logger::info;
 use sak_p2p_id::Identity;
@@ -55,16 +56,16 @@ pub(in crate::rpc) async fn make_test_context(
         Arc::new(id)
     };
 
-    let blockchain = {
+    let ledger = {
         let pk = String::from("test");
 
-        Blockchain::init(&pk, None, None, None, identity.clone())
+        Ledger::init(&pk, None, None, None, identity.clone())
             .await
             .unwrap()
     };
 
     let machine = {
-        let m = Machine { blockchain };
+        let m = Machine { ledger };
 
         Arc::new(m)
     };
@@ -153,7 +154,7 @@ pub fn make_dummy_tx_pour_block() -> BlockCandidate {
     tx_pour_block
 }
 
-pub(crate) async fn make_blockchain(secret: &String, public_key_str: &String) -> Blockchain {
+pub(crate) async fn make_blockchain(secret: &String, public_key_str: &String) -> Ledger {
     let (_disc_socket, disc_port) = {
         let (socket, socket_addr) = sak_utils_net::setup_udp_socket(None).await.unwrap();
 
@@ -172,7 +173,7 @@ pub(crate) async fn make_blockchain(secret: &String, public_key_str: &String) ->
         Arc::new(id)
     };
 
-    let blockchain = Blockchain::init(&String::from("test"), None, None, None, identity.clone())
+    let blockchain = Ledger::init(&String::from("test"), None, None, None, identity.clone())
         .await
         .expect("Blockchain should be made");
 

@@ -30,7 +30,7 @@ async fn test_call_get_block_with_good_params() {
 
     let original_block_hash = {
         let block_hash = match machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .write_block(Some(block_candidate_same))
@@ -115,7 +115,7 @@ async fn test_call_get_block_with_wrong_params() {
 
     let original_block_hash = {
         let block_hash = match machine
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .write_block(Some(block_candidate))
@@ -215,7 +215,7 @@ async fn test_call_get_block_list() {
 
         let block_hash = {
             let block_hash = match machine
-                .blockchain
+                .ledger
                 .dist_ledger
                 .apis
                 .write_block(Some(block_candidate))

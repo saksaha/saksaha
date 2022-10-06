@@ -107,7 +107,7 @@ async fn test_concurrent_sync() {
     let mock_tx5 = sak_types::mock_mint_tc_random();
     let mock_tx6 = sak_types::mock_mint_tc_random();
 
-    let mut ledger_event_rx_1 = machine_1.blockchain.dist_ledger.ledger_event_tx.subscribe();
+    let mut ledger_event_rx_1 = machine_1.ledger.dist_ledger.ledger_event_tx.subscribe();
 
     let mut map = HashMap::from([
         (mock_tx1.get_tx_hash().to_string(), false),
@@ -149,7 +149,7 @@ async fn test_concurrent_sync() {
     let machine_1_clone = machine_1.clone();
     tokio::spawn(async move {
         machine_1_clone
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(mock_tx1.clone())
@@ -160,7 +160,7 @@ async fn test_concurrent_sync() {
     let machine_1_clone = machine_1.clone();
     tokio::spawn(async move {
         machine_1_clone
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(mock_tx2)
@@ -171,7 +171,7 @@ async fn test_concurrent_sync() {
     let machine_1_clone = machine_1.clone();
     tokio::spawn(async move {
         machine_1_clone
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(mock_tx3)
@@ -186,7 +186,7 @@ async fn test_concurrent_sync() {
     let machine_2_clone = machine_2.clone();
     tokio::spawn(async move {
         machine_2_clone
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(mock_tx4)
@@ -197,7 +197,7 @@ async fn test_concurrent_sync() {
     let machine_2_clone = machine_2.clone();
     tokio::spawn(async move {
         machine_2_clone
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(mock_tx5)
@@ -208,7 +208,7 @@ async fn test_concurrent_sync() {
     let machine_2_clone = machine_2.clone();
     tokio::spawn(async move {
         machine_2_clone
-            .blockchain
+            .ledger
             .dist_ledger
             .apis
             .send_tx(mock_tx6)

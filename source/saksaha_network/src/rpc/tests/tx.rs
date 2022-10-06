@@ -296,7 +296,7 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
     assert_eq!(expected_tc_hash, result_hash);
 
     let is_contain = machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .tx_pool_contains(&expected_tc_hash)
@@ -445,7 +445,7 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
     assert_eq!("success", send_success);
 
     let is_contain = machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .tx_pool_contains(&expected_tc_hash)

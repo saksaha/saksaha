@@ -30,7 +30,7 @@ pub(in crate::rpc) async fn query_ctr(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .query_ctr(&rb.ctr_addr, rb.req)

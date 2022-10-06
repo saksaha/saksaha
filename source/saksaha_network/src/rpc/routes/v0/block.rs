@@ -29,7 +29,7 @@ pub(in crate::rpc) async fn get_block(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_block(&rb.block_hash)
@@ -67,7 +67,7 @@ pub(in crate::rpc) async fn get_block_list(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
         .apis
         .get_block_list(rb.offset, rb.limit)

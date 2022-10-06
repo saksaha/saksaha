@@ -1,5 +1,5 @@
 use super::utils::DistLedgerTestUtils;
-use sak_vm::CtrFn;
+use sak_vm::ContractFn;
 use sak_vm::SakVM;
 
 #[tokio::test(flavor = "multi_thread")]
@@ -11,7 +11,7 @@ async fn test_insert_invalid_contract_to_tx_pool() {
 
     let vm = SakVM::init().expect("VM should be initiated");
 
-    let ctr_fn = CtrFn::Init;
+    let ctr_fn = ContractFn::Init;
 
     vm.invoke(test_wasm, ctr_fn)
         .expect("This test should panic");
