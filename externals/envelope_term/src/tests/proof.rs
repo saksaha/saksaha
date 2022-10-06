@@ -1,9 +1,7 @@
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
-use sak_dist_ledger::{
-    Consensus, ConsensusError, DistLedgerApis, SakDistLedger, SakDistLedgerArgs,
-};
+use sak_dist_ledger::{Consensus, ConsensusError, SakDistLedger, SakDistLedgerArgs};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
 use sak_proof::{CoinProof, NewCoin, OldCoin};
@@ -26,7 +24,7 @@ pub struct DummyPos {}
 impl Consensus for DummyPos {
     async fn do_consensus(
         &self,
-        _dist_ledger_apis: &DistLedgerApis,
+        _dist_ledger: &SakDistLedger,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());
@@ -154,7 +152,7 @@ async fn test_generate_a_proof() {
         println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
-        let merkle_node = dist_ledger.apis.get_merkle_node(&key).await.unwrap();
+        let merkle_node = dist_ledger.get_merkle_node(&key).await.unwrap();
 
         let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
 
@@ -321,7 +319,7 @@ async fn test_real_generate_a_proof() {
         println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
-        let merkle_node = dist_ledger.apis.get_merkle_node(&key).await.unwrap();
+        let merkle_node = dist_ledger.get_merkle_node(&key).await.unwrap();
 
         let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
 

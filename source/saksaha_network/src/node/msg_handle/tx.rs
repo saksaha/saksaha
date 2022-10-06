@@ -17,7 +17,6 @@ pub(in crate::node) async fn send_tx_syn<'a>(
     let tx_candidates = machine
         .ledger
         .dist_ledger
-        .apis
         .get_txs_from_pool(tx_hashes)
         .await;
 
@@ -44,7 +43,6 @@ pub(in crate::node) async fn recv_tx_syn(
     machine
         .ledger
         .dist_ledger
-        .apis
         .insert_into_pool(tx_syn.tx_candidates)
         .await;
 

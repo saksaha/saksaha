@@ -1,4 +1,4 @@
-use crate::{DistLedgerApis, LedgerError};
+use crate::{LedgerError, SakDistLedger};
 use sak_contract_std::Storage;
 use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
@@ -6,7 +6,7 @@ use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandida
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
-impl DistLedgerApis {
+impl SakDistLedger {
     pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
         self.ledger_db.get_blocks(block_hashes).await
     }

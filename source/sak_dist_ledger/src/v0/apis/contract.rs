@@ -1,10 +1,10 @@
-use crate::DistLedgerApis;
 use crate::LedgerError;
+use crate::SakDistLedger;
 use sak_contract_std::CtrRequest;
 use sak_types::CtrAddr;
 use sak_vm::ContractFn;
 
-impl DistLedgerApis {
+impl SakDistLedger {
     pub async fn query_ctr(
         &self,
         ctr_addr: &CtrAddr,
@@ -26,8 +26,6 @@ impl DistLedgerApis {
         let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
         let result = receipt.result;
-
-        // info!("invoke query ctr result: {:?}", result);
 
         Ok(result)
     }
@@ -55,8 +53,6 @@ impl DistLedgerApis {
         let state = receipt
             .updated_storage
             .ok_or("State needs to be updated after execution")?;
-
-        // info!("invoke execute ctr result, next ctr_state: {:?}", state);
 
         Ok(state)
     }

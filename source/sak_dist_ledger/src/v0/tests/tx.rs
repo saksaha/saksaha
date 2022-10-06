@@ -12,7 +12,6 @@ async fn test_put_and_get_transaction() {
     let bc = sak_types::mock_block_2();
 
     let block_hash = dist_ledger
-        .apis
         .write_block(Some(bc))
         .await
         .expect("block should be written")
@@ -21,7 +20,6 @@ async fn test_put_and_get_transaction() {
     println!("[+] block hash: {:?}", block_hash);
 
     let tx_hashes = dist_ledger
-        .apis
         .ledger_db
         .get_tx_hashes(&block_hash)
         .expect("block should be written")
@@ -29,7 +27,6 @@ async fn test_put_and_get_transaction() {
 
     for (idx, tx_hash) in tx_hashes.iter().enumerate() {
         let tx_val_retrieved = dist_ledger
-            .apis
             .get_tx(tx_hash)
             .await
             .expect("Tx should exist")
@@ -53,7 +50,6 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
         let dummy_pour_tx = sak_types::mock_pour_tc_2to2_1().upgrade(2);
 
         let _dummy_tx_hash = dist_ledger
-            .apis
             .ledger_db
             .batch_put_tx(&mut write_batch, &dummy_pour_tx)
             .expect("pour_tx should be written");
@@ -80,13 +76,11 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
     };
 
     dist_ledger
-        .apis
         .write_block(Some(block_candidate))
         .await
         .unwrap();
 
     let cms = dist_ledger
-        .apis
         .ledger_db
         .get_tx(&mock_tx_hash)
         .await
@@ -99,7 +93,6 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         println!("cms :{:?}", cms);
 
         let cm_1_idx = dist_ledger
-            .apis
             .ledger_db
             .get_cm_idx_by_cm(&cms[0])
             .unwrap()
@@ -132,13 +125,11 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     dist_ledger
-        .apis
         .write_block(Some(block_candidate))
         .await
         .unwrap();
 
     let cms = dist_ledger
-        .apis
         .ledger_db
         .get_tx(&mock_tx_hash)
         .await
@@ -149,7 +140,6 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     let cm_1_idx = {
         let cm_1_idx = dist_ledger
-            .apis
             .ledger_db
             .get_cm_idx_by_cm(&cms[0])
             .unwrap()
@@ -160,7 +150,6 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
     let cm_2_idx = {
         let cm_2_idx = dist_ledger
-            .apis
             .ledger_db
             .get_cm_idx_by_cm(&cms[1])
             .expect("cm_2_idx should be obtained")
@@ -190,7 +179,6 @@ async fn test_dist_ledger_verify_proof_success() {
 
     {
         let block_hash = dist_ledger
-            .apis
             .write_block(Some(bc_1))
             .await
             .expect("block should be written");
@@ -210,7 +198,6 @@ async fn test_dist_ledger_verify_proof_fail() {
 
     {
         let block_hash = dist_ledger
-            .apis
             .write_block(Some(bc_1))
             .await
             .expect("block should be written");
@@ -234,7 +221,6 @@ async fn test_dist_ledger_double_spending_success() {
 
     {
         let block_hash = dist_ledger
-            .apis
             .write_block(Some(block))
             .await
             .expect("block should be written");
@@ -255,7 +241,6 @@ async fn test_dist_ledger_double_spending_fail() {
 
     {
         let block_hash = dist_ledger
-            .apis
             .write_block(Some(bc_1))
             .await
             .expect("block should be written");
@@ -265,7 +250,6 @@ async fn test_dist_ledger_double_spending_fail() {
 
     {
         let block_hash = dist_ledger
-            .apis
             .write_block(Some(bc_2))
             .await
             .expect("block should be written");
@@ -287,7 +271,7 @@ async fn test_dist_ledger_verify_merkle_rt_fail() {
         created_at: format!("{}", 1),
     };
 
-    let result = match dist_ledger.apis.write_block(Some(bc)).await {
+    let result = match dist_ledger.write_block(Some(bc)).await {
         Ok(v) => v,
         Err(err) => panic!("Failed to write dummy block, err: {}", err),
     };

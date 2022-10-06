@@ -31,7 +31,6 @@ pub(in crate::rpc) async fn get_auth_path(
         .machine
         .ledger
         .dist_ledger
-        .apis
         .get_auth_path(&rb.cm_idx)
         .await
     {
@@ -69,7 +68,6 @@ pub(in crate::rpc) async fn get_cm_idx(
         .machine
         .ledger
         .dist_ledger
-        .apis
         .get_cm_idx_by_cm(&rb.cm)
         .await
     {

@@ -8,11 +8,11 @@ use sak_crypto::{hasher::MiMC, MerkleTree};
 use sak_vm::SakVM;
 use std::sync::Arc;
 
-pub struct DistLedgerApis {
-    pub(crate) ledger_db: LedgerDB,
-    pub vm: SakVM,
-    pub(crate) sync_pool: Arc<SyncPool>,
-    pub merkle_tree: MerkleTree,
-    pub hasher: MiMC,
-    pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
-}
+// pub struct DistLedgerApis {
+//     pub(crate) ledger_db: LedgerDB,
+//     pub vm: SakVM,
+//     pub(crate) sync_pool: Arc<SyncPool>,
+//     pub merkle_tree: MerkleTree,
+//     pub hasher: MiMC,
+//     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
+// }

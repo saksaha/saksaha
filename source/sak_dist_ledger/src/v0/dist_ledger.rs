@@ -1,6 +1,5 @@
 use super::DistLedgerEvent;
 use crate::Consensus;
-use crate::DistLedgerApis;
 use crate::LedgerDB;
 use crate::LedgerError;
 use crate::SyncPool;
@@ -19,8 +18,13 @@ use tokio::sync::broadcast::Sender;
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct SakDistLedger {
-    pub apis: DistLedgerApis,
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
+    pub(crate) ledger_db: LedgerDB,
+    pub vm: SakVM,
+    pub(crate) sync_pool: Arc<SyncPool>,
+    pub merkle_tree: MerkleTree,
+    pub hasher: MiMC,
+    pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
 }
 
 pub struct SakDistLedgerArgs {
@@ -63,7 +67,8 @@ impl SakDistLedger {
 
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
-        let apis = DistLedgerApis {
+        let dist_ledger = SakDistLedger {
+            ledger_event_tx,
             ledger_db,
             vm,
             sync_pool,
@@ -72,16 +77,11 @@ impl SakDistLedger {
             consensus,
         };
 
-        let dist_ledger = SakDistLedger {
-            apis,
-            ledger_event_tx,
-        };
-
         if let Some(bc) = genesis_block {
-            dist_ledger.apis.insert_genesis_block(bc).await?;
+            dist_ledger.insert_genesis_block(bc).await?;
         }
 
-        let latest_height = match dist_ledger.apis.ledger_db.get_latest_block_height()? {
+        let latest_height = match dist_ledger.ledger_db.get_latest_block_height()? {
             Some(h) => h.to_string(),
             None => "No block yet".to_string(),
         };

@@ -7,9 +7,6 @@ use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_tx_pool_marshal_check_true() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test_1", "test_2"]);
-
     let test_credential_1 = CredentialProfile::test_1();
     let test_credential_2 = CredentialProfile::test_2();
 
@@ -19,7 +16,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     ]);
 
     let test_context_1 = utils::make_test_context(
-        // "test_1".to_string(),
         Some(35519),
         Some(35518),
         test_credential_1.secret,
@@ -48,7 +44,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     } = test_context_1;
 
     let test_context_2 = utils::make_test_context(
-        // "test_2".to_string(),
         Some(35521),
         Some(35520),
         test_credential_2.secret,
@@ -102,7 +97,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     machine_1
         .ledger
         .dist_ledger
-        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -110,7 +104,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     machine_1
         .ledger
         .dist_ledger
-        .apis
         .send_tx(dummy_tx2.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -121,14 +114,12 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         let tx_pool_2_contains_tx1 = machine_2
             .ledger
             .dist_ledger
-            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
         let tx_pool_2_contains_tx2 = machine_2
             .ledger
             .dist_ledger
-            .apis
             .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 
@@ -141,7 +132,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         machine_1
             .ledger
             .dist_ledger
-            .apis
             .write_block(Some(block))
             .await
             .expect("Block should be written");
@@ -149,7 +139,6 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
         let tx_pool_1_contains_tx1 = machine_1
             .ledger
             .dist_ledger
-            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 

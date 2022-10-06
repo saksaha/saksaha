@@ -8,11 +8,6 @@ use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_tx_sync_true() {
-    // sak_test_utils::init_test_log();
-
-    // let app_prefix_vec = vec!["test_1", "test_2"];
-    // TestUtil::init_test(app_prefix_vec.clone());
-
     let test_credential_1 = CredentialProfile::test_1();
     let test_credential_2 = CredentialProfile::test_2();
 
@@ -57,7 +52,6 @@ async fn test_tx_sync_true() {
     machine_1
         .ledger
         .dist_ledger
-        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -65,7 +59,6 @@ async fn test_tx_sync_true() {
     let tx_pool_1_contains_tx1 = machine_1
         .ledger
         .dist_ledger
-        .apis
         .tx_pool_contains(dummy_tx1.get_tx_hash())
         .await;
 

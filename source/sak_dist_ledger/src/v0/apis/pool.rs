@@ -1,8 +1,8 @@
-use crate::{DistLedgerApis, LedgerError};
+use crate::{LedgerError, SakDistLedger};
 use sak_logger::warn;
 use sak_types::{BlockCandidate, TxCandidate};
 
-impl DistLedgerApis {
+impl SakDistLedger {
     pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
         for tx in tx_candidates.into_iter() {
             println!("insert into pool, tx: {}", tx.get_tx_hash());

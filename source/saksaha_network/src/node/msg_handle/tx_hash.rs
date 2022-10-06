@@ -42,7 +42,6 @@ pub(in crate::node) async fn recv_tx_hash_syn(
     let txs_to_request = machine
         .ledger
         .dist_ledger
-        .apis
         .get_tx_pool_diff(tx_hash_syn_msg.tx_hashes)
         .await;
 

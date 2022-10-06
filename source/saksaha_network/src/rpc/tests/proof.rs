@@ -40,10 +40,9 @@ async fn test_rpc_client_handle_get_cm_idx() {
             created_at: format!("{}", 0),
         });
 
-        dist_ledger.apis.write_block(bc).await.unwrap();
+        dist_ledger.write_block(bc).await.unwrap();
 
         let tx = dist_ledger
-            .apis
             .get_tx(&old_tx_hash.clone())
             .await
             .expect("Tx should be exist")

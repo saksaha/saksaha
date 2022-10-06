@@ -36,7 +36,7 @@ impl Miner {
         loop {
             let time_since = SystemTime::now();
 
-            match self.machine.ledger.dist_ledger.apis.write_block(None).await {
+            match self.machine.ledger.dist_ledger.write_block(None).await {
                 Ok(_) => (),
                 Err(err) => {
                     error!("write_block failed, err: {}", err.to_string());

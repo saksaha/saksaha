@@ -31,7 +31,6 @@ pub(in crate::rpc) async fn get_block(
         .machine
         .ledger
         .dist_ledger
-        .apis
         .get_block(&rb.block_hash)
     {
         Ok(block) => {
@@ -69,7 +68,6 @@ pub(in crate::rpc) async fn get_block_list(
         .machine
         .ledger
         .dist_ledger
-        .apis
         .get_block_list(rb.offset, rb.limit)
         .await
     {

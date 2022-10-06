@@ -10,10 +10,6 @@ use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_get_tx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    // SaksahaTestUtils::init_test(vec!["test"]);
-
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -23,7 +19,6 @@ async fn test_rpc_client_request_correct_get_tx() {
             utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
                 .await;
 
-        // let dummy_tx = sak_types::mock_pour_tc_m1_to_p3_p4();
         let dummy_tx = sak_types::mock_pour_tc_1();
 
         let old_tx_hash = (&dummy_tx).get_tx_hash();
@@ -31,7 +26,6 @@ async fn test_rpc_client_request_correct_get_tx() {
         let dist_ledger = blockchain.dist_ledger;
 
         dist_ledger
-            .apis
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
 
@@ -42,10 +36,9 @@ async fn test_rpc_client_request_correct_get_tx() {
             created_at: format!("{}", 0),
         });
 
-        dist_ledger.apis.write_block(bc).await.unwrap();
+        dist_ledger.write_block(bc).await.unwrap();
 
         let tx = dist_ledger
-            .apis
             .get_tx(&old_tx_hash.clone())
             .await
             .expect("Tx should be exist")
@@ -116,8 +109,6 @@ async fn test_rpc_client_request_correct_get_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_wrong_get_tx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -135,7 +126,6 @@ async fn test_rpc_client_request_wrong_get_tx() {
         let dist_ledger = blockchain.dist_ledger;
 
         dist_ledger
-            .apis
             .delete_tx(&old_tx_hash)
             .expect("Tx should be deleted");
 
@@ -146,10 +136,9 @@ async fn test_rpc_client_request_wrong_get_tx() {
             created_at: format!("{}", 0),
         });
 
-        dist_ledger.apis.write_block(bc).await.unwrap();
+        dist_ledger.write_block(bc).await.unwrap();
 
         let tx = dist_ledger
-            .apis
             .get_tx(&old_tx_hash.clone())
             .await
             .expect("Tx should be exist")
@@ -218,8 +207,6 @@ async fn test_rpc_client_request_wrong_get_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_correct_send_pour_tx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -298,7 +285,6 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
     let is_contain = machine
         .ledger
         .dist_ledger
-        .apis
         .tx_pool_contains(&expected_tc_hash)
         .await;
 
@@ -307,8 +293,6 @@ async fn test_rpc_reqeust_correct_send_pour_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_pour_tx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -368,8 +352,6 @@ async fn test_rpc_reqeust_wrong_send_pour_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_correct_send_mint_tx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -447,7 +429,6 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
     let is_contain = machine
         .ledger
         .dist_ledger
-        .apis
         .tx_pool_contains(&expected_tc_hash)
         .await;
 
@@ -456,8 +437,6 @@ async fn test_rpc_reqeust_correct_send_mint_tx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_mint_tx() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);

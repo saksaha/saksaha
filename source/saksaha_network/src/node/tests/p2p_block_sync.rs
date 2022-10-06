@@ -97,7 +97,6 @@ async fn test_block_sync_true() {
     machine_1
         .ledger
         .dist_ledger
-        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -110,7 +109,6 @@ async fn test_block_sync_true() {
         let tx_pool_1_contains_tx1 = machine_1
             .ledger
             .dist_ledger
-            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
@@ -125,7 +123,6 @@ async fn test_block_sync_true() {
         let tx_pool_2_contains_tx1 = machine_2
             .ledger
             .dist_ledger
-            .apis
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
@@ -141,7 +138,6 @@ async fn test_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .write_block(None)
             .await
             .expect("Block should be written");
@@ -150,7 +146,6 @@ async fn test_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .get_latest_block_height()
             .unwrap()
             .unwrap();
@@ -165,7 +160,6 @@ async fn test_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .get_latest_block_height()
             .unwrap()
             .unwrap();
@@ -181,11 +175,6 @@ async fn test_block_sync_true() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_late_block_sync_true() {
-    // sak_test_utils::init_test_log();
-
-    // let app_prefix_vec = vec!["test_1", "test_2"];
-    // TestUtil::init_test(app_prefix_vec.clone());
-
     let test_credential_1 = CredentialProfile::test_1();
     let test_credential_2 = CredentialProfile::test_2();
 
@@ -195,7 +184,6 @@ async fn test_late_block_sync_true() {
     ]);
 
     let test_context_1 = make_test_context(
-        // app_prefix_vec[0].to_string(),
         Some(35519),
         Some(35518),
         test_credential_1.secret,
@@ -224,7 +212,6 @@ async fn test_late_block_sync_true() {
     } = test_context_1;
 
     let test_context_2 = make_test_context(
-        // app_prefix_vec[1].to_string(),
         Some(35521),
         Some(35520),
         test_credential_2.secret,
@@ -272,7 +259,6 @@ async fn test_late_block_sync_true() {
         machine_1
             .ledger
             .dist_ledger
-            .apis
             .send_tx(dummy_tx1.clone())
             .await
             .expect("Node should be able to send a transaction");
@@ -283,7 +269,6 @@ async fn test_late_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .write_block(None)
             .await
             .expect("Block should be written");
@@ -292,7 +277,6 @@ async fn test_late_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .get_latest_block_height()
             .unwrap()
             .unwrap();
@@ -310,7 +294,6 @@ async fn test_late_block_sync_true() {
         machine_1
             .ledger
             .dist_ledger
-            .apis
             .send_tx(dummy_tx2.clone())
             .await
             .expect("Node should be able to send a transaction");
@@ -321,7 +304,6 @@ async fn test_late_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .write_block(None)
             .await
             .expect("Block should be written");
@@ -330,7 +312,6 @@ async fn test_late_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .get_latest_block_height()
             .unwrap()
             .unwrap();
@@ -350,7 +331,6 @@ async fn test_late_block_sync_true() {
         machine_1
             .ledger
             .dist_ledger
-            .apis
             .send_tx(dummy_tx3.clone())
             .await
             .expect("Node should be able to send a transaction");
@@ -361,7 +341,6 @@ async fn test_late_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .write_block(None)
             .await
             .expect("Block should be written");
@@ -370,7 +349,6 @@ async fn test_late_block_sync_true() {
             .machine
             .ledger
             .dist_ledger
-            .apis
             .get_latest_block_height()
             .unwrap()
             .unwrap();
@@ -396,7 +374,6 @@ async fn test_late_block_sync_true() {
         .machine
         .ledger
         .dist_ledger
-        .apis
         .get_latest_block_height()
         .unwrap()
         .unwrap();

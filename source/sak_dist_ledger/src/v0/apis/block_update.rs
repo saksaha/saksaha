@@ -1,4 +1,4 @@
-use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
+use crate::{CtrStateUpdate, LedgerError, MerkleUpdate, SakDistLedger};
 use colored::Colorize;
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
@@ -13,7 +13,7 @@ use sak_types::{
 };
 use sak_vm::ContractFn;
 
-impl DistLedgerApis {
+impl SakDistLedger {
     pub async fn insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
@@ -103,8 +103,7 @@ impl DistLedgerApis {
         for tx_candidate in tcs {
             let cm_count = match tx_candidate {
                 TxCandidate::Mint(tc) => {
-                    handle_mint_tx_candidate(
-                        self,
+                    self.handle_mint_tx_candidate(
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
@@ -113,8 +112,7 @@ impl DistLedgerApis {
                     .await?
                 }
                 TxCandidate::Pour(tc) => {
-                    handle_pour_tx_candidate(
-                        self,
+                    self.handle_pour_tx_candidate(
                         tc,
                         &mut ctr_state_update,
                         &mut merkle_update,
@@ -322,166 +320,171 @@ impl DistLedgerApis {
 
         Ok(())
     }
-}
 
-async fn process_ctr_state_update(
-    apis: &DistLedgerApis,
-    ctr_addr: &String,
-    data: &[u8],
-    tx_ctr_op: TxCtrOp,
-    ctr_state_update: &mut CtrStateUpdate,
-) -> Result<(), LedgerError> {
-    let vm = &apis.vm;
+    async fn process_ctr_state_update(
+        // apis: &DistLedgerApis,
+        &self,
+        ctr_addr: &String,
+        data: &[u8],
+        tx_ctr_op: TxCtrOp,
+        ctr_state_update: &mut CtrStateUpdate,
+    ) -> Result<(), LedgerError> {
+        let vm = &self.vm;
 
-    match tx_ctr_op {
-        TxCtrOp::ContractDeploy => {
-            let receipt = vm.invoke(&data, ContractFn::Init)?;
-            let storage = receipt
-                .updated_storage
-                .ok_or("Contract state needs to be initialized")?;
+        match tx_ctr_op {
+            TxCtrOp::ContractDeploy => {
+                let receipt = vm.invoke(&data, ContractFn::Init)?;
+                let storage = receipt
+                    .updated_storage
+                    .ok_or("Contract state needs to be initialized")?;
 
-            ctr_state_update.insert(ctr_addr.clone(), storage);
-        }
-
-        TxCtrOp::ContractCall => {
-            let req = CtrRequest::parse(data)?;
-
-            match req.ctr_call_type {
-                CtrCallType::Query => {
-                    warn!(
-                        "Tx may contain contract 'execute' request, \
-                        but not 'query'"
-                    );
-                }
-                CtrCallType::Execute => {
-                    let new_state = match ctr_state_update.get(ctr_addr) {
-                        Some(previous_state) => {
-                            let ctr_wasm = apis
-                                .ledger_db
-                                .get_ctr_data_by_ctr_addr(ctr_addr)
-                                .await?
-                                .ok_or("ctr data (wasm) should exist")?;
-
-                            let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
-
-                            let receipt = vm.invoke(ctr_wasm, ctr_fn)?;
-
-                            receipt.updated_storage.ok_or("State needs to be updated")?
-                        }
-                        None => apis.execute_ctr(ctr_addr, req).await?,
-                    };
-
-                    // println!(
-                    //     "[+] new_state: {:?}",
-                    //     String::from_utf8(new_state.clone())
-                    // );
-
-                    let maybe_error_placehorder = match &new_state.get(0..6) {
-                        Some(ep) => ep.to_owned(),
-                        None => {
-                            return Err("new_state should be bigger than 6-byte".into());
-                        }
-                    };
-
-                    if maybe_error_placehorder != ERROR_PLACEHOLDER {
-                        ctr_state_update.insert(ctr_addr.clone(), new_state.clone());
-                    }
-                }
-            };
-        }
-        TxCtrOp::None => {
-            // get `idx` and `height` from tx.`CM`
-        }
-    };
-
-    Ok(())
-}
-
-async fn handle_mint_tx_candidate(
-    apis: &DistLedgerApis,
-    tc: &MintTxCandidate,
-    ctr_state_update: &mut CtrStateUpdate,
-    merkle_update: &mut MerkleUpdate,
-    next_cm_idx: CmIdx,
-    // ledger_cm_count: u128,
-) -> Result<u128, LedgerError> {
-    let ctr_addr = &tc.ctr_addr;
-    let data = &tc.data;
-    let tx_ctr_op = tc.get_ctr_op();
-
-    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update).await?;
-
-    let cm_count = process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx).await?;
-
-    Ok(cm_count)
-}
-
-async fn handle_pour_tx_candidate(
-    apis: &DistLedgerApis,
-    tc: &PourTxCandidate,
-    ctr_state_update: &mut CtrStateUpdate,
-    merkle_update: &mut MerkleUpdate,
-    next_cm_idx: CmIdx,
-) -> Result<u128, LedgerError> {
-    let ctr_addr = &tc.ctr_addr;
-    let data = &tc.data;
-    let tx_ctr_op = tc.get_ctr_op();
-
-    process_ctr_state_update(apis, ctr_addr, data, tx_ctr_op, ctr_state_update).await?;
-
-    let cm_count = process_merkle_update(apis, merkle_update, &tc.cms, next_cm_idx).await?;
-
-    Ok(cm_count)
-}
-
-async fn process_merkle_update(
-    apis: &DistLedgerApis,
-    merkle_update: &mut MerkleUpdate,
-    cms: &Vec<[u8; 32]>,
-    next_cm_idx: CmIdx,
-) -> Result<u128, LedgerError> {
-    let cm_count = cms.len() as u128;
-
-    for (idx, cm) in cms.iter().enumerate() {
-        let cm_idx = next_cm_idx + idx as u128;
-        let auth_path = apis.merkle_tree.generate_auth_paths(cm_idx);
-
-        let leaf_loc = format!("{}_{}", 0, cm_idx);
-        merkle_update.insert(leaf_loc, *cm);
-
-        let mut curr_idx = cm_idx;
-        for (height, path) in auth_path.iter().enumerate() {
-            let sibling_node = match merkle_update.get(&path.node_loc) {
-                Some(n) => *n,
-                None => apis.get_merkle_node(&path.node_loc).await?,
-            };
-
-            let curr_loc = format!("{}_{}", height, curr_idx);
-            let curr_node = match merkle_update.get(&curr_loc) {
-                Some(n) => *n,
-                None => apis.get_merkle_node(&curr_loc).await?,
-            };
-
-            let lv;
-            let rv;
-            if path.direction {
-                lv = sibling_node;
-                rv = curr_node;
-            } else {
-                lv = curr_node;
-                rv = sibling_node;
+                ctr_state_update.insert(ctr_addr.clone(), storage);
             }
 
-            let merkle_node = apis.hasher.mimc(&lv, &rv)?.to_bytes();
+            TxCtrOp::ContractCall => {
+                let req = CtrRequest::parse(data)?;
 
-            let parent_idx = MerkleTree::get_parent_idx(curr_idx);
-            let update_loc = format!("{}_{}", height + 1, parent_idx);
+                match req.ctr_call_type {
+                    CtrCallType::Query => {
+                        warn!(
+                            "Tx may contain contract 'execute' request, \
+                        but not 'query'"
+                        );
+                    }
+                    CtrCallType::Execute => {
+                        let new_state = match ctr_state_update.get(ctr_addr) {
+                            Some(previous_state) => {
+                                let ctr_wasm = self
+                                    .ledger_db
+                                    .get_ctr_data_by_ctr_addr(ctr_addr)
+                                    .await?
+                                    .ok_or("ctr data (wasm) should exist")?;
 
-            merkle_update.insert(update_loc, merkle_node);
+                                let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
 
-            curr_idx = parent_idx;
-        }
+                                let receipt = vm.invoke(ctr_wasm, ctr_fn)?;
+
+                                receipt.updated_storage.ok_or("State needs to be updated")?
+                            }
+                            None => self.execute_ctr(ctr_addr, req).await?,
+                        };
+
+                        let maybe_error_placehorder = match &new_state.get(0..6) {
+                            Some(ep) => ep.to_owned(),
+                            None => {
+                                return Err("new_state should be bigger than 6-byte".into());
+                            }
+                        };
+
+                        if maybe_error_placehorder != ERROR_PLACEHOLDER {
+                            ctr_state_update.insert(ctr_addr.clone(), new_state.clone());
+                        }
+                    }
+                };
+            }
+            TxCtrOp::None => {
+                // get `idx` and `height` from tx.`CM`
+            }
+        };
+
+        Ok(())
     }
 
-    Ok(cm_count)
+    async fn handle_mint_tx_candidate(
+        // apis: &DistLedgerApis,
+        &self,
+        tc: &MintTxCandidate,
+        ctr_state_update: &mut CtrStateUpdate,
+        merkle_update: &mut MerkleUpdate,
+        next_cm_idx: CmIdx,
+        // ledger_cm_count: u128,
+    ) -> Result<u128, LedgerError> {
+        let ctr_addr = &tc.ctr_addr;
+        let data = &tc.data;
+        let tx_ctr_op = tc.get_ctr_op();
+
+        self.process_ctr_state_update(ctr_addr, data, tx_ctr_op, ctr_state_update)
+            .await?;
+
+        let cm_count = self
+            .process_merkle_update(merkle_update, &tc.cms, next_cm_idx)
+            .await?;
+
+        Ok(cm_count)
+    }
+
+    async fn handle_pour_tx_candidate(
+        // apis: &DistLedgerApis,
+        &self,
+        tc: &PourTxCandidate,
+        ctr_state_update: &mut CtrStateUpdate,
+        merkle_update: &mut MerkleUpdate,
+        next_cm_idx: CmIdx,
+    ) -> Result<u128, LedgerError> {
+        let ctr_addr = &tc.ctr_addr;
+        let data = &tc.data;
+        let tx_ctr_op = tc.get_ctr_op();
+
+        self.process_ctr_state_update(ctr_addr, data, tx_ctr_op, ctr_state_update)
+            .await?;
+
+        let cm_count = self
+            .process_merkle_update(merkle_update, &tc.cms, next_cm_idx)
+            .await?;
+
+        Ok(cm_count)
+    }
+
+    async fn process_merkle_update(
+        // apis: &DistLedgerApis,
+        &self,
+        merkle_update: &mut MerkleUpdate,
+        cms: &Vec<[u8; 32]>,
+        next_cm_idx: CmIdx,
+    ) -> Result<u128, LedgerError> {
+        let cm_count = cms.len() as u128;
+
+        for (idx, cm) in cms.iter().enumerate() {
+            let cm_idx = next_cm_idx + idx as u128;
+            let auth_path = self.merkle_tree.generate_auth_paths(cm_idx);
+
+            let leaf_loc = format!("{}_{}", 0, cm_idx);
+            merkle_update.insert(leaf_loc, *cm);
+
+            let mut curr_idx = cm_idx;
+            for (height, path) in auth_path.iter().enumerate() {
+                let sibling_node = match merkle_update.get(&path.node_loc) {
+                    Some(n) => *n,
+                    None => self.get_merkle_node(&path.node_loc).await?,
+                };
+
+                let curr_loc = format!("{}_{}", height, curr_idx);
+                let curr_node = match merkle_update.get(&curr_loc) {
+                    Some(n) => *n,
+                    None => self.get_merkle_node(&curr_loc).await?,
+                };
+
+                let lv;
+                let rv;
+                if path.direction {
+                    lv = sibling_node;
+                    rv = curr_node;
+                } else {
+                    lv = curr_node;
+                    rv = sibling_node;
+                }
+
+                let merkle_node = self.hasher.mimc(&lv, &rv)?.to_bytes();
+
+                let parent_idx = MerkleTree::get_parent_idx(curr_idx);
+                let update_loc = format!("{}_{}", height + 1, parent_idx);
+
+                merkle_update.insert(update_loc, merkle_node);
+
+                curr_idx = parent_idx;
+            }
+        }
+
+        Ok(cm_count)
+    }
 }
