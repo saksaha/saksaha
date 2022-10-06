@@ -5,12 +5,12 @@ mod pool;
 
 use crate::{Consensus, LedgerDB, SyncPool};
 use sak_crypto::{hasher::MiMC, MerkleTree};
-use sak_vm::VM;
+use sak_vm::SakVM;
 use std::sync::Arc;
 
 pub struct DistLedgerApis {
     pub(crate) ledger_db: LedgerDB,
-    pub vm: VM,
+    pub vm: SakVM,
     pub(crate) sync_pool: Arc<SyncPool>,
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,

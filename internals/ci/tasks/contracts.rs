@@ -71,7 +71,7 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
         },
         Contract {
             name: "sak_mrs",
-            path: source_path.join("sak_mrs"),
+            path: source_path.join("sak_mrs_contract"),
         },
     ];
 

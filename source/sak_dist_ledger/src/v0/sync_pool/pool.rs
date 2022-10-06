@@ -1,6 +1,7 @@
 use crate::DistLedgerEvent;
 use sak_logger::{debug, warn};
 use sak_types::{Block, BlockHash, BlockHeight, TxCandidate, TxCtrOp, TxHash};
+use sak_vm::SakVM;
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
@@ -149,7 +150,7 @@ impl SyncPool {
                 TxCtrOp::ContractDeploy => {
                     // check functions
                     let maybe_wasm = tc.get_data();
-                    if !sak_vm::is_valid_wasm(maybe_wasm) {
+                    if !SakVM::is_valid_wasm(maybe_wasm) {
                         return Err("Not valid wasm data".to_string());
                     }
                 }
