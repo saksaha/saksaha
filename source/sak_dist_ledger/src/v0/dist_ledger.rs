@@ -10,7 +10,7 @@ use sak_crypto::MerkleTree;
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_types::BlockCandidate;
-use sak_vm::VM;
+use sak_vm::SakVM;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -44,7 +44,7 @@ impl DistLedger {
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
 
-        let vm = VM::init()?;
+        let vm = SakVM::init()?;
 
         let ledger_event_tx = {
             let (tx, _rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);

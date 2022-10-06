@@ -8,6 +8,7 @@ edition = "2018"
 sak_kv_db = { path = "../sak_kv_db" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_logger = { path = "../sak_logger" }
+sak_mrs = { path = "../sak_mrs" }
 sak_dir = { path = "../sak_dir" }
 sak_crypto = { path = "../sak_crypto" }
 chrono = "0.4"
