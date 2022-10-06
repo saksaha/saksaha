@@ -329,6 +329,12 @@ pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
     let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
         .expect("proof should be created");
 
+    println!("merkle_rt_1:{:?}", test_context.merkle_rt_1.to_bytes());
+    println!("merkle_rt_2:{:?}", test_context.merkle_rt_2.to_bytes());
+    println!("sn_1:{:?}", test_context.sn_1.to_bytes());
+    println!("sn_2:{:?}", test_context.sn_2.to_bytes());
+    println!("cm_1:{:?}", test_context.cm_1.to_bytes());
+    println!("cm_2:{:?}", test_context.cm_2.to_bytes());
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
         test_context.merkle_rt_2,
@@ -337,6 +343,16 @@ pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
         test_context.cm_1,
         test_context.cm_2,
     ];
+
+    let mut pi_ser = Vec::new();
+    proof.write(&mut pi_ser).expect("pi should be serialized");
+
+    // println!("pi_ser: {:?}", pi_ser);
+    // println!("pi_ser_len: {:?}", pi_ser.len());
+
+    let pi_des: Proof<Bls12> = Proof::read(&*pi_ser).unwrap();
+
+    assert_eq!(pi_des, proof);
 
     assert_eq!(
         CoinProof::verify_proof_2_to_2(proof, &public_inputs, &test_context.hasher).unwrap(),
