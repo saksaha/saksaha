@@ -1,53 +1,29 @@
 use crate::{v0::tests::utils::SakCryptoTestUtils, MerkleTreeSim, ScalarExt};
-use std::collections::HashMap;
+
+use type_extension::U8Array;
 
 #[test]
 fn test_merkle_simulator() {
     SakCryptoTestUtils::init_test();
 
-    let tree = MerkleTreeSim::init(
-        5,
-        vec![
-            // some element (scalar)
-        ],
-    );
+    let tree_depth = 6;
+    let leaf_len = 2;
 
-    // let merkle_nodes_1 = {
-    //     let cm_1 = ScalarExt::parse_arr(&old_coin_1.cm).unwrap();
-    //     let cm_2 = ScalarExt::parse_arr(&old_coin_2.cm).unwrap();
+    let scalar_zero = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
 
-    //     let mut m = HashMap::new();
+    let mut cm_vec = vec![];
+    for _i in 0..leaf_len {
+        cm_vec.push(scalar_zero);
+    }
 
-    //     let node_0_1 = cm_2;
-    //     let node_1_1 = ScalarExt::parse_u64(0).unwrap();
-    //     let node_2_1 = ScalarExt::parse_u64(0).unwrap();
-    //     let node_3_1 = ScalarExt::parse_u64(0).unwrap();
-    //     let node_4_1 = ScalarExt::parse_u64(0).unwrap();
-    //     let node_5_1 = ScalarExt::parse_u64(0).unwrap();
+    let cm_vec_len = cm_vec.len() as u32;
 
-    //     m.insert("0_1", node_0_1);
-    //     m.insert("1_1", node_1_1);
-    //     m.insert("2_1", node_2_1);
-    //     m.insert("3_1", node_3_1);
-    //     m.insert("4_1", node_4_1);
-    //     m.insert("5_1", node_5_1);
+    let tree = MerkleTreeSim::init(tree_depth, cm_vec).unwrap();
+    let leaf_count = tree.get_leaf_count();
+    let merkle_rt = tree.get_merkle_rt();
 
-    //     let node_1_0 = hasher.mimc_scalar(cm_1, cm_2);
-    //     let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
-    //     let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
-    //     let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-    //     let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
-    //     let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
+    println!("leaf_count: {}", leaf_count);
+    println!("merkle_rt: {}", merkle_rt);
 
-    //     m.insert("1_0", node_1_0);
-    //     m.insert("2_0", node_2_0);
-    //     m.insert("3_0", node_3_0);
-    //     m.insert("4_0", node_4_0);
-    //     m.insert("5_0", node_5_0);
-    //     m.insert("6_0", node_6_0);
-
-    //     m
-    // };
-
-    println!("11");
+    assert_eq!(leaf_count, cm_vec_len);
 }

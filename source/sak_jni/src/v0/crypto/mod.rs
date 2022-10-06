@@ -1,15 +1,17 @@
 use jni::objects::{JClass, JObject, JString, JValue};
 use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
+use sak_crypto::derive_aes_key;
 use sak_crypto::{
     self, decode_hex, encode_hex, AesParams, PublicKey, SecretKey, SharedSecretParams,
+    ToEncodedPoint,
 };
-use sak_crypto::{derive_aes_key, PublicKey, SecretKey, ToEncodedPoint};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use type_extension::U8Array;
+use type_extension::{convert_vec_into_u8_32, U8Array};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Channel {
@@ -110,7 +112,11 @@ pub extern "C" fn Java_jni_saksaha_sakCrypto_SakCrypto_generateChannel(
     let ch_id = sak_crypto::rand().to_string();
 
     // =-=-=-=-=-= `open_ch` for initiator  =-=-=-=-=-=-=-=
-    let my_sk: [u8; 32] = U8Array::from_hex_string(my_sk).expect("hex_string should be parsed");
+    let my_sk: [u8; 32] = decode_hex(&my_sk)
+        .expect("hex_string should be parsed")
+        .as_slice()
+        .try_into()
+        .expect("u8 array should be parsed");
 
     let ch = {
         let ch_id_enc = {
