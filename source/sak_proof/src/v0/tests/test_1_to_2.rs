@@ -1,12 +1,11 @@
 use super::utils;
 use crate::{CoinProof, ProofError};
-use sak_crypto::groth16::{self, Parameters, Proof};
+use sak_crypto::groth16::{self, Proof};
 use sak_crypto::hasher::MiMC;
-use sak_crypto::{Bls12, MerkleTree, OsRng, Scalar, ScalarExt};
+use sak_crypto::{Bls12, MerkleTreeSim, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::debug;
 use sak_proof_circuit::{CoinProofCircuit1to2, NewCoin, OldCoin};
-use std::collections::HashMap;
 use type_extension::U8Array;
 
 pub struct TestContext {
@@ -146,7 +145,7 @@ pub fn make_test_context() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(40);
+            let arr = U8Array::from_int(30);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -159,9 +158,11 @@ pub fn make_test_context() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+    let tree_simulator = MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1_old]).unwrap();
 
-    let merkle_nodes = mock_merkle_nodes(&hasher, cm_1_old);
+    let merkle_tree = tree_simulator.merkle_tree;
+
+    let merkle_nodes = tree_simulator.nodes;
 
     let merkle_rt = *merkle_nodes
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
@@ -178,10 +179,10 @@ pub fn make_test_context() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -218,136 +219,6 @@ pub fn make_test_context() -> TestContext {
     }
 }
 
-pub fn mock_merkle_nodes(hasher: &MiMC, cm_old: Scalar) -> HashMap<&'static str, Scalar> {
-    let merkle_nodes = {
-        let mut m = HashMap::new();
-
-        let node_0_1 = {
-            let arr = U8Array::new_empty_32();
-            ScalarExt::parse_arr(&arr).unwrap()
-        };
-
-        let node_1_1 = {
-            let node_0_2 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_3 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let h = hasher.mimc_scalar(node_0_2, node_0_3);
-            h
-        };
-
-        let node_2_1 = {
-            let node_0_4 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_5 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_6 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_7 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_1_2 = hasher.mimc_scalar(node_0_4, node_0_5);
-
-            let node_1_3 = hasher.mimc_scalar(node_0_6, node_0_7);
-
-            hasher.mimc_scalar(node_1_2, node_1_3)
-        };
-
-        let node_3_1 = {
-            let node_0_8 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_9 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_10 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_11 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_12 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_13 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_14 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_15 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            //
-            let node_1_4 = hasher.mimc_scalar(node_0_8, node_0_9);
-
-            let node_1_5 = hasher.mimc_scalar(node_0_10, node_0_11);
-
-            let node_1_6 = hasher.mimc_scalar(node_0_12, node_0_13);
-
-            let node_1_7 = hasher.mimc_scalar(node_0_14, node_0_15);
-
-            //
-            let node_2_2 = hasher.mimc_scalar(node_1_4, node_1_5);
-
-            let node_2_3 = hasher.mimc_scalar(node_1_6, node_1_7);
-
-            hasher.mimc_scalar(node_2_2, node_2_3)
-        };
-
-        let node_1_0 = hasher.mimc_scalar(cm_old, node_0_1);
-
-        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
-
-        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
-
-        let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-
-        m.insert("0_1", node_0_1);
-        m.insert("1_1", node_1_1);
-        m.insert("2_1", node_2_1);
-        m.insert("3_1", node_3_1);
-        m.insert("4_0", node_4_0);
-
-        m
-    };
-
-    merkle_nodes
-}
-
 fn make_proof(
     coin_1_old: OldCoin,
     coin_1_new: NewCoin,
@@ -378,7 +249,7 @@ fn make_proof(
 fn verify_proof(
     proof: Proof<Bls12>,
     public_inputs: &[Scalar],
-    hasher: &MiMC,
+    _hasher: &MiMC,
 ) -> Result<bool, ProofError> {
     let de_params = CoinProof::get_mimc_params_1_to_2()?;
     let pvk = groth16::prepare_verifying_key(&de_params.vk);

@@ -1,11 +1,10 @@
 use crate::{CoinProof, ProofError};
 use bls12_381::Scalar;
 use sak_crypto::hasher::MiMC;
-use sak_crypto::Proof;
-use sak_crypto::{Bls12, MerkleTree, ScalarExt};
+use sak_crypto::{Bls12, ScalarExt};
+use sak_crypto::{MerkleTreeSim, Proof};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_proof_circuit::{NewCoin, OldCoin};
-use std::collections::HashMap;
 use std::os::raw::c_char;
 use type_extension::U8Array;
 
@@ -318,13 +317,16 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+    let tree_simulator =
+        MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1_old, cm_2_old]).unwrap();
 
-    let merkle_nodes_1 = mock_merkle_nodes_cm_1_depth_32(&hasher, cm_1_old, cm_2_old);
+    let merkle_tree = tree_simulator.merkle_tree;
 
-    println!("{:#?}", merkle_nodes_1);
+    let merkle_nodes = tree_simulator.nodes;
 
-    let merkle_rt_1 = *merkle_nodes_1
+    println!("{:#?}", merkle_nodes);
+
+    let merkle_rt_1 = *merkle_nodes
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
@@ -340,7 +342,7 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes_1.get(key.as_str()).expect(&format!(
+            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
                 "value doesn't exist in the merkle node, key: {}",
                 key
             ));
@@ -351,9 +353,7 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
         ret
     };
 
-    let merkle_nodes_2 = mock_merkle_nodes_cm_2_depth_32(&hasher, cm_1_old, cm_2_old);
-
-    let merkle_rt_2 = *merkle_nodes_2
+    let merkle_rt_2 = *merkle_nodes
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
@@ -369,7 +369,7 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes_2.get(key.as_str()).expect(&format!(
+            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
                 "value doesn't exist in the merkle node, key: {}",
                 key
             ));
@@ -554,13 +554,16 @@ pub fn make_test_context_2_to_2() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
+    let tree_simulator =
+        MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1_old, cm_2_old]).unwrap();
 
-    let merkle_nodes_1 = mock_merkle_nodes_cm_1(&hasher, cm_1_old, cm_2_old);
+    let merkle_tree = tree_simulator.merkle_tree;
 
-    println!("{:#?}", merkle_nodes_1);
+    let merkle_nodes = tree_simulator.nodes;
 
-    let merkle_rt_1 = *merkle_nodes_1
+    println!("{:#?}", merkle_nodes);
+
+    let merkle_rt_1 = *merkle_nodes
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
@@ -576,7 +579,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes_1.get(key.as_str()).expect(&format!(
+            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
                 "value doesn't exist in the merkle node, key: {}",
                 key
             ));
@@ -587,9 +590,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         ret
     };
 
-    let merkle_nodes_2 = mock_merkle_nodes_cm_2(&hasher, cm_1_old, cm_2_old);
-
-    let merkle_rt_2 = *merkle_nodes_2
+    let merkle_rt_2 = *merkle_nodes
         .get(format!("{}_0", CM_TREE_DEPTH).as_str())
         .unwrap();
 
@@ -605,7 +606,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes_2.get(key.as_str()).expect(&format!(
+            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
                 "value doesn't exist in the merkle node, key: {}",
                 key
             ));
@@ -656,365 +657,4 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2,
         cm_2,
     }
-}
-pub fn mock_merkle_nodes_cm_1_depth_32(
-    hasher: &MiMC,
-    cm_old_1: Scalar,
-    cm_old_2: Scalar,
-) -> HashMap<String, Scalar> {
-    let merkle_nodes = {
-        let mut m = HashMap::new();
-
-        let node_0_0 = cm_old_1;
-
-        m.insert("0_0".to_string(), node_0_0);
-
-        for idx in 0..CM_TREE_DEPTH {
-            let loc = format!("{}_1", idx);
-
-            m.insert(loc, ScalarExt::parse_u64(0).unwrap());
-        }
-
-        for idx in 1..=CM_TREE_DEPTH {
-            let loc = format!("{}_0", idx);
-            m.insert(
-                loc,
-                hasher.mimc_scalar(
-                    *m.get(format!("{}_0", idx - 1).as_str()).unwrap(),
-                    *m.get(format!("{}_1", idx - 1).as_str()).unwrap(),
-                ),
-            );
-        }
-
-        m
-    };
-
-    merkle_nodes
-}
-
-pub fn mock_merkle_nodes_cm_1(
-    hasher: &MiMC,
-    cm_old_1: Scalar,
-    cm_old_2: Scalar,
-) -> HashMap<&'static str, Scalar> {
-    let merkle_nodes = {
-        let mut m = HashMap::new();
-
-        let node_0_1 = cm_old_2;
-
-        let node_1_1 = {
-            let node_0_2 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_3 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let h = hasher.mimc_scalar(node_0_2, node_0_3);
-            h
-        };
-
-        let node_2_1 = {
-            let node_0_4 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_5 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_6 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_7 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_1_2 = hasher.mimc_scalar(node_0_4, node_0_5);
-
-            let node_1_3 = hasher.mimc_scalar(node_0_6, node_0_7);
-
-            hasher.mimc_scalar(node_1_2, node_1_3)
-        };
-
-        let node_3_1 = {
-            let node_0_8 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_9 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_10 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_11 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_12 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_13 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_14 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_15 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            //
-            let node_1_4 = hasher.mimc_scalar(node_0_8, node_0_9);
-
-            let node_1_5 = hasher.mimc_scalar(node_0_10, node_0_11);
-
-            let node_1_6 = hasher.mimc_scalar(node_0_12, node_0_13);
-
-            let node_1_7 = hasher.mimc_scalar(node_0_14, node_0_15);
-
-            //
-            let node_2_2 = hasher.mimc_scalar(node_1_4, node_1_5);
-
-            let node_2_3 = hasher.mimc_scalar(node_1_6, node_1_7);
-
-            hasher.mimc_scalar(node_2_2, node_2_3)
-        };
-
-        let node_1_0 = hasher.mimc_scalar(cm_old_1, node_0_1);
-
-        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
-
-        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
-
-        let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-
-        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
-
-        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
-
-        m.insert("0_1", node_0_1);
-        m.insert("1_1", node_1_1);
-        m.insert("2_1", node_2_1);
-        m.insert("3_1", node_3_1);
-        m.insert("4_0", node_4_0);
-
-        m.insert("4_1", node_4_1);
-        m.insert("5_1", node_5_1);
-        m.insert("5_0", node_5_0);
-        m.insert("6_0", node_6_0);
-
-        m
-    };
-
-    merkle_nodes
-}
-pub fn mock_merkle_nodes_cm_2_depth_32(
-    hasher: &MiMC,
-    cm_old_1: Scalar,
-    cm_old_2: Scalar,
-) -> HashMap<String, Scalar> {
-    let merkle_nodes = {
-        let mut m = HashMap::new();
-
-        let node_0_1 = cm_old_2;
-
-        m.insert("0_0".to_string(), ScalarExt::parse_u64(0).unwrap());
-        m.insert("0_1".to_string(), node_0_1);
-
-        for idx in 1..CM_TREE_DEPTH {
-            let loc = format!("{}_1", idx);
-
-            m.insert(loc, ScalarExt::parse_u64(0).unwrap());
-        }
-
-        for idx in 1..=CM_TREE_DEPTH {
-            let loc = format!("{}_0", idx);
-
-            m.insert(
-                loc,
-                hasher.mimc_scalar(
-                    *m.get(format!("{}_0", idx - 1).as_str()).unwrap(),
-                    *m.get(format!("{}_1", idx - 1).as_str()).unwrap(),
-                ),
-            );
-        }
-
-        m
-    };
-
-    merkle_nodes
-}
-
-pub fn mock_merkle_nodes_cm_2(
-    hasher: &MiMC,
-    cm_old_1: Scalar,
-    cm_old_2: Scalar,
-) -> HashMap<&'static str, Scalar> {
-    let merkle_nodes = {
-        let mut m = HashMap::new();
-
-        // let node_0_1 = {
-        //     let arr = U8Array::new_empty_32();
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        let node_1_1 = {
-            let node_0_2 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_3 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let h = hasher.mimc_scalar(node_0_2, node_0_3);
-            h
-        };
-
-        let node_2_1 = {
-            let node_0_4 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_5 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_6 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_7 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_1_2 = hasher.mimc_scalar(node_0_4, node_0_5);
-
-            let node_1_3 = hasher.mimc_scalar(node_0_6, node_0_7);
-
-            hasher.mimc_scalar(node_1_2, node_1_3)
-        };
-
-        let node_3_1 = {
-            let node_0_8 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_9 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_10 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_11 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_12 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_13 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_14 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            let node_0_15 = {
-                let arr = U8Array::new_empty_32();
-                ScalarExt::parse_arr(&arr).unwrap()
-            };
-
-            //
-            let node_1_4 = hasher.mimc_scalar(node_0_8, node_0_9);
-
-            let node_1_5 = hasher.mimc_scalar(node_0_10, node_0_11);
-
-            let node_1_6 = hasher.mimc_scalar(node_0_12, node_0_13);
-
-            let node_1_7 = hasher.mimc_scalar(node_0_14, node_0_15);
-
-            //
-            let node_2_2 = hasher.mimc_scalar(node_1_4, node_1_5);
-
-            let node_2_3 = hasher.mimc_scalar(node_1_6, node_1_7);
-
-            hasher.mimc_scalar(node_2_2, node_2_3)
-        };
-
-        let node_1_0 = hasher.mimc_scalar(cm_old_1, cm_old_2);
-
-        let node_2_0 = hasher.mimc_scalar(node_1_0, node_1_1);
-
-        let node_3_0 = hasher.mimc_scalar(node_2_0, node_2_1);
-
-        let node_4_0 = hasher.mimc_scalar(node_3_0, node_3_1);
-
-        let node_4_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_5_0 = hasher.mimc_scalar(node_4_0, node_4_1);
-
-        let node_5_1 = ScalarExt::parse_u64(0).unwrap();
-
-        let node_6_0 = hasher.mimc_scalar(node_5_0, node_5_1);
-
-        m.insert("0_0", cm_old_1);
-        m.insert("1_1", node_1_1);
-        m.insert("2_1", node_2_1);
-        m.insert("3_1", node_3_1);
-        m.insert("4_0", node_4_0);
-
-        m.insert("4_1", node_4_1);
-        m.insert("5_1", node_5_1);
-        m.insert("5_0", node_5_0);
-        m.insert("6_0", node_6_0);
-
-        m
-    };
-
-    merkle_nodes
 }
