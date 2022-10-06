@@ -28,7 +28,7 @@ members = [
   "source/sak_vm",
   "source/sak_test_utils",
   "source/wasm_postprocess",
-  "source/wasm_experiment",
+  "source/wasm_experiments",
   "source/type_extension",
   "source/saksaha_rs",
   "source/saksaha_wallet",

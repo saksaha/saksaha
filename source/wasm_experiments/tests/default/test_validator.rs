@@ -2,7 +2,7 @@ use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_logger::SakLogger;
 use sak_vm::{CtrFn, VM};
 use std::collections::HashMap;
-use wasm_experiment::{AddValidatorParams, ValidatorStorage};
+use wasm_experiments::{AddValidatorParams, ValidatorStorage};
 
 pub(crate) const VALIDATOR: &[u8] =
     include_bytes!("../../../prebuild/wasm_experiment.postprocess.wasm");

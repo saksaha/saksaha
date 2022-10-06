@@ -1,5 +1,5 @@
 [package]
-name = "wasm_experiment"
+name = "wasm_experiments"
 version = "0.1.0"
 edition = "2021"
 
