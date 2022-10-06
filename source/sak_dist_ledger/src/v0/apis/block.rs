@@ -15,14 +15,6 @@ impl SakDistLedger {
         self.ledger_db.get_txs(tx_hashes).await
     }
 
-    // pub async fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
-    //     match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
-    //         Ok(Some(_)) => return false,
-    //         Ok(None) => return true,
-    //         Err(_err) => return false,
-    //     }
-    // }
-
     pub async fn get_merkle_node(&self, location: &String) -> Result<[u8; 32], LedgerError> {
         self.ledger_db.get_merkle_node(location)
     }
