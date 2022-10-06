@@ -53,12 +53,6 @@ fn reserve_slot(
     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
     let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
 
-    mrs.slots.push(Slot {
-        pk: reserve_slot_params.public_key,
-        timestamp: String::default(),
-        // timestamp: Local::now().to_string(),
-    });
-
     *storage = serde_json::to_vec(&mrs)?;
 
     Ok(vec![])

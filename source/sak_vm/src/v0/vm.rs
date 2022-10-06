@@ -168,7 +168,6 @@ fn invoke_execute(
             .into());
         }
     };
-    println!("44444444");
 
     let storage: Vec<u8>;
     unsafe {
