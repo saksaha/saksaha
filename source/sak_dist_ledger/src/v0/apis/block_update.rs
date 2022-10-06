@@ -477,10 +477,6 @@ async fn process_merkle_update(
             let parent_idx = MerkleTree::get_parent_idx(curr_idx);
             let update_loc = format!("{}_{}", height + 1, parent_idx);
 
-            // println!(
-            //     "merkle_update(): loc: {}, val: {:?}",
-            //     update_loc, merkle_node
-            // );
             merkle_update.insert(update_loc, merkle_node);
 
             curr_idx = parent_idx;
