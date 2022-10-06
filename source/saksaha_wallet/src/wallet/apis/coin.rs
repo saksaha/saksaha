@@ -2,12 +2,12 @@ use crate::wallet::Wallet;
 use crate::WalletError;
 use sak_contract_std::CtrRequest;
 use sak_crypto::encode_hex;
+use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_dist_ledger_meta::GAS;
 use sak_logger::debug;
 use sak_proof::CoinProof;
-use sak_proof::Hasher;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
 use sak_proof::DUMMY_MERKLE_RT;
@@ -124,7 +124,7 @@ impl Wallet {
         auth_path: Vec<([u8; 32], bool)>,
     ) -> Result<[u8; 32], WalletError> {
         let merkle_rt = {
-            let hasher = Hasher::new();
+            let hasher = MiMC::new();
 
             let mut curr = coin.cm.to_bytes();
 
@@ -357,7 +357,7 @@ impl Wallet {
 
             let rho = coin.rho;
 
-            let hasher = Hasher::new();
+            let hasher = MiMC::new();
 
             let s = hasher.mimc_scalar(addr_sk, rho);
 

@@ -5,9 +5,9 @@ use crate::TxHash;
 use crate::TypesError;
 use colored::Colorize;
 use sak_crypto::decode_hex;
+use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
-use sak_proof::Hasher;
 use sak_proof::NewCoin;
 use type_extension::U8Array;
 
@@ -49,7 +49,7 @@ impl CoinRecord {
         coin_idx: Option<CoinIdx>,
         tx_hash: Option<TxHash>,
     ) -> Result<CoinRecord, TypesError> {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let (addr_pk, addr_sk) = {
             let a_sk = U8Array::from_int(addr_sk);
@@ -112,7 +112,7 @@ impl CoinRecord {
         coin_idx: Option<CoinIdx>,
         tx_hash: Option<TxHash>,
     ) -> Result<CoinRecord, TypesError> {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         // U8Array::from_int()
 
@@ -167,7 +167,7 @@ impl CoinRecord {
     }
 
     pub fn new_dummy() -> CoinRecord {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let addr_sk = Scalar::default();
         let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
@@ -223,7 +223,7 @@ impl CoinRecord {
 
             let rho = self.rho;
 
-            let hasher = Hasher::new();
+            let hasher = MiMC::new();
 
             let s = hasher.mimc_scalar(addr_sk, rho);
 

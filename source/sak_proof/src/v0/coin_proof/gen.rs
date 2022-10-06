@@ -1,12 +1,11 @@
-use crate::CoinProof;
+use crate::{CoinProof, ProofError};
 use bls12_381::Scalar;
-use jni::objects::{JClass, JObject, JValue};
-use jni::JNIEnv;
-use sak_crypto::{MerkleTree, ScalarExt};
+use sak_crypto::hasher::MiMC;
+use sak_crypto::Proof;
+use sak_crypto::{Bls12, MerkleTree, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{Hasher, NewCoin, OldCoin};
+use sak_proof_circuit::{NewCoin, OldCoin};
 use std::collections::HashMap;
-use std::ffi::CString;
 use std::os::raw::c_char;
 use type_extension::U8Array;
 
@@ -71,7 +70,25 @@ pub fn pi_gen_1_depth_32() -> String {
         }
     };
 }
-pub fn pi_gen_1() -> String {
+
+pub fn verify_proof_jni(pi_ser: Vec<u8>) -> Result<bool, ProofError> {
+    let test_context = make_test_context_2_to_2();
+    let public_inputs: Vec<Scalar> = vec![
+        test_context.merkle_rt_1,
+        test_context.merkle_rt_2,
+        test_context.sn_1,
+        test_context.sn_2,
+        test_context.cm_1,
+        test_context.cm_2,
+    ];
+
+    let pi_des: Proof<Bls12> = Proof::read(&*pi_ser.clone()).unwrap();
+    let ret = CoinProof::verify_proof_2_to_2(pi_des, &public_inputs, &test_context.hasher);
+
+    ret
+}
+
+pub fn pi_gen_1() -> Vec<u8> {
     let test_context = make_test_context_2_to_2();
 
     let coin_1_old = OldCoin {
@@ -116,24 +133,14 @@ pub fn pi_gen_1() -> String {
         .expect("proof should be created");
 
     let mut pi_ser = Vec::new();
-    // proof.write(&mut pi_ser).expect("pi should be serialized")
-    match proof.write(&mut pi_ser) {
-        Ok(_) => {
-            let s: String = match serde_json::to_string(&pi_ser) {
-                Ok(s) => s,
-                Err(err) => format!("serde fail, err: {}", err.to_string()),
-            };
 
-            return s;
-        }
-        Err(err) => {
-            return format!("pi generate failed, {}", err.to_string());
-        }
-    };
+    proof.write(&mut pi_ser).expect("pi should be serialized");
+
+    pi_ser
 }
 
 pub struct TestContext {
-    pub hasher: Hasher,
+    pub hasher: MiMC,
 
     // old coin 1
     pub addr_pk_1_old: Scalar,
@@ -156,7 +163,7 @@ pub struct TestContext {
     pub v_2_old: Scalar,
     pub cm_2_old: Scalar,
     pub auth_path_2: [(Scalar, bool); CM_TREE_DEPTH as usize],
-    // pub merkle_rt_2: Scalar,
+    pub merkle_rt_2: Scalar,
     pub sn_2: Scalar,
 
     // new coin 1
@@ -179,7 +186,7 @@ pub struct TestContext {
 }
 
 pub fn make_test_context_2_to_2_depth_32() -> TestContext {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
@@ -396,6 +403,7 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
+        merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,
@@ -414,7 +422,7 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
     }
 }
 pub fn make_test_context_2_to_2() -> TestContext {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let (addr_pk_1_old, addr_sk_1_old, r_1_old, s_1_old, rho_1_old, v_1_old, cm_1_old, sn_1) = {
         let addr_sk = {
@@ -533,7 +541,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(20);
+            let arr = U8Array::from_int(10);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -631,6 +639,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
+        merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,
@@ -649,7 +658,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
     }
 }
 pub fn mock_merkle_nodes_cm_1_depth_32(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<String, Scalar> {
@@ -684,7 +693,7 @@ pub fn mock_merkle_nodes_cm_1_depth_32(
 }
 
 pub fn mock_merkle_nodes_cm_1(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {
@@ -827,7 +836,7 @@ pub fn mock_merkle_nodes_cm_1(
     merkle_nodes
 }
 pub fn mock_merkle_nodes_cm_2_depth_32(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<String, Scalar> {
@@ -864,7 +873,7 @@ pub fn mock_merkle_nodes_cm_2_depth_32(
 }
 
 pub fn mock_merkle_nodes_cm_2(
-    hasher: &Hasher,
+    hasher: &MiMC,
     cm_old_1: Scalar,
     cm_old_2: Scalar,
 ) -> HashMap<&'static str, Scalar> {
