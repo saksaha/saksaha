@@ -36,7 +36,7 @@ pub struct TestContext {
     pub v_2_old: Scalar,
     pub cm_2_old: Scalar,
     pub auth_path_2: [(Scalar, bool); CM_TREE_DEPTH as usize],
-    // pub merkle_rt_2: Scalar,
+    pub merkle_rt_2: Scalar,
     pub sn_2: Scalar,
 
     // new coin 1
@@ -101,39 +101,6 @@ pub fn make_test_context_2_to_2() -> TestContext {
     };
 
     let (addr_pk_2_old, addr_sk_2_old, r_2_old, s_2_old, rho_2_old, v_2_old, cm_2_old, sn_2) = {
-        // let addr_sk = {
-        //     let arr = U8Array::from_int(11);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let addr_pk = hasher.mimc_single_scalar(addr_sk).unwrap();
-
-        // let r = {
-        //     let arr = U8Array::from_int(12);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let s = {
-        //     let arr = U8Array::from_int(13);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let rho = {
-        //     let arr = U8Array::from_int(14);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let v = {
-        //     let arr = U8Array::from_int(100);
-        //     ScalarExt::parse_arr(&arr).unwrap()
-        // };
-
-        // let cm = {
-        //     let k = hasher.comm2_scalar(r, addr_pk, rho);
-
-        //     hasher.comm2_scalar(s, v, k)
-        // };
-
         let dummy_old_coin = OldCoin::new_dummy().unwrap();
 
         let sn = hasher.mimc_scalar(dummy_old_coin.addr_sk.unwrap(), dummy_old_coin.rho.unwrap());
@@ -211,7 +178,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         };
 
         let v = {
-            let arr = U8Array::from_int(20);
+            let arr = U8Array::from_int(10);
             ScalarExt::parse_arr(&arr).unwrap()
         };
 
@@ -307,6 +274,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
         v_2_old,
         cm_2_old,
         auth_path_2,
+        merkle_rt_2,
         sn_2,
         addr_sk_1,
         addr_pk_1,
@@ -664,13 +632,30 @@ pub async fn test_coin_ownership_default_2_to_2_using_dummy_old() {
     let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
         .expect("proof should be created");
 
+    println!("merkle_rt_1:{:?}", test_context.merkle_rt_1.to_bytes());
+    println!("merkle_rt_2:{:?}", test_context.merkle_rt_2.to_bytes());
+    println!("sn_1:{:?}", test_context.sn_1.to_bytes());
+    println!("sn_2:{:?}", test_context.sn_2.to_bytes());
+    println!("cm_1:{:?}", test_context.cm_1.to_bytes());
+    println!("cm_2:{:?}", test_context.cm_2.to_bytes());
     let public_inputs: Vec<Scalar> = vec![
         test_context.merkle_rt_1,
+        test_context.merkle_rt_2,
         test_context.sn_1,
         test_context.sn_2,
         test_context.cm_1,
         test_context.cm_2,
     ];
+
+    let mut pi_ser = Vec::new();
+    proof.write(&mut pi_ser).expect("pi should be serialized");
+
+    // println!("pi_ser: {:?}", pi_ser);
+    // println!("pi_ser_len: {:?}", pi_ser.len());
+
+    let pi_des: Proof<Bls12> = Proof::read(&*pi_ser).unwrap();
+
+    assert_eq!(pi_des, proof);
 
     assert_eq!(
         CoinProof::verify_proof_2_to_2(proof, &public_inputs, &test_context.hasher).unwrap(),
