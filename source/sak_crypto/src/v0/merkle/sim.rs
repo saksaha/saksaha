@@ -28,41 +28,12 @@ impl MerkleTreeSim {
             merkle_tree: MerkleTree::new(height),
         };
 
-        // mk_tree_init.init_all_nodes(leaves.len() as u32);
-
         for (leaf_idx, leaf) in leaves.iter().enumerate() {
             mk_tree_init.update_root(leaf_idx as u32, *leaf);
         }
 
         Ok(mk_tree_init)
     }
-
-    // pub fn init_all_nodes(&mut self, cm_len: u32) -> Result<(), CryptoError> {
-    //     let hasher = MiMC::new();
-
-    //     let empty_node = ScalarExt::parse_arr(&U8Array::new_empty_32())?;
-    //     let mut height_node_arr: Vec<Scalar> = vec![empty_node];
-    //     let mut node = empty_node;
-
-    //     for _i in 0..self.height - 1 {
-    //         node = hasher.mimc_scalar(node, node);
-    //         height_node_arr.push(node);
-    //     }
-
-    //     for i in 1..self.height {
-    //         let height_node = height_node_arr[i as usize];
-    //         let base: u32 = 2;
-    //         let nodes_len =
-    //             (((cm_len as f32 / base.pow(i - 1) as f32) as f32 / 4.).ceil() * 2. - 1.) as u32;
-
-    //         for idx in 1..1 + nodes_len {
-    //             let tmp_loc = format!("{}_{}", i, idx);
-    //             self.nodes.insert(tmp_loc, height_node);
-    //         }
-    //     }
-
-    //     Ok(())
-    // }
 
     pub fn get_leaf_count(&self) -> u32 {
         self.leaf_count
@@ -88,16 +59,6 @@ impl MerkleTreeSim {
         let auth_path = self.merkle_tree.generate_auth_paths(leaf_idx as u128);
 
         self.add_leaf_node(leaf);
-
-        // let empty_node = ScalarExt::parse_arr(&U8Array::new_empty_32())?;
-
-        // let mut height_node_arr: Vec<Scalar> = vec![empty_node];
-        // let mut node = empty_node;
-
-        // for _i in 0..self.height - 1 {
-        //     node = hasher.mimc_scalar(node, node);
-        //     height_node_arr.push(node)
-        // }
 
         for (height, path) in auth_path.iter().enumerate() {
             let sibling_idx = path.idx;
