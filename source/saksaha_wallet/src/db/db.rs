@@ -75,7 +75,7 @@ impl WalletDB {
 
     pub fn get_db_path(acc_addr: &String) -> Result<PathBuf, WalletError> {
         // let app_path =
-        //     sak_fs::create_or_get_app_path(APP_NAME)?.join(&acc_addr);
+        //     sak_dir::create_or_get_app_path(APP_NAME)?.join(&acc_addr);
 
         let acc_dir = fs::acc_dir(acc_addr)?;
 

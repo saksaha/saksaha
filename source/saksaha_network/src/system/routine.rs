@@ -13,8 +13,7 @@ use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
 use sak_logger::SakLogger;
-use sak_logger::RUST_LOG_ENV;
-use sak_logger::{error, info, warn};
+use sak_logger::{debug, error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use std::sync::Arc;
@@ -23,43 +22,64 @@ pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
 }
 
+const LOGO: &str = r#"
+___________________________________________________________
+      __     __     _    _     __     __     _     _   __  
+    /    )   / |    /  ,'    /    )   / |    /    /    / | 
+----\-------/__|---/_.'------\-------/__|---/___ /----/__|-
+     \     /   |  /  \        \     /   |  /    /    /   | 
+_(____/___/____|_/____\___(____/___/____|_/____/____/____|_
+"#;
+
 impl Routine {
     pub(super) async fn run(&self, sys_run_args: SystemRunArgs) -> Result<(), SaksahaError> {
-        info!(
-            "System is starting, public_key: {:?}, cfg_profile: {:?}",
-            sys_run_args.public_key, sys_run_args.cfg_profile,
-        );
+        println!("{}", LOGO.bright_white().bold());
+        println!("\n{}", "Loading Saksaha config".magenta().bold());
 
         let config = if let Some(cp) = &sys_run_args.cfg_profile {
+            println!(
+                "You have provided 'Config profile'.
+    {}: {}",
+                "Config profile".cyan().bold(),
+                cp,
+            );
+
             let cfg = Config::load_profiled(&cp, &sys_run_args)?;
-
-            info!("Loaded profiled config, cfg_profile: {}", cp.yellow());
-
             cfg.persist(Some(cp))?;
+
             cfg
         } else {
+            println!(
+                "Config profile is not given. \n\
+                We will generate a new random config. If you have provided \n\
+                public_key, Saksaha will load persisted config from the \n\
+                designated location. Persisted config shall be used to create\n\
+                Saksaha config.",
+            );
+
             let pconfig = PConfig::init(&sys_run_args.public_key)?;
             let cfg = Config::new(&sys_run_args, pconfig)?;
-
             cfg.persist(None)?;
+
             cfg
         };
 
-        info!("Resolved config: {:?}", config);
+        println!(
+            "    {} {}
+    {}: {}
+    {}: {}",
+            "Finished".green().bold(),
+            "loading Saksaha config",
+            "Public key".cyan().bold(),
+            config.p2p.public_key_str,
+            "Secret".cyan().bold(),
+            config.p2p.secret,
+        );
 
         let _logger = {
             let public_key = &config.p2p.public_key_str;
-
-            // let log_dir = {
-            //     let acc_dir = fs::acc_dir(public_key)?;
-            //     acc_dir.join("logs")
-            // };
-
             let log_root_dir = fs::config_dir()?;
-
-            // std::fs::create_dir_all(&log_dir)?;
-
-            let l = SakLogger::init(&log_root_dir, public_key.as_str(), "saksaha.log")?;
+            let l = SakLogger::init(&log_root_dir, public_key.as_str())?;
 
             l
         };

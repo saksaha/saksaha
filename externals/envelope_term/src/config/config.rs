@@ -61,7 +61,7 @@ impl Config {
 //                 config_file_path,
 //             );
 
-//             let file = sak_fs::load(config_file_path)?;
+//             let file = sak_dir::load(config_file_path)?;
 
 //             let pconfig = serde_yaml::from_slice::<PConfig>(&file)?;
 
@@ -78,7 +78,7 @@ impl Config {
 
 //             let data = serde_yaml::to_string(&pconfig)?;
 
-//             sak_fs::persist(data, config_file_path)?;
+//             sak_dir::persist(data, config_file_path)?;
 
 //             return Ok(pconfig);
 //         }
@@ -93,7 +93,7 @@ impl Config {
 //         let user_name = self.user_name.clone();
 //         let config_file_path = fs::get_config_file_path(&user_name)?;
 //         let data = serde_yaml::to_string(&self)?;
-//         sak_fs::persist(data, config_file_path)?;
+//         sak_dir::persist(data, config_file_path)?;
 //         return Ok(());
 //     }
 

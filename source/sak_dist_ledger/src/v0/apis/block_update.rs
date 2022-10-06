@@ -1,10 +1,11 @@
 use crate::{CtrStateUpdate, DistLedgerApis, LedgerError, MerkleUpdate};
 use colored::Colorize;
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
-use sak_crypto::{Bls12, MerkleTree, ScalarExt};
+use sak_crypto::hasher::MiMC;
+use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::{debug, info, warn};
-use sak_proof::{CoinProof, Hasher, Proof};
+use sak_proof::CoinProof;
 use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate,
@@ -23,10 +24,7 @@ impl DistLedgerApis {
         } {
             let block_hash = b.get_block_hash().to_string();
 
-            info!(
-                "Genesis block is already persisted, block_hash: {}",
-                block_hash.green(),
-            );
+            info!("Found genesis block, block_hash: {}", block_hash.green(),);
 
             Some(block_hash)
         } else {
@@ -247,7 +245,7 @@ impl DistLedgerApis {
     }
 
     pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let mut public_inputs = vec![];
 

@@ -1,10 +1,10 @@
-use super::TestUtil;
+use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
-use sak_crypto::{encode_hex, Bls12, MerkleTree, Scalar, ScalarExt};
+use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
 use sak_dist_ledger::{Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs};
 use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
-use sak_proof::{CoinProof, Hasher, NewCoin, OldCoin, Proof};
+use sak_proof::{CoinProof, NewCoin, OldCoin};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
 
@@ -50,7 +50,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
     let pos = make_dummy_pos();
 
     let ledger_path = {
-        let config_dir = sak_fs::get_config_dir("SAKSAHA").unwrap();
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
         config_dir.join("test").join("db/ledger")
     };
 
@@ -83,7 +83,7 @@ pub struct Coin {
 }
 
 fn generate_a_dummy_coin(value: u64) -> Coin {
-    let hasher = Hasher::new();
+    let hasher = MiMC::new();
 
     let addr_sk = U8Array::from_int(sak_crypto::rand() as u64).to_owned();
     let addr_pk = hasher.mimc_single(&addr_sk).unwrap();
@@ -127,10 +127,7 @@ fn generate_a_dummy_coin(value: u64) -> Coin {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_generate_a_proof() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-
-    SakLogger::init_test_console().unwrap();
+    EnvelopeTermTestUtils::init_test().unwrap();
 
     let coin_1_old = generate_a_dummy_coin(100);
 
@@ -216,7 +213,7 @@ async fn test_generate_a_proof() {
     println!("\n[+] Verifying  pi...");
 
     {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let merkle_rt = {
             let mut merkle_rt = coin_1_old.cm.unwrap();
@@ -278,10 +275,8 @@ async fn test_generate_a_proof() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_real_generate_a_proof() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
+    EnvelopeTermTestUtils::init_test().unwrap();
 
-    SakLogger::init_test_console().unwrap();
     let validator_wasm = VALIDATOR.to_vec();
     let envelope_wasm = ENVELOPE.to_vec();
 
@@ -336,7 +331,7 @@ async fn test_real_generate_a_proof() {
     println!("[*] updated auth_path: {:#?}", auth_path);
 
     let coin_1_old = {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let rho = U8Array::from_int(0x11);
 
@@ -418,7 +413,7 @@ async fn test_real_generate_a_proof() {
     println!("\n[+] Verifying  pi...");
 
     {
-        let hasher = Hasher::new();
+        let hasher = MiMC::new();
 
         let merkle_rt = {
             let mut merkle_rt = coin_1_old.cm.unwrap();

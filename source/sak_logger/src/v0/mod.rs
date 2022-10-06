@@ -1,4 +1,5 @@
 mod formatters;
+mod global;
 mod logger;
 mod macros;
 mod utils;

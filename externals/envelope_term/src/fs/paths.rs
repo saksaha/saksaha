@@ -3,12 +3,16 @@ use std::path::PathBuf;
 
 const APP_NAME: &str = "envelope-term";
 
-pub fn config_dir() -> Result<PathBuf, EnvelopeError> {
-    sak_fs::get_config_dir(APP_NAME)
-}
+pub(crate) struct FS;
 
-pub fn acc_dir(acc_addr: &String) -> Result<PathBuf, EnvelopeError> {
-    let p = config_dir()?.join(acc_addr);
+impl FS {
+    pub fn config_dir() -> Result<PathBuf, EnvelopeError> {
+        sak_dir::get_config_dir(APP_NAME)
+    }
 
-    Ok(p)
+    pub fn acc_dir(acc_addr: &String) -> Result<PathBuf, EnvelopeError> {
+        let p = Self::config_dir()?.join(acc_addr);
+
+        Ok(p)
+    }
 }

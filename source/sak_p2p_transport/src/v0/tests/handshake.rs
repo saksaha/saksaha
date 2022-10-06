@@ -142,7 +142,7 @@ async fn handshake_init(
 
     let transport = match initiate_handshake(handshake_init_args).await {
         Ok(t) => {
-            info!("[init] peer successfuly constructs a `shared secret key` after handshaking");
+            info!("[init] peer successfully constructs a `shared secret key` after handshaking");
             t
         }
         Err(err) => {
@@ -210,7 +210,6 @@ async fn handshake_recv(
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_handshake_works() {
-    // sak_test_utils::init_test_log();
     SakLogger::init_test_console().unwrap();
 
     let (
