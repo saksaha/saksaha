@@ -42,7 +42,7 @@ impl MerkleTreeSim {
         for i in 1..self.height {
             let zero_node = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
             let base: u32 = 2;
-            let nodes_len = (cm_len as f32 / (base.pow(i) as f32)).floor() as u32;
+            let nodes_len = ((cm_len - 1) as f32 / (base.pow(i) as f32)).floor() as u32;
             println!("nodes_len: {}", nodes_len);
             for j in 1..1 + nodes_len {
                 let tmp_loc = format!("{}_{}", i, j);
