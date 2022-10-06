@@ -32,23 +32,39 @@ impl MerkleTreeSim {
         println!("init all nodes finish");
 
         for (leaf_idx, leaf) in leaves.iter().enumerate() {
-            mk_tree_init.update_root(leaf_idx.try_into().unwrap(), *leaf);
+            mk_tree_init.update_root(leaf_idx as u32, *leaf);
         }
 
         mk_tree_init
     }
 
-    pub fn init_all_nodes(&mut self, cm_len: u32) {
+    pub fn init_all_nodes(&mut self, cm_len: u32) -> Result<(), CryptoError> {
+        let hahser = MiMC::new();
+
+        let empty_node = ScalarExt::parse_arr(&U8Array::new_empty_32())?;
+        let mut height_node_arr: Vec<Scalar> = vec![empty_node];
+        let mut node = empty_node;
+
+        for _i in 0..self.height - 1 {
+            node = hahser.mimc_scalar(node, node);
+            height_node_arr.push(node);
+        }
+
         for i in 1..self.height {
-            let zero_node = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+            let height_node = height_node_arr[i as usize];
             let base: u32 = 2;
-            let nodes_len = ((cm_len - 1) as f32 / (base.pow(i) as f32)).floor() as u32;
+            let nodes_len =
+                (((cm_len as f32 / base.pow(i - 1) as f32) as f32 / 4.).ceil() * 2. - 1.) as u32;
+
             println!("nodes_len: {}", nodes_len);
-            for j in 1..1 + nodes_len {
-                let tmp_loc = format!("{}_{}", i, j);
-                self.nodes.insert(tmp_loc, zero_node);
+
+            for idx in 1..1 + nodes_len {
+                let tmp_loc = format!("{}_{}", i, idx);
+                self.nodes.insert(tmp_loc, height_node);
             }
         }
+
+        Ok(())
     }
 
     pub fn get_leaf_count(&self) -> u32 {
@@ -56,10 +72,10 @@ impl MerkleTreeSim {
     }
 
     pub fn get_merkle_rt(&self) -> Scalar {
-        *self
-            .nodes
-            .get(format!("{}_0", self.height).as_str())
-            .unwrap()
+        match self.nodes.get(format!("{}_0", self.height).as_str()) {
+            Some(t) => *t,
+            None => Scalar::default(),
+        }
     }
 
     pub fn add_leaf_node(&mut self, cm: Scalar) {
@@ -70,12 +86,20 @@ impl MerkleTreeSim {
         self.nodes.insert(idx, cm);
     }
 
-    pub fn update_root(&mut self, leaf_idx: u32, leaf: Scalar) {
+    pub fn update_root(&mut self, leaf_idx: u32, leaf: Scalar) -> Result<(), CryptoError> {
         let hahser = MiMC::new();
-        let empty_node = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
+        let empty_node = ScalarExt::parse_arr(&U8Array::new_empty_32())?;
         let auth_path = self.merkle_tree.generate_auth_paths(leaf_idx as u128);
 
         self.add_leaf_node(leaf);
+
+        let mut height_node_arr: Vec<Scalar> = vec![empty_node];
+        let mut node = empty_node;
+
+        for _i in 0..self.height - 1 {
+            node = hahser.mimc_scalar(node, node);
+            height_node_arr.push(node)
+        }
 
         for (height, path) in auth_path.iter().enumerate() {
             let sibling_idx = path.idx;
@@ -87,18 +111,24 @@ impl MerkleTreeSim {
                 true => {
                     let ci = sibling_idx + 1;
                     sibling_loc = format!("{}_{}", height, sibling_idx);
-                    sibling_node = *self.nodes.get(&sibling_loc).unwrap();
+                    sibling_node = match self.nodes.get(&sibling_loc) {
+                        Some(t) => *t,
+                        None => Scalar::default(),
+                    };
                     ci
                 }
                 false => {
                     let ci = sibling_idx - 1;
-                    sibling_node = empty_node;
+                    sibling_node = height_node_arr[height];
                     ci
                 }
             };
 
             let curr_loc = format!("{}_{}", height, curr_idx);
-            let curr_node = *self.nodes.get(&curr_loc).unwrap();
+            let curr_node = match self.nodes.get(&curr_loc) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             let lv;
             let rv;
@@ -118,5 +148,6 @@ impl MerkleTreeSim {
 
             self.nodes.insert(update_loc, merkle_node);
         }
+        Ok(())
     }
 }
