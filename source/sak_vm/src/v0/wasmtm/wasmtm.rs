@@ -1,5 +1,7 @@
-use super::constants::Constants;
-use crate::{v0::state::InstanceState, wasm_bootstrap, VMError};
+use crate::{
+    v0::{constants::Constants, state::InstanceState},
+    VMError,
+};
 use sak_logger::{error, info};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -12,68 +14,9 @@ pub struct Data {
     d: usize,
 }
 
-pub struct Wasmtime {}
+pub(crate) struct Wasmtime {}
 
 impl Wasmtime {
-    pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
-        let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true)).unwrap();
-
-        let mut store = Store::new(&engine, 3);
-
-        let module = match Module::new(&engine, &wasm) {
-            Ok(m) => {
-                {
-                    for i in m.imports() {
-                        println!("imported: {}", i.name());
-                    }
-                }
-
-                m
-            }
-            Err(_err) => {
-                return false;
-            }
-        };
-
-        let linker = Linker::new(&engine);
-
-        let instance = match linker.instantiate(&mut store, &module) {
-            Ok(i) => i,
-            Err(err) => {
-                panic!("Error creating an instance, err: {}", err);
-            }
-        };
-
-        let _init: TypedFunc<(), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, Constants::INIT) {
-                Ok(o) => o,
-                Err(err) => {
-                    return false;
-                }
-            }
-        };
-
-        let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, Constants::QUERY) {
-                Ok(o) => o,
-                Err(err) => {
-                    return false;
-                }
-            }
-        };
-
-        let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> = {
-            match instance.get_typed_func(&mut store, Constants::EXECUTE) {
-                Ok(o) => o,
-                Err(err) => {
-                    return false;
-                }
-            }
-        };
-
-        true
-    }
-
     pub(crate) fn create_instance(
         wasm: impl AsRef<[u8]>,
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
@@ -173,5 +116,63 @@ impl Wasmtime {
         };
 
         return Ok((instance, store));
+    }
+    pub fn is_valid_wasm(wasm: impl AsRef<[u8]>) -> bool {
+        let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true)).unwrap();
+
+        let mut store = Store::new(&engine, 3);
+
+        let module = match Module::new(&engine, &wasm) {
+            Ok(m) => {
+                {
+                    for i in m.imports() {
+                        println!("imported: {}", i.name());
+                    }
+                }
+
+                m
+            }
+            Err(_err) => {
+                return false;
+            }
+        };
+
+        let linker = Linker::new(&engine);
+
+        let instance = match linker.instantiate(&mut store, &module) {
+            Ok(i) => i,
+            Err(err) => {
+                panic!("Error creating an instance, err: {}", err);
+            }
+        };
+
+        let _init: TypedFunc<(), (i32, i32)> = {
+            match instance.get_typed_func(&mut store, Constants::INIT) {
+                Ok(o) => o,
+                Err(err) => {
+                    return false;
+                }
+            }
+        };
+
+        let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
+            match instance.get_typed_func(&mut store, Constants::QUERY) {
+                Ok(o) => o,
+                Err(err) => {
+                    return false;
+                }
+            }
+        };
+
+        let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> = {
+            match instance.get_typed_func(&mut store, Constants::EXECUTE) {
+                Ok(o) => o,
+                Err(err) => {
+                    return false;
+                }
+            }
+        };
+
+        true
     }
 }

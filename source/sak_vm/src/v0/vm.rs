@@ -1,9 +1,7 @@
-use super::{constants::Constants, state::InstanceState};
-use crate::{wasm_bootstrap, wasm_time::Wasmtime, ContractFn, InvokeReceipt, VMError};
-use sak_contract_std::{CtrRequest, InvokeResult, Storage, ERROR_PLACEHOLDER};
+use super::{constants::Constants, state::InstanceState, wasmtm::Wasmtime};
+use crate::{ContractFn, InvokeReceipt, VMError};
+use sak_contract_std::{CtrRequest, Storage};
 use sak_logger::{error, info};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct SakVM {}
@@ -46,12 +44,8 @@ impl SakVM {
 
         let storage: Vec<u8>;
         unsafe {
-            storage = wasm_bootstrap::read_memory(
-                &store,
-                &memory,
-                storage_ptr as u32,
-                storage_len as u32,
-            )?;
+            storage =
+                Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?;
         }
 
         let receipt = InvokeReceipt::from_init(storage)?;
@@ -75,11 +69,11 @@ impl SakVM {
             (str.as_bytes().to_vec(), str.len())
         };
 
-        let request_ptr = wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
+        let request_ptr = Wasmtime::copy_memory(&request_bytes, &instance, &mut store)?;
 
         let storage_len = storage.len();
         let storage_bytes = storage;
-        let storage_ptr = wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
+        let storage_ptr = Wasmtime::copy_memory(&storage_bytes, &instance, &mut store)?;
 
         let (result_ptr, result_len) = match contract_fn.call(
             &mut store,
@@ -103,8 +97,7 @@ impl SakVM {
 
         let result: Vec<u8>;
         unsafe {
-            result =
-                wasm_bootstrap::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
+            result = Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
         }
 
         let receipt = InvokeReceipt::from_query(result)?;
@@ -129,12 +122,12 @@ impl SakVM {
             (vec, vec_len)
         };
 
-        let request_ptr = wasm_bootstrap::copy_memory(&request_bytes, &instance, &mut store)?;
+        let request_ptr = Wasmtime::copy_memory(&request_bytes, &instance, &mut store)?;
 
         let storage_len = storage.len();
         let storage_bytes = storage.clone();
 
-        let storage_ptr = wasm_bootstrap::copy_memory(&storage_bytes, &instance, &mut store)?;
+        let storage_ptr = Wasmtime::copy_memory(&storage_bytes, &instance, &mut store)?;
 
         let (storage_ptr, storage_len, result_ptr, result_len) = match contract_fn.call(
             &mut store,
@@ -158,18 +151,13 @@ impl SakVM {
 
         let storage: Vec<u8>;
         unsafe {
-            storage = wasm_bootstrap::read_memory(
-                &store,
-                &memory,
-                storage_ptr as u32,
-                storage_len as u32,
-            )?
+            storage =
+                Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?
         }
 
         let result: Vec<u8>;
         unsafe {
-            result =
-                wasm_bootstrap::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
+            result = Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
         }
 
         let receipt = InvokeReceipt::from_execute(result, storage)?;
