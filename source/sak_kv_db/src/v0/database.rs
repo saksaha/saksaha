@@ -1,4 +1,4 @@
-use colored::Colorize;
+use crate::KVDBError;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use sak_logger::info;
 use std::path::Path;
@@ -17,21 +17,27 @@ where
         db_path: P,
         options: Options,
         cf_descriptors: Vec<ColumnFamilyDescriptor>,
-    ) -> Result<KeyValueDatabase<P>, String> {
+    ) -> Result<KeyValueDatabase<P>, KVDBError> {
+        if !db_path.as_ref().clone().exists() {
+            info!(
+                "DB path does not exist. Creating {}",
+                db_path.as_ref().to_string_lossy()
+            );
+
+            std::fs::create_dir_all(db_path.as_ref().clone())?;
+        }
+
         let db_instance = match DB::open_cf_descriptors(&options, &db_path, cf_descriptors) {
             Ok(db) => {
                 info!(
                     "Initialized KeyValueDatabase, path: {:?}",
-                    db_path.as_ref().to_string_lossy(),
+                    db_path.as_ref().to_string_lossy()
                 );
 
                 db
             }
             Err(err) => {
-                return Err(format!(
-                    "Cannot open column family descriptors, err: {}",
-                    err,
-                ))
+                return Err(format!("Cannot open column family descriptors, err: {}", err,).into())
             }
         };
 

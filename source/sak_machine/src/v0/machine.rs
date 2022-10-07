@@ -50,7 +50,7 @@ impl SakMachine {
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
 
-        let mrs = SakMRS::init(&ledger_path);
+        let mrs = SakMRS::init(&mrs_path).await;
 
         let vm = SakVM::init()?;
 

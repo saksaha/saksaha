@@ -12,10 +12,6 @@ pub struct SakMRS {
     db: MRSDB,
 }
 
-// pub struct SakMRSArgs {
-//     pub mrs_db_path: PathBuf,
-// }
-
 impl SakMRS {
     pub async fn init<P: AsRef<Path>>(mrs_db_path: P) -> Result<Self, MRSError> {
         let db = MRSDB::init(&mrs_db_path).await?;
