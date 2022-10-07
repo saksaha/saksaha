@@ -1,13 +1,11 @@
 use sak_contract_std::{
-    contract_bootstrap, define_execute, define_init, define_query,
-    ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
+    contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
+    InvokeResult, RequestArgs, Storage,
 };
 
-use crate::{
-    request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot,
-};
+use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
 
-const SLOT_CAPACITY: usize = 64;
+const SLOT_CAPACITY: usize = 16;
 
 contract_bootstrap!();
 
@@ -23,10 +21,7 @@ pub fn init2() -> Result<Storage, ContractError> {
 }
 
 define_query!();
-pub fn query2(
-    request: CtrRequest,
-    storage: Storage,
-) -> Result<Vec<u8>, ContractError> {
+pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "unimplemented" => {
             unimplemented!()
@@ -36,20 +31,14 @@ pub fn query2(
 }
 
 define_execute!();
-pub fn execute2(
-    request: CtrRequest,
-    storage: &mut Storage,
-) -> Result<InvokeResult, ContractError> {
+pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         RESERVE => reserve_slot(storage, request.args),
         _ => Err(("Wrong request type has been found in execution").into()),
     }
 }
 
-fn reserve_slot(
-    storage: &mut Storage,
-    args: RequestArgs,
-) -> Result<InvokeResult, ContractError> {
+fn reserve_slot(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
     let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
 
@@ -58,4 +47,11 @@ fn reserve_slot(
     Ok(vec![])
 }
 
-fn get_empty_slot_idx() {}
+fn update(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
+    let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
+    let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
+
+    *storage = serde_json::to_vec(&mrs)?;
+
+    Ok(vec![])
+}

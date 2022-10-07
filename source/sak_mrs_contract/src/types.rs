@@ -1,4 +1,3 @@
-use sak_contract_std::ContractError;
 use serde::{Deserialize, Serialize};
 
 pub type PublicKey = String;
@@ -20,6 +19,7 @@ pub struct MutableRecordStorage {
 pub struct Slot {
     pub pk: PublicKey,
     pub timestamp: String,
+    pub slot_number: usize,
 }
 
 impl Slot {
@@ -27,6 +27,7 @@ impl Slot {
         Slot {
             pk: String::default(),
             timestamp: String::default(),
+            slot_number: usize::default(),
         }
     }
 }
