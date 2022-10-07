@@ -2,7 +2,7 @@ use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
 use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
 use sak_crypto::encode_hex;
-use sak_dist_ledger_config::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_rpc_interface::{JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest};
 use sak_types::{Cm, CmIdx, Tx};
 use serde::{Deserialize, Serialize};

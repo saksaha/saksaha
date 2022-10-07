@@ -3,7 +3,7 @@ use colored::Colorize;
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
-use sak_dist_ledger_config::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
 use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
@@ -326,11 +326,9 @@ impl SakDistLedger {
         tx_ctr_op: TxCtrOp,
         ctr_state_update: &mut CtrStateUpdate,
     ) -> Result<(), LedgerError> {
-        let vm = &self.vm;
-
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                let receipt = vm.invoke(&data, ContractFn::Init)?;
+                let receipt = self.vm.invoke(&data, ContractFn::Init)?;
                 let storage = receipt
                     .updated_storage
                     .ok_or("Contract state needs to be initialized")?;
@@ -393,7 +391,6 @@ impl SakDistLedger {
         ctr_state_update: &mut CtrStateUpdate,
         merkle_update: &mut MerkleUpdate,
         next_cm_idx: CmIdx,
-        // ledger_cm_count: u128,
     ) -> Result<u128, LedgerError> {
         let ctr_addr = &tc.ctr_addr;
         let data = &tc.data;

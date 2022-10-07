@@ -16,7 +16,7 @@ serde_json = "1.0.59"
 serde_bytes = "0.11.6"
 hyper = { version = "0.14", features = ["full"] }
 type_extension = { path = "../type_extension" }
-sak_dist_ledger_config = { path = "../sak_dist_ledger_config" }
+sak_dist_ledger_cfg = { path = "../sak_dist_ledger_cfg" }
 hyper_server = { path = "../hyper_server" }
 hyper_rpc_router = { path = "../hyper_rpc_router" }
 saksaha = { path = "../saksaha_rs" }

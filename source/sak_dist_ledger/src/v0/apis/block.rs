@@ -1,7 +1,7 @@
 use crate::{LedgerError, SakDistLedger};
 use sak_contract_std::Storage;
 use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
-use sak_dist_ledger_config::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;

@@ -11,7 +11,7 @@ doctest = false
 [dependencies]
 sak_crypto = { path = "../sak_crypto" }
 sak_logger = { path = "../sak_logger" }
-sak_dist_ledger_config = { path = "../sak_dist_ledger_config" }
+sak_dist_ledger_cfg = { path = "../sak_dist_ledger_cfg" }
 sak_proof_circuit = { path = "../sak_proof_circuit" }
 type_extension = { path = "../type_extension" }
 blake2s_simd = "1.0.0"

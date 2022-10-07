@@ -8,7 +8,7 @@ use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
-use sak_dist_ledger_config::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_proof::CoinProof;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;

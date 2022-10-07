@@ -11,7 +11,7 @@ sak_logger = { path = "../../source/sak_logger" }
 type_extension = { path = "../../source/type_extension" }
 sak_contract_std = { path = "../../source/sak_contract_std" }
 sak_crypto = { path = "../../source/sak_crypto" }
-sak_dist_ledger_config = { path = "../../source/sak_dist_ledger_config" }
+sak_dist_ledger_cfg = { path = "../../source/sak_dist_ledger_cfg" }
 sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
 sak_proof = { path = "../../source/sak_proof" }

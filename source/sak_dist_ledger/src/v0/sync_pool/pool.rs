@@ -65,20 +65,6 @@ impl SyncPool {
         }
     }
 
-    pub(crate) async fn drain_new_blocks(&self) -> Vec<(u128, String)> {
-        let mut new_blocks_lock = self.new_blocks.write().await;
-
-        let v: Vec<_> = new_blocks_lock.drain().collect();
-        v
-    }
-
-    pub(crate) async fn drain_new_tx_hashes(&self) -> Vec<String> {
-        let mut new_tx_hashes_lock = self.tx_hash_set.write().await;
-
-        let v: Vec<_> = new_tx_hashes_lock.drain().collect();
-        v
-    }
-
     // Returns hashes of transactions that I do not have
     pub(crate) async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
         let tx_map_lock = self.tx_map.write().await;
@@ -138,17 +124,12 @@ impl SyncPool {
     }
 
     pub(crate) async fn insert_tx(&self, tc: TxCandidate) -> Result<TxHash, String> {
-        // for test,
-
         {
             // Check if tx is valid ctr deploying type
-            // let (tx_ctr_op, tx_coin_op) = tc.get_tx_op();
-
             let tx_ctr_op = tc.get_ctr_op();
 
             match tx_ctr_op {
                 TxCtrOp::ContractDeploy => {
-                    // check functions
                     let maybe_wasm = tc.get_data();
                     if !SakVM::is_valid_wasm(maybe_wasm) {
                         return Err("Not valid wasm data".to_string());
@@ -177,8 +158,6 @@ impl SyncPool {
             let mut tx_hashes_set_lock = self.tx_hash_set.write().await;
             tx_hashes_set_lock.insert(tx_hash.to_string());
         }
-
-        // ----------------------------------------------------------
 
         if self.tx_hash_set.read().await.len() == 1 {
             let new_tx_hashes = self.tx_hash_set.clone();

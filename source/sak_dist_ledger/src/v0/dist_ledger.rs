@@ -6,7 +6,7 @@ use crate::SyncPool;
 use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
-use sak_dist_ledger_config::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_types::BlockCandidate;
 use sak_vm::SakVM;
@@ -20,7 +20,7 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 pub struct SakDistLedger {
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     pub(crate) ledger_db: LedgerDB,
-    pub vm: SakVM,
+    // pub vm: SakVM,
     pub(crate) sync_pool: Arc<SyncPool>,
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
@@ -70,7 +70,7 @@ impl SakDistLedger {
         let dist_ledger = SakDistLedger {
             ledger_event_tx,
             ledger_db,
-            vm,
+            // vm,
             sync_pool,
             merkle_tree,
             hasher,
