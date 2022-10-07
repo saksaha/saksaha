@@ -2,7 +2,7 @@ use super::columns::{self, Columns};
 use crate::MRSError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
 use sak_logger::info;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 // const APP_NAME: &'static str = "saksaha";
@@ -12,9 +12,9 @@ pub struct MRSDB {
 }
 
 impl MRSDB {
-    pub(crate) async fn init(db_path: &PathBuf) -> Result<MRSDB, MRSError> {
+    pub(crate) async fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
         let mrs_db_path = {
-            if !db_path.exists() {
+            if !db_path.clone().exists() {
                 std::fs::create_dir_all(db_path.clone())?;
             }
 

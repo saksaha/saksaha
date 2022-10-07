@@ -8,6 +8,7 @@ use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
+use sak_mrs::SakMRS;
 use sak_types::BlockCandidate;
 use sak_vm::SakVM;
 use std::path::PathBuf;
@@ -46,6 +47,8 @@ impl SakMachine {
         } = machine_args;
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
+
+        let mrs = SakMRS::init();
 
         let vm = SakVM::init()?;
 

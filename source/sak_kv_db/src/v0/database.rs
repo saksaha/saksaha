@@ -1,7 +1,7 @@
 use colored::Colorize;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use sak_logger::info;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct KeyValueDatabase {
     pub db_instance: DB,
@@ -9,12 +9,14 @@ pub struct KeyValueDatabase {
 }
 
 impl KeyValueDatabase {
-    pub fn new(
-        db_path: &PathBuf,
+    pub fn new<P: AsRef<Path>>(
+        db_path: P,
         options: Options,
         cf_descriptors: Vec<ColumnFamilyDescriptor>,
     ) -> Result<KeyValueDatabase, String> {
-        let db_path_str = match db_path.clone().into_os_string().into_string() {
+        let a: &Path = db_path.as_ref().clone();
+
+        let db_path_str = match db_path.as_ref().clone() {
             Ok(s) => s,
             Err(err) => {
                 return Err(format!(
