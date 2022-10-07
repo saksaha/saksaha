@@ -14,8 +14,8 @@ pub struct MRSDB {
 impl MRSDB {
     pub(crate) async fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
         let mrs_db_path = {
-            if !db_path.clone().exists() {
-                std::fs::create_dir_all(db_path.clone())?;
+            if !db_path.as_ref().clone().exists() {
+                std::fs::create_dir_all(db_path.as_ref().clone())?;
             }
 
             db_path

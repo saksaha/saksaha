@@ -14,39 +14,41 @@ impl KeyValueDatabase {
         options: Options,
         cf_descriptors: Vec<ColumnFamilyDescriptor>,
     ) -> Result<KeyValueDatabase, String> {
-        let a: &Path = db_path.as_ref().clone();
+        let a = db_path.as_ref().clone();
+        let a = a.join("..");
 
-        let db_path_str = match db_path.as_ref().clone() {
-            Ok(s) => s,
-            Err(err) => {
-                return Err(format!(
-                    "Not a valid path, path: {:?}, err: {:?}",
-                    db_path, err,
-                ));
-            }
-        };
+        // let db_path_str = match db_path.as_ref().clone() {
+        //     Ok(s) => s,
+        //     Err(err) => {
+        //         return Err(format!(
+        //             "Not a valid path, path: {:?}, err: {:?}",
+        //             db_path, err,
+        //         ));
+        //     }
+        // };
 
-        let db_instance = match DB::open_cf_descriptors(&options, &db_path_str, cf_descriptors) {
-            Ok(db) => {
-                info!(
-                    "Initialized KeyValueDatabase, path: {}",
-                    db_path_str.yellow(),
-                );
+        // let db_instance = match DB::open_cf_descriptors(&options, &db_path_str, cf_descriptors) {
+        //     Ok(db) => {
+        //         info!(
+        //             "Initialized KeyValueDatabase, path: {}",
+        //             db_path_str.yellow(),
+        //         );
 
-                db
-            }
-            Err(err) => {
-                return Err(format!(
-                    "Cannot open column family descriptors, err: {}",
-                    err,
-                ))
-            }
-        };
+        //         db
+        //     }
+        //     Err(err) => {
+        //         return Err(format!(
+        //             "Cannot open column family descriptors, err: {}",
+        //             err,
+        //         ))
+        //     }
+        // };
 
-        Ok(KeyValueDatabase {
-            db_instance,
-            db_path_str,
-        })
+        // Ok(KeyValueDatabase {
+        //     db_instance,
+        //     db_path_str,
+        // })
+        panic!();
     }
 
     pub fn destroy(&self) -> Result<(), String> {
