@@ -6,7 +6,7 @@ use crate::SyncPool;
 use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
-use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_dist_ledger_config::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_types::BlockCandidate;
 use sak_vm::SakVM;

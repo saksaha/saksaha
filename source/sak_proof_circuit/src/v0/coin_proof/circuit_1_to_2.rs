@@ -3,7 +3,7 @@ use bellman::gadgets::boolean::AllocatedBit;
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
-use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
+use sak_dist_ledger_config::{CM_TREE_DEPTH, GAS};
 use type_extension::U8Array;
 
 pub struct CoinProofCircuit1to2 {
