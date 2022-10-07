@@ -1,3 +1,4 @@
+use super::linker::make_linker;
 use crate::{
     v0::{constants::Constants, state::InstanceState},
     VMError,
@@ -7,8 +8,6 @@ use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
-
-use super::linker::make_linker;
 
 pub(crate) struct Wasmtime {}
 

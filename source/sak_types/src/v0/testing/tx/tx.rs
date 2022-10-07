@@ -7,7 +7,7 @@ use crate::{
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
-use sak_dist_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
 use sak_proof::{CoinProof, DUMMY_MERKLE_RT, DUMMY_SN};
