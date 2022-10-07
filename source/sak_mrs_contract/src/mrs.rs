@@ -1,13 +1,20 @@
 use sak_contract_std::{
-    contract_bootstrap, define_execute, define_init, define_query,
-    ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
+    contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
+    InvokeResult, RequestArgs, Storage,
 };
 
-use crate::{
-    request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot,
-};
+use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
 
 const SLOT_CAPACITY: usize = 64;
+
+#[link(wasm_import_module = "host")]
+extern "C" {
+    fn hello(param1: i32, param2: i32) -> i32;
+
+    fn get_mrs_data(param1: i32, param2: i32) -> i32;
+
+    fn get_latest_len(p1: i32, p2: i32) -> i32;
+}
 
 contract_bootstrap!();
 
@@ -26,6 +33,7 @@ define_query!();
 pub fn query2(
     request: CtrRequest,
     storage: Storage,
+    store_accessor: __StoreAccessor,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "unimplemented" => {
@@ -36,20 +44,14 @@ pub fn query2(
 }
 
 define_execute!();
-pub fn execute2(
-    request: CtrRequest,
-    storage: &mut Storage,
-) -> Result<InvokeResult, ContractError> {
+pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         RESERVE => reserve_slot(storage, request.args),
         _ => Err(("Wrong request type has been found in execution").into()),
     }
 }
 
-fn reserve_slot(
-    storage: &mut Storage,
-    args: RequestArgs,
-) -> Result<InvokeResult, ContractError> {
+fn reserve_slot(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
     let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
 

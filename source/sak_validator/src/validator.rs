@@ -15,6 +15,15 @@ pub struct ValidatorStorage {
     pub validators: Vec<String>,
 }
 
+#[link(wasm_import_module = "host")]
+extern "C" {
+    fn hello(param1: i32, param2: i32) -> i32;
+
+    fn get_mrs_data(param1: i32, param2: i32) -> i32;
+
+    fn get_latest_len(p1: i32, p2: i32) -> i32;
+}
+
 contract_bootstrap!();
 
 define_init!();
@@ -36,7 +45,11 @@ pub fn init2() -> Result<Vec<u8>, ContractError> {
 }
 
 define_query!();
-pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
+pub fn query2(
+    request: CtrRequest,
+    storage: Storage,
+    store_accessor: __StoreAccessor,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "get_validator" => {
             return handle_get_validator(storage);

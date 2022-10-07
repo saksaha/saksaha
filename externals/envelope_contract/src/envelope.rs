@@ -4,7 +4,7 @@ use crate::{
 };
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
-    InvokeResult, RequestArgs, Storage,
+    InvokeResult, RequestArgs, Storage, StoreAccess,
 };
 use std::collections::HashMap;
 
@@ -35,12 +35,26 @@ pub fn init2() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
+// struct __StoreAccessor {}
+
+// impl sak_contract_std::StoreAccess for __StoreAccessor {
+//     unsafe fn _get_mrs_data() -> usize {
+//         get_mrs_data(1, 3) as usize
+//     }
+// }
+
 define_query!();
-pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
+pub fn query2(
+    request: CtrRequest,
+    storage: Storage,
+    store_accessor: __StoreAccessor,
+) -> Result<Vec<u8>, ContractError> {
     unsafe {
         // let ptr, len = alloc();
-        let ptr = get_mrs_data(331, 44);
-        hello(ptr, 1);
+        // let ptr = get_mrs_data(331, 44);
+
+        let ptr = store_accessor._get_mrs_data();
+        hello(ptr as i32, 1);
 
         let len = get_latest_len(0, 0);
         hello(len, 2);

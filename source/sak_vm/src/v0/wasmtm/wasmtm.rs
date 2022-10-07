@@ -1,8 +1,11 @@
+use std::sync::Arc;
+
 use crate::{
     v0::{constants::Constants, state::InstanceState},
     VMError,
 };
 use sak_logger::{error, info};
+use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
@@ -17,6 +20,7 @@ impl Wasmtime {
     pub(crate) fn create_instance(
         wasm: impl AsRef<[u8]>,
         // accessor,
+        store_accessor: Option<Arc<StoreAccessor>>,
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
@@ -56,11 +60,23 @@ impl Wasmtime {
         linker.func_wrap(
             "host",
             "get_mrs_data",
-            |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+            move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
                 let state = caller.data_mut();
                 println!("state: {:?}", state);
 
-                let data = Data { d: 123 }; // accessor
+                match store_accessor.clone() {
+                    Some(sa) => {
+                        println!("555 {:?}", sa.get_mrs_data());
+                    }
+                    None => {}
+                };
+
+                let data = {
+                    // let data = store_accessor.get_mrs_data();
+
+                    Data { d: 123 }
+                };
+
                 let data_bytes = match serde_json::to_vec(&data) {
                     Ok(b) => b,
                     Err(err) => {
