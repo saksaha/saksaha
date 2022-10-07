@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
 use super::{constants::Constants, state::InstanceState, wasmtm::Wasmtime};
 use crate::{ContractFn, InvokeReceipt, VMError};
 use sak_contract_std::{CtrRequest, Storage};
 use sak_logger::{error, info};
+use sak_store_accessor::StoreAccessor;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct SakVM {}
@@ -17,16 +20,21 @@ impl SakVM {
         contract_wasm: impl AsRef<[u8]>,
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMError> {
-        let (instance, store, memory) = Self::init_module(contract_wasm)?;
-
         match ctr_fn {
             ContractFn::Init => {
+                let (instance, store, memory) = Self::init_module(contract_wasm, None)?;
+
                 return Self::invoke_init(instance, store, memory);
             }
-            ContractFn::Query(request, storage) => {
-                return Self::invoke_query(instance, store, memory, request, storage)
+            ContractFn::Query(request, storage, store_accessor) => {
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, Some(store_accessor))?;
+
+                return Self::invoke_query(instance, store, memory, request, storage);
             }
             ContractFn::Execute(request, storage) => {
+                let (instance, store, memory) = Self::init_module(contract_wasm, None)?;
+
                 return Self::invoke_execute(instance, store, memory, request, storage);
             }
         };
@@ -167,8 +175,9 @@ impl SakVM {
 
     fn init_module(
         contract_wasm: impl AsRef<[u8]>,
+        store_accessor: Option<Arc<StoreAccessor>>,
     ) -> Result<(Instance, Store<InstanceState>, Memory), VMError> {
-        let (instance, mut store) = match Wasmtime::create_instance(contract_wasm) {
+        let (instance, mut store) = match Wasmtime::create_instance(contract_wasm, store_accessor) {
             Ok(r) => r,
             Err(err) => {
                 return Err(format!("Error creating an instance, err: {}", err).into());

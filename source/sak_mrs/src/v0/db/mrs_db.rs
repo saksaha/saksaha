@@ -34,10 +34,7 @@ impl MRSDB {
     }
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
-        vec![ColumnFamilyDescriptor::new(
-            Columns::TX_HASH_BY_CTR_ADDR,
-            Options::default(),
-        )]
+        vec![]
     }
 
     pub(crate) fn make_cf_handle<'a>(

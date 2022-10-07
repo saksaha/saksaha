@@ -25,6 +25,21 @@ macro_rules! contract_bootstrap {
 
             std::mem::drop(data);
         }
+
+        pub struct ContractCtx;
+
+        impl ContractCtx {
+            unsafe fn get_mrs_data(&self, ptr: *mut u8, b: i32) -> usize {
+                HOST__get_mrs_data(ptr, b) as usize
+            }
+
+            unsafe fn put_mrs_data(&self, arg: usize) -> usize {
+                // ptr, len
+
+                // HOST__put_mrs_data(ptr, len) as usize
+                0
+            }
+        }
     };
 }
 
@@ -113,11 +128,13 @@ macro_rules! define_query {
             );
 
             let request = serde_json::from_slice(&request);
-
             let request: sak_contract_std::CtrRequest = sak_contract_std::return_err_2!(request);
 
+            let ctx = ContractCtx {};
+
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                query2(request, storage);
+                query2(ctx, request, storage);
+            // query2(request, storage);
 
             {
                 let mut result: sak_contract_std::InvokeResult =
