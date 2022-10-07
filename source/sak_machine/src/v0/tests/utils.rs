@@ -5,7 +5,7 @@ use std::{fs, path::Path};
 
 const APP_NAME: &str = "saksaha";
 
-pub(crate) struct DistLedgerTestUtils;
+pub struct DistLedgerTestUtils;
 
 impl DistLedgerTestUtils {
     // pub fn init_test(app_prefixes: Vec<&str>) {
@@ -26,14 +26,15 @@ impl DistLedgerTestUtils {
     //     info!("Initialized test configurations");
     // }
 
-    pub fn init_saksaha_test() {
+    pub fn init_saksaha_test(pk_str: String) {
         SakLogger::init_test_console().unwrap();
-        let saksaha_test_path = {
+        let test_ledger_path = {
             let s = "/tmp/saksaha_test";
-            Path::new(s)
+            Path::new(s).join(pk_str).join("ledger")
         };
-        if saksaha_test_path.is_dir() {
-            fs::remove_dir_all(saksaha_test_path).unwrap();
+
+        if test_ledger_path.is_dir() {
+            DB::destroy(&Options::default(), test_ledger_path).unwrap();
         }
 
         info!("Initialized test configurations");
