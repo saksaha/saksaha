@@ -1,4 +1,5 @@
 use crate::{mock_pos, SakMachine, SakMachineArgs};
+use sak_credential::{Credential as SakCredential, CredentialProfile};
 use sak_types::BlockCandidate;
 
 const APP_NAME: &str = "saksaha";
@@ -34,16 +35,20 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> SakMachine {
 
 pub async fn mock_dist_ledger_1() -> SakMachine {
     let pos = mock_pos();
+    let credential = CredentialProfile::test_1();
 
-    let ledger_path = {
-        let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
-        config_dir.join("ledger")
+    let test_dir = {
+        let tempdir = std::env::temp_dir()
+            .join("saksaha_test")
+            .join(credential.public_key_str);
+
+        std::fs::create_dir_all(&tempdir).unwrap();
+        tempdir
     };
 
-    let mrs_path = {
-        let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
-        config_dir.join("mrs")
-    };
+    let ledger_path = { test_dir.join("ledger") };
+
+    let mrs_path = { test_dir.join("mrs") };
 
     let dist_ledger_args = SakMachineArgs {
         tx_sync_interval: None,

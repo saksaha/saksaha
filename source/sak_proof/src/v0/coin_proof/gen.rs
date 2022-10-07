@@ -341,10 +341,10 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -368,10 +368,10 @@ pub fn make_test_context_2_to_2_depth_32() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -578,10 +578,10 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
@@ -605,10 +605,10 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = merkle_nodes.get(key.as_str()).expect(&format!(
-                "value doesn't exist in the merkle node, key: {}",
-                key
-            ));
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });

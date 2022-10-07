@@ -147,9 +147,12 @@ pub fn mock_pour_tc_random() -> TxCandidate {
             }
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
-            ret[idx] = Some((*merkle_node, p.direction));
+            ret[idx] = Some((merkle_node, p.direction));
         });
 
         ret
@@ -461,7 +464,10 @@ pub fn mock_pour_tc_invalid_pi() -> TxCandidate {
             }
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = Some((merkle_node.clone(), p.direction));
         });

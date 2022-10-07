@@ -6,7 +6,7 @@ pub const REPEAT_NUM: u128 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -35,7 +35,7 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_genesis_block() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -44,7 +44,7 @@ async fn test_write_a_genesis_block() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_new_block_after_genesis() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -58,7 +58,7 @@ async fn test_write_a_new_block_after_genesis() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block_1() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -79,7 +79,7 @@ async fn test_sequential_write_block_1() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block_and_get_tx_height() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -111,7 +111,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_block_and_check_merkle_rt_changed() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
@@ -140,11 +140,11 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_sync_block_if_block_is_correct() {
-    DistLedgerTestUtils::init_test(vec!["test"]);
+    DistLedgerTestUtils::init_saksaha_test();
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
-    let latest_block_height = dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
+    let latest_block_height = dist_ledger.get_latest_block_height().unwrap().unwrap();
 
     println!("latest_block_height: {}", latest_block_height);
 

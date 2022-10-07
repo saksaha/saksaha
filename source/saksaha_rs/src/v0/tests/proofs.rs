@@ -140,7 +140,10 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
             }
 
             let key = format!("{}_{}", idx, p.idx);
-            let merkle_node = merkle_nodes.get(key.as_str()).unwrap();
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
+                Some(t) => *t,
+                None => Scalar::default(),
+            };
 
             ret[idx] = (merkle_node.clone(), p.direction);
         });
