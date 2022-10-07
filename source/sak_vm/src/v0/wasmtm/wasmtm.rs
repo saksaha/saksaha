@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     v0::{constants::Constants, state::InstanceState},
     VMError,
@@ -7,6 +5,7 @@ use crate::{
 use sak_logger::{error, info};
 use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 #[derive(Serialize, Deserialize)]
@@ -66,6 +65,8 @@ impl Wasmtime {
 
                 match store_accessor.clone() {
                     Some(sa) => {
+                        // sa.put_mrs_data();
+
                         match caller.get_export(Constants::MEMORY) {
                             Some(exp) => {
                                 let memory = exp.into_memory().unwrap();
