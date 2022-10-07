@@ -2,12 +2,12 @@ use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_logger::SakLogger;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
-use sak_validator::{AddValidatorParams, ValidatorStorage};
+use sak_validator_contract::{AddValidatorParams, ValidatorStorage};
 use sak_vm::{ContractFn, SakVM};
 use std::{collections::HashMap, sync::Arc};
 
 pub(crate) const VALIDATOR: &[u8] =
-    include_bytes!("../../../prebuild/sak_validator.postprocess.wasm");
+    include_bytes!("../../../prebuild/sak_validator_contract.postprocess.wasm");
 
 fn get_dummy_validator_1() -> String {
     String::from(

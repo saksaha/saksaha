@@ -6,7 +6,7 @@ pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 
 pub(crate) const VALIDATOR: &[u8] =
-    include_bytes!("../../../../prebuild/sak_validator.postprocess.wasm");
+    include_bytes!("../../../../prebuild/sak_validator_contract.postprocess.wasm");
 
 pub(crate) const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
 

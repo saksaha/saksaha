@@ -35,7 +35,7 @@ members = [
   "source/saksaha_wallet",
 
   # Contracts (independently compiled and processed)
-  "source/sak_validator",
+  "source/sak_validator_contract",
   "source/sak_mrs_contract",
 
   # internals

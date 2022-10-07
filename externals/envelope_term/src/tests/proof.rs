@@ -11,7 +11,7 @@ use type_extension::U8Array;
 const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
 
 const VALIDATOR: &[u8] =
-    include_bytes!("../../../../source/prebuild/sak_validator.postprocess.wasm");
+    include_bytes!("../../../../source/prebuild/sak_validator_contract.postprocess.wasm");
 
 const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
 
