@@ -147,6 +147,10 @@ async fn test_sequential_sync_block_if_block_is_correct() {
 
     let dist_ledger = testing::mock_dist_ledger_1().await;
 
+    let latest_block_height = dist_ledger.apis.get_latest_block_height().unwrap().unwrap();
+
+    println!("latest_block_height: {}", latest_block_height);
+
     for i in 0..REPEAT_NUM as u64 {
         // let txs = utils::make_dummy_txs();
 
