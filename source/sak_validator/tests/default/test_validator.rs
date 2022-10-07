@@ -1,7 +1,7 @@
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_logger::SakLogger;
 use sak_validator::{AddValidatorParams, ValidatorStorage};
-use sak_vm::{CtrFn, SakVM};
+use sak_vm::{ContractFn, SakVM};
 use std::collections::HashMap;
 
 pub(crate) const VALIDATOR: &[u8] =
@@ -75,7 +75,7 @@ async fn test_call_ctr_validator_fn_init() {
     let vm = SakVM::init().expect("VM should be initiated");
 
     let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = CtrFn::Init;
+    let ctr_fn = ContractFn::Init;
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
@@ -120,7 +120,7 @@ async fn test_call_ctr_validator_fn_query() {
 
     let ctr_wasm = VALIDATOR.to_vec();
 
-    let ctr_fn = CtrFn::Query(request, storage);
+    let ctr_fn = ContractFn::Query(request, storage);
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
@@ -170,7 +170,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
     };
 
     let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = CtrFn::Execute(request, storage);
+    let ctr_fn = ContractFn::Execute(request, storage);
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)

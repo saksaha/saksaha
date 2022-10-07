@@ -6,8 +6,6 @@ use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_client_request_correct_status() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -63,6 +61,4 @@ async fn test_rpc_client_request_correct_status() {
         },
         Err(err) => panic!("Failed to get response : {:?}", err),
     };
-
-    // assert_eq!(&expected_tx_hash, tx_hash_from_res);
 }

@@ -1,7 +1,7 @@
 // use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 // use sak_mrs::{request_type, MutableRecordStorage, ReserveSlotParams, Slot};
 // // use sak_mrs::{AddValidatorParams, ValidatorStorage};
-// use sak_vm::{CtrFn, VM};
+// use sak_vm::{ContractFn, VM};
 // use std::collections::HashMap;
 
 // pub(crate) const MRS: &[u8] =
@@ -53,7 +53,7 @@
 //     };
 
 //     let ctr_wasm = MRS.to_vec();
-//     let ctr_fn = CtrFn::Execute(request, storage);
+//     let ctr_fn = ContractFn::Execute(request, storage);
 
 //     let receipt = vm.invoke(ctr_wasm, ctr_fn).expect("mrs should be obtained");
 

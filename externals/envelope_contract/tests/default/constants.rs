@@ -19,10 +19,4 @@ pub const ARG_DST_PK: &str = "dst_pk";
 
 pub const ARG_SERIALIZED_INPUT: &str = "serialized_input";
 
-// pub const DUMMY_CHANNEL_ID_1: &str = "ch_12";
-
 pub const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
-
-// pub const ARG_SERIALIZED_INPUT: &str = "serialized_input";
-
-// pub const ARG_CH_ID: &str = "ch_id";

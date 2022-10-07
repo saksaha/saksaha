@@ -10,10 +10,6 @@ use sak_types::BlockHash;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_with_good_params() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    // SaksahaTestUtils::init_test(vec!["test"]);
-
     let test_credential_1 = CredentialProfile::test_1();
 
     let TestContext {
@@ -30,9 +26,8 @@ async fn test_call_get_block_with_good_params() {
 
     let original_block_hash = {
         let block_hash = match machine
-            .blockchain
+            .ledger
             .dist_ledger
-            .apis
             .write_block(Some(block_candidate_same))
             .await
         {
@@ -93,10 +88,6 @@ async fn test_call_get_block_with_good_params() {
 #[tokio::test(flavor = "multi_thread")]
 #[should_panic]
 async fn test_call_get_block_with_wrong_params() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    // SaksahaTestUtils::init_test(vec!["test"]);
-
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -115,9 +106,8 @@ async fn test_call_get_block_with_wrong_params() {
 
     let original_block_hash = {
         let block_hash = match machine
-            .blockchain
+            .ledger
             .dist_ledger
-            .apis
             .write_block(Some(block_candidate))
             .await
         {
@@ -186,16 +176,10 @@ async fn test_call_get_block_with_wrong_params() {
         block_acquired.get_block_hash(),
         &original_block_hash.unwrap()
     );
-
-    //
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_get_block_list() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    // SaksahaTestUtils::init_test(vec!["test"]);
-
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
@@ -215,9 +199,8 @@ async fn test_call_get_block_list() {
 
         let block_hash = {
             let block_hash = match machine
-                .blockchain
+                .ledger
                 .dist_ledger
-                .apis
                 .write_block(Some(block_candidate))
                 .await
             {

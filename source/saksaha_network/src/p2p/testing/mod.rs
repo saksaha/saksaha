@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::Blockchain,
+    ledger::Ledger,
     machine::Machine,
     node::LocalNode,
     p2p::{P2PHost, P2PHostArgs},

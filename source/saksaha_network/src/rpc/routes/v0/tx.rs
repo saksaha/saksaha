@@ -32,9 +32,8 @@ pub(in crate::rpc) async fn send_mint_tx(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .send_tx(tx_candidate)
         .await
     {
@@ -69,9 +68,8 @@ pub(in crate::rpc) async fn send_pour_tx(
 
     match sys_handle
         .machine
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .send_tx(tx_candidate)
         .await
     {
@@ -87,7 +85,6 @@ pub struct GetTxRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTxResponse {
-    //
     pub tx: Option<Tx>,
 }
 
@@ -100,14 +97,7 @@ pub(in crate::rpc) async fn get_tx(
 
     let rb: GetTxRequest = require_params_parsed!(route_state, &params);
 
-    match sys_handle
-        .machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .get_tx(&rb.hash)
-        .await
-    {
+    match sys_handle.machine.ledger.dist_ledger.get_tx(&rb.hash).await {
         Ok(tx) => {
             let get_tx_resp = GetTxResponse { tx };
 

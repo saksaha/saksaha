@@ -1,4 +1,4 @@
-use crate::KvDBError;
+use crate::KVDBError;
 use std::convert::TryInto;
 
 // const U128_BYTE_LEN: usize = 16;

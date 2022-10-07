@@ -4,7 +4,7 @@ use bellman::groth16::{self, Parameters};
 use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, OsRng, Scalar};
-use sak_dist_ledger_meta::{CM_TREE_DEPTH, GAS};
+use sak_dist_ledger_cfg::{CM_TREE_DEPTH, GAS};
 use type_extension::U8Array;
 
 pub struct CoinProofCircuit2to2 {

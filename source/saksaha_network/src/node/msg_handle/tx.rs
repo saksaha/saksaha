@@ -15,9 +15,8 @@ pub(in crate::node) async fn send_tx_syn<'a>(
     machine: &Arc<Machine>,
 ) -> Result<(), SaksahaNodeError> {
     let tx_candidates = machine
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .get_txs_from_pool(tx_hashes)
         .await;
 
@@ -42,9 +41,8 @@ pub(in crate::node) async fn recv_tx_syn(
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaNodeError> {
     machine
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .insert_into_pool(tx_syn.tx_candidates)
         .await;
 

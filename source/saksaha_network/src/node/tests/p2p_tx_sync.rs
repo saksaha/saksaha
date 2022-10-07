@@ -2,17 +2,12 @@ use super::utils::make_dual_node_test_context;
 use super::utils::DualNodeTestContext;
 use crate::tests::SaksahaTestUtils;
 use sak_credential::CredentialProfile;
-use sak_dist_ledger::DistLedgerEvent;
 use sak_logger::{error, info};
+use sak_machine::DistLedgerEvent;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_tx_sync_true() {
-    // sak_test_utils::init_test_log();
-
-    // let app_prefix_vec = vec!["test_1", "test_2"];
-    // TestUtil::init_test(app_prefix_vec.clone());
-
     let test_credential_1 = CredentialProfile::test_1();
     let test_credential_2 = CredentialProfile::test_2();
 
@@ -55,17 +50,15 @@ async fn test_tx_sync_true() {
     );
 
     machine_1
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
 
     let tx_pool_1_contains_tx1 = machine_1
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .tx_pool_contains(dummy_tx1.get_tx_hash())
         .await;
 
@@ -73,7 +66,7 @@ async fn test_tx_sync_true() {
 
     info!("[Success] node_1 has tx_1 (tx sent to node_1 directly)");
 
-    let mut ledger_event_rx = machine_2.blockchain.dist_ledger.ledger_event_tx.subscribe();
+    let mut ledger_event_rx = machine_2.ledger.dist_ledger.ledger_event_tx.subscribe();
 
     let ev = tokio::time::timeout(Duration::from_secs(5), ledger_event_rx.recv())
         .await

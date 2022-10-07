@@ -14,22 +14,12 @@ pub(in crate::node) async fn send_block_syn(
         .map(|(_, block_hash)| block_hash)
         .collect();
 
-    let blocks = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .get_blocks(block_hashes)
-        .await?;
+    let blocks = machine.ledger.dist_ledger.get_blocks(block_hashes).await?;
 
     let mut blocks_to_send = Vec::with_capacity(blocks.len());
 
     for block in blocks {
-        let txs = machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .get_txs(&block.tx_hashes)
-            .await?;
+        let txs = machine.ledger.dist_ledger.get_txs(&block.tx_hashes).await?;
 
         blocks_to_send.push((block, txs));
     }
@@ -57,12 +47,7 @@ pub(in crate::node) async fn recv_block_syn(
 ) -> Result<(), SaksahaNodeError> {
     let blocks = block_syn_msg.blocks;
 
-    let _ = machine
-        .blockchain
-        .dist_ledger
-        .apis
-        .write_blocks(blocks)
-        .await;
+    let _ = machine.ledger.dist_ledger.write_blocks(blocks).await;
 
     let block_ack_msg = Msg::BlockAck(BlockAckMsg {});
 

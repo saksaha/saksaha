@@ -16,5 +16,5 @@ serde_json = "1.0.59"
 sak_vm = { path = "../sak_vm" }
 sak_test_utils = { path = "../sak_test_utils" }
 tokio = { version = "1.20.0", features = ["full"] }
-sak_dist_ledger = { path = "../sak_dist_ledger" }
+sak_machine = { path = "../sak_machine" }
 sak_logger = { path = "../sak_logger" }

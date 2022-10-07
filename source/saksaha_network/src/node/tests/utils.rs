@@ -1,4 +1,4 @@
-use crate::blockchain::Blockchain;
+use crate::ledger::Ledger;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::P2PHost;
@@ -118,12 +118,12 @@ pub(crate) async fn make_test_context(
         .await
         .expect("P2P Host should be initialized");
 
-    let blockchain = Blockchain::init(&public_key_str, None, None, None, identity.clone())
+    let ledger = Ledger::init(&public_key_str, None, None, None, identity.clone())
         .await
         .unwrap();
 
     let machine = {
-        let m = Machine { blockchain };
+        let m = Machine { ledger };
 
         Arc::new(m)
     };

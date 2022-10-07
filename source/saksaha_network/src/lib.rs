@@ -1,6 +1,6 @@
-mod blockchain;
 mod config;
 mod fs;
+mod ledger;
 mod machine;
 mod node;
 mod p2p;

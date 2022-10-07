@@ -1,6 +1,6 @@
 use crate::CircuitError;
 use sak_crypto::{hasher::MiMC, rand, Scalar, ScalarExt};
-use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 
 #[derive(Debug, Copy, Clone)]
 pub struct OldCoin {

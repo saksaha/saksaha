@@ -1,9 +1,9 @@
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
-use sak_dist_ledger::{Consensus, ConsensusError, DistLedger, DistLedgerApis, DistLedgerArgs};
-use sak_dist_ledger_meta::CM_TREE_DEPTH;
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
+use sak_machine::{Consensus, ConsensusError, SakMachine, SakMachineArgs};
 use sak_proof::{CoinProof, NewCoin, OldCoin};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
@@ -24,7 +24,7 @@ pub struct DummyPos {}
 impl Consensus for DummyPos {
     async fn do_consensus(
         &self,
-        _dist_ledger_apis: &DistLedgerApis,
+        _machine: &SakMachine,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());
@@ -46,25 +46,29 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
     Box::new(DummyPos {})
 }
 
-pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> DistLedger {
+pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakMachine {
     let pos = make_dummy_pos();
 
     let ledger_path = {
         let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
-        config_dir.join("test").join("db/ledger")
+        config_dir.join("test").join("ledger")
     };
 
-    let dist_ledger_args = DistLedgerArgs {
-        // app_prefix: String::from("test"),
-        // public_key: String::from("test"),
+    let mrs_path = {
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("test").join("mrs")
+    };
+
+    let dist_ledger_args = SakMachineArgs {
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
         block_sync_interval: None,
         ledger_path,
+        mrs_path,
     };
 
-    let dist_ledger = DistLedger::init(dist_ledger_args)
+    let dist_ledger = SakMachine::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 
@@ -154,7 +158,7 @@ async fn test_generate_a_proof() {
         println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
-        let merkle_node = dist_ledger.apis.get_merkle_node(&key).await.unwrap();
+        let merkle_node = dist_ledger.get_merkle_node(&key).await.unwrap();
 
         let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
 
@@ -301,7 +305,7 @@ async fn test_real_generate_a_proof() {
 
         let genesis_block = sak_types::mock_block(tx_candidates);
 
-        sak_dist_ledger::mock_dist_ledger(genesis_block).await
+        sak_machine::mock_dist_ledger(genesis_block).await
     };
 
     let cm_1_old_idx: u128 = 0;
@@ -321,7 +325,7 @@ async fn test_real_generate_a_proof() {
         println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
-        let merkle_node = dist_ledger.apis.get_merkle_node(&key).await.unwrap();
+        let merkle_node = dist_ledger.get_merkle_node(&key).await.unwrap();
 
         let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
 

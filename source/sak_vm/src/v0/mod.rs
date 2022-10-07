@@ -3,8 +3,7 @@ mod ctr_fn;
 mod receipt;
 mod state;
 mod vm;
-pub(crate) mod wasm_bootstrap;
-pub(crate) mod wasm_time;
+mod wasmtm;
 
 #[cfg(test)]
 mod tests;

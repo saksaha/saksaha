@@ -9,4 +9,4 @@ pub use rocksdb::{
 };
 pub use utils::*;
 
-pub(crate) type KvDBError = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type KVDBError = Box<dyn std::error::Error + Send + Sync>;

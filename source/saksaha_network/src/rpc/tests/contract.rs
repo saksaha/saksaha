@@ -1,5 +1,5 @@
 use super::utils::{self, TestContext};
-use crate::blockchain::GenesisBlock;
+use crate::ledger::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
 use crate::tests::SaksahaTestUtils;
 use hyper::{Body, Client, Method, Request, Uri};
@@ -9,10 +9,6 @@ use sak_rpc_interface::{JsonRequest, JsonResponse};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_contract() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test"]);
-    // SaksahaTestUtils::init_test(vec!["test"]);
-
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);

@@ -1,6 +1,6 @@
-use crate::MRS;
+use crate::SakMRS;
 use sak_contract_std::Storage;
 
-impl MRS {
+impl SakMRS {
     pub fn api_fn() {}
 }

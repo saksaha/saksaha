@@ -43,9 +43,8 @@ pub(in crate::node) async fn recv_block_hash_syn(
     let new_blocks = block_hash_syn_msg.new_blocks;
 
     let (_, latest_block_hash) = machine
-        .blockchain
+        .ledger
         .dist_ledger
-        .apis
         .get_latest_block_hash()
         .await?
         .ok_or("height does not exist")?;
@@ -58,13 +57,7 @@ pub(in crate::node) async fn recv_block_hash_syn(
 
     let mut blocks_to_req = vec![];
     for (height, block_hash) in new_blocks {
-        if machine
-            .blockchain
-            .dist_ledger
-            .apis
-            .get_block(&block_hash)?
-            .is_none()
-        {
+        if machine.ledger.dist_ledger.get_block(&block_hash)?.is_none() {
             blocks_to_req.push((height, block_hash));
         }
     }

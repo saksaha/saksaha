@@ -2,25 +2,15 @@ use super::columns::{self, Columns};
 use crate::MRSError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
 use sak_logger::info;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
-
-// const APP_NAME: &'static str = "saksaha";
 
 pub struct MRSDB {
     pub(crate) db: DB,
 }
 
 impl MRSDB {
-    pub(crate) async fn init(db_path: &PathBuf) -> Result<MRSDB, MRSError> {
-        let mrs_db_path = {
-            if !db_path.exists() {
-                std::fs::create_dir_all(db_path.clone())?;
-            }
-
-            db_path
-        };
-
+    pub(crate) async fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
         let options = {
             let mut o = Options::default();
             o.create_missing_column_families(true);
@@ -29,7 +19,7 @@ impl MRSDB {
             o
         };
 
-        let kv_db = match KeyValueDatabase::new(mrs_db_path, options, Self::make_cf_descriptors()) {
+        let kv_db = match KeyValueDatabase::new(db_path, options, Self::make_cf_descriptors()) {
             Ok(d) => d,
             Err(err) => {
                 return Err(format!("Error initializing key value database, err: {}", err).into());
