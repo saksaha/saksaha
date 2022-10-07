@@ -3,10 +3,13 @@ use crate::CoinProof;
 use sak_crypto::groth16::Proof;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTreeSim;
-use sak_crypto::{Bls12, Scalar, ScalarExt};
-use sak_dist_ledger_meta::CM_TREE_DEPTH;
-use sak_proof_circuit::{NewCoin, OldCoin};
 
+use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
+use sak_proof_circuit::{CoinProofCircuit2to2, NewCoin, OldCoin};
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 use type_extension::U8Array;
 
 pub struct TestContext {

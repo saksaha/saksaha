@@ -3,14 +3,14 @@ use super::{
         ARG_CH_ID, ARG_DST_PK, ARG_SERIALIZED_INPUT, DUMMY_CHANNEL_ID_1, DUMMY_CHANNEL_ID_2,
         DUMMY_CHANNEL_ID_3, ENVELOPE_CONTRACT,
     },
-    utils::init_test_log,
+    utils::EnvelopeTestUtils,
 };
 use envelope_contract::{
     request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EncryptedChatMessage, EnvelopeStorage,
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
-use sak_vm::{CtrFn, VM};
+use sak_vm::{ContractFn, SakVM};
 use std::collections::HashMap;
 
 fn get_single_message() -> String {
@@ -31,22 +31,6 @@ fn get_her_pk() -> String {
 fn mock_storage(msgs: &Vec<String>) -> Storage {
     let mut open_ch_reqs = HashMap::new();
 
-    // open_ch_reqs.insert(
-    //     get_her_pk(),
-    //     vec![
-    //         Channel {
-    //             ch_id: "ch_id_1".to_string(),
-    //             eph_key: "eph_key_1".to_string(),
-    //             sig: "sig_1".to_string(),
-    //         },
-    //         Channel {
-    //             ch_id: DUMMY_CHANNEL_ID_1.to_string(),
-    //             eph_key: "eph_key_1".to_string(),
-    //             sig: "sig_1".to_string(),
-    //         },
-    //     ],
-    // );
-
     let mut chats = HashMap::<ChannelId, Vec<String>>::new();
 
     let chat_msg = ChatMessage {
@@ -65,31 +49,6 @@ fn mock_storage(msgs: &Vec<String>) -> Storage {
         chats,
     };
 
-    // let mut ret = Storage::with_capacity(STORAGE_CAP);
-
-    // let key = String::from(DUMMY_CHANNEL_ID_1);
-
-    // let value = serde_json::to_string(&msgs).unwrap();
-
-    // ret.insert(key, value);
-
-    // let key = String::from(get_her_pk());
-
-    // let input: Vec<String> = vec![
-    //     String::default(),
-    //     DUMMY_CHANNEL_ID_1.to_string(),
-    //     String::default(),
-    //     String::default(),
-    // ];
-
-    // let input = serde_json::to_string(&input).unwrap();
-
-    // let input_vec: Vec<String> = vec![input];
-
-    // let value = serde_json::to_string(&input_vec).unwrap();
-
-    // ret.insert(key, value);
-
     serde_json::to_vec(&envelope_storage).unwrap()
 }
 
@@ -105,10 +64,9 @@ fn make_mock_open_ch() -> Channel {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_msgs() {
-    // sak_test_utils::init_test_log();
-    init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let test_dummy_messege = get_multi_messages();
 
@@ -130,7 +88,7 @@ async fn test_messenger_get_msgs() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Query(request, messages_state);
+        let ctr_fn = ContractFn::Query(request, messages_state);
 
         let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -150,19 +108,15 @@ async fn test_messenger_get_msgs() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_get_ch_list() {
-    // sak_test_utils::init_test_log();
-    init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let her_pk = get_her_pk();
 
     let dummy_messeges = get_multi_messages();
 
     let (request, storage) = {
-        // let mut args = HashMap::with_capacity(2);
-        // args.insert(String::from(ARG_DST_PK), her_pk.clone());
-
         let get_ch_list_params = GetChListParams {
             dst_pk: her_pk.clone(),
         };
@@ -182,7 +136,7 @@ async fn test_messenger_get_ch_list() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Query(request, storage);
+        let ctr_fn = ContractFn::Query(request, storage);
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
@@ -201,10 +155,9 @@ async fn test_messenger_get_ch_list() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel() {
-    // sak_test_utils::init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    init_test_log();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let new_pk = "abcdef".to_string();
 
@@ -245,7 +198,7 @@ async fn test_messenger_open_channel() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
@@ -256,29 +209,16 @@ async fn test_messenger_open_channel() {
 
         let storage: EnvelopeStorage = serde_json::from_slice(&updated_storage).unwrap();
 
-        // let envelope_storage: EnvelopeStorage =
-        //     serde_json::from_slice(&storage).unwrap();
-
-        // let open_ch_reqs = envelope_storage.open_ch_reqs.get(&new_pk).unwrap();
-        // let open_ch_reqs = storage.open_ch_reqs.get(&new_pk).unwrap();
-
-        // let open_ch = open_ch_reqs.get(0).unwrap();
-
         println!("expected channel id : {:?}", DUMMY_CHANNEL_ID_2);
         println!("updated channel id: {:?}", storage);
-
-        // let ch_id = &open_ch.ch_id;
-
-        // assert_eq!(DUMMY_CHANNEL_ID_2, ch_id);
     }
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_send_msg() {
-    // sak_test_utils::init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    init_test_log();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let dummy_messeges = get_multi_messages();
 
@@ -315,7 +255,7 @@ async fn test_messenger_send_msg() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -339,17 +279,14 @@ async fn test_messenger_send_msg() {
         println!("expected msg: {:?}", expected_msg);
 
         println!("updated msg: {:?}", msg);
-
-        // assert_eq!(&expected_msg, chat.);
     };
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_messenger_open_channel_me_and_you() {
-    // sak_test_utils::init_test_log();
+    EnvelopeTestUtils::init_test_log();
 
-    init_test_log();
-    let vm = VM::init().expect("VM should be initiated");
+    let vm = SakVM::init().expect("VM should be initiated");
 
     let my_pk = "my_pk".to_string();
     let your_pk = "your_pk".to_string();
@@ -404,10 +341,8 @@ async fn test_messenger_open_channel_me_and_you() {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        // let storage = make_mock_storage(&dummy_messeges);
-
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage.clone());
+        let ctr_fn = ContractFn::Execute(request, storage.clone());
 
         vm.invoke(ctr_wasm, ctr_fn).unwrap()
     };
@@ -433,7 +368,7 @@ async fn test_messenger_open_channel_me_and_you() {
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = CtrFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         vm.invoke(ctr_wasm, ctr_fn).unwrap()
     };

@@ -1,9 +1,9 @@
 use super::shutdown::ShutdownMng;
 use super::SaksahaError;
 use super::SystemRunArgs;
-use crate::blockchain::Blockchain;
 use crate::config::Config;
 use crate::fs;
+use crate::ledger::Ledger;
 use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
@@ -168,8 +168,8 @@ impl Routine {
             P2PHost::init(p2p_host_args).await?
         };
 
-        let blockchain = {
-            let b = Blockchain::init(
+        let ledger = {
+            let l = Ledger::init(
                 &config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
@@ -178,11 +178,11 @@ impl Routine {
             )
             .await?;
 
-            b
+            l
         };
 
         let machine = {
-            let m = Machine { blockchain };
+            let m = Machine { ledger };
 
             Arc::new(m)
         };

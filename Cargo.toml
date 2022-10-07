@@ -10,6 +10,7 @@ members = [
   "source/sak_proof_circuit",
   "source/sak_dir",
   "source/sak_kv_db",
+  "source/sak_mrs",
   "source/sak_rpc_interface",
   "source/sak_p2p_addr",
   "source/sak_p2p_peertable",
@@ -21,8 +22,8 @@ members = [
   "source/sak_utils_time",
   "source/sak_utils_net",
   "source/sak_contract_std",
-  "source/sak_dist_ledger",
-  "source/sak_dist_ledger_meta",
+  "source/sak_machine",
+  "source/sak_dist_ledger_cfg",
   "source/hyper_server",
   "source/hyper_rpc_router",
   "source/sak_vm",
@@ -34,7 +35,7 @@ members = [
 
   # Contracts (independently compiled and processed)
   "source/sak_validator",
-  "source/sak_mrs",
+  "source/sak_mrs_contract",
 
   # internals
   "internals/ci",

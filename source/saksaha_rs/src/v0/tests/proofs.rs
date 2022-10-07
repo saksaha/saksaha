@@ -1,10 +1,10 @@
 use sak_crypto::hasher::MiMC;
-use sak_crypto::Scalar;
-use sak_crypto::{MerkleTreeSim, ScalarExt};
+use sak_crypto::ScalarExt;
+use sak_crypto::{MerkleTreeSim, Scalar};
+use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
 use sak_proof::{CoinProof, NewCoin, OldCoin};
 
-use sak_dist_ledger_meta::CM_TREE_DEPTH;
 use type_extension::U8Array;
 
 fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
