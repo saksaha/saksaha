@@ -16,6 +16,7 @@ pub(crate) struct Wasmtime {}
 impl Wasmtime {
     pub(crate) fn create_instance(
         wasm: impl AsRef<[u8]>,
+        // accessor,
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
@@ -59,7 +60,7 @@ impl Wasmtime {
                 let state = caller.data_mut();
                 println!("state: {:?}", state);
 
-                let data = Data { d: 123 };
+                let data = Data { d: 123 }; // accessor
                 let data_bytes = match serde_json::to_vec(&data) {
                     Ok(b) => b,
                     Err(err) => {

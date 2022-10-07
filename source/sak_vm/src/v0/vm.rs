@@ -23,8 +23,10 @@ impl SakVM {
             ContractFn::Init => {
                 return Self::invoke_init(instance, store, memory);
             }
-            ContractFn::Query(request, storage) => {
-                return Self::invoke_query(instance, store, memory, request, storage)
+            ContractFn::Query(request, storage, store_accessor) => {
+                println!("store_accessor value: {}", store_accessor.get_mrs_data());
+
+                return Self::invoke_query(instance, store, memory, request, storage);
             }
             ContractFn::Execute(request, storage) => {
                 return Self::invoke_execute(instance, store, memory, request, storage);
