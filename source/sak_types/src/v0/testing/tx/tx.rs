@@ -50,7 +50,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let dummy_coin = mock_coin_custom(0, 0, 0, 0, 0);
     let dummy_auth_path = [
-        Some((Scalar::default(), false));32
+        Some((Scalar::default(), false));CM_TREE_DEPTH as usize
         // Some((Scalar::default(), false)),
         // Some((Scalar::default(), false)),
         // Some((Scalar::default(), false)),

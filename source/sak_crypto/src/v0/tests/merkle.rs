@@ -6,7 +6,7 @@ use type_extension::U8Array;
 fn test_merkle_simulator() {
     SakCryptoTestUtils::init_test();
 
-    let tree_depth = 6;
+    let tree_depth = 32;
     let leaf_len = 2;
 
     let scalar_zero = ScalarExt::parse_arr(&U8Array::new_empty_32()).unwrap();
