@@ -4,29 +4,25 @@ use sak_logger::info;
 use std::path::Path;
 use std::path::PathBuf;
 
-pub struct KeyValueDatabase {
+pub struct KeyValueDatabase<P: AsRef<Path>> {
     pub db_instance: DB,
-    db_path_str: String,
+    db_path: P,
 }
 
-impl KeyValueDatabase {
-    pub fn new<P: AsRef<Path>>(
+impl<P> KeyValueDatabase<P>
+where
+    P: AsRef<Path>,
+{
+    pub fn new(
         db_path: P,
         options: Options,
         cf_descriptors: Vec<ColumnFamilyDescriptor>,
-    ) -> Result<KeyValueDatabase, String> {
-        let db_path_str = match db_path.as_ref().clone().to_str() {
-            Some(s) => s.to_string(),
-            None => {
-                return Err(format!("Not a valid path").into());
-            }
-        };
-
-        let db_instance = match DB::open_cf_descriptors(&options, &db_path_str, cf_descriptors) {
+    ) -> Result<KeyValueDatabase<P>, String> {
+        let db_instance = match DB::open_cf_descriptors(&options, &db_path, cf_descriptors) {
             Ok(db) => {
                 info!(
-                    "Initialized KeyValueDatabase, path: {}",
-                    db_path_str.yellow(),
+                    "Initialized KeyValueDatabase, path: {:?}",
+                    db_path.as_ref().to_string_lossy(),
                 );
 
                 db
@@ -41,12 +37,12 @@ impl KeyValueDatabase {
 
         Ok(KeyValueDatabase {
             db_instance,
-            db_path_str,
+            db_path,
         })
     }
 
     pub fn destroy(&self) -> Result<(), String> {
-        let destroy = DB::destroy(&Options::default(), &self.db_path_str);
+        let destroy = DB::destroy(&Options::default(), &self.db_path);
 
         match destroy {
             Ok(_) => {
@@ -56,7 +52,8 @@ impl KeyValueDatabase {
             }
             Err(err) => Err(format!(
                 "Error destroying KeyValueDatabase path, path: {}, err: {}",
-                self.db_path_str, err
+                self.db_path.as_ref().to_string_lossy(),
+                err
             )),
         }
     }

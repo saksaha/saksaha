@@ -5,8 +5,6 @@ use sak_logger::info;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-// const APP_NAME: &'static str = "saksaha";
-
 pub struct MRSDB {
     pub(crate) db: DB,
 }
