@@ -12,6 +12,7 @@ sak_contract_std = { path = "../sak_contract_std" }
 sak_dist_ledger_cfg = { path = "../sak_dist_ledger_cfg" }
 sak_dir = { path = "../sak_dir" }
 sak_mrs = { path = "../sak_mrs" }
+sak_store_accessor = { path = "../sak_store_accessor" }
 sak_vm = { path = "../sak_vm" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_crypto = { path = "../sak_crypto" }
@@ -27,9 +28,11 @@ sak_types = { path = "../sak_types" }
 sak_task_queue = { path = "../sak_task_queue" }
 async-trait = "0.1.57"
 saksaha = { path = "../../source/saksaha_rs" }
+sak_credential = { path = "../sak_credential" }
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
+
 
 [lib]
 doctest = false # until stable beta is released

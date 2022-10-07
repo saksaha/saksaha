@@ -10,8 +10,10 @@ use envelope_contract::{
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_mrs::SakMRS;
+use sak_store_accessor::StoreAccessor;
 use sak_vm::{ContractFn, SakVM};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 fn get_single_message() -> String {
     String::from("Hello! I belong to saksaha")
@@ -87,8 +89,20 @@ async fn test_messenger_get_msgs() {
     };
 
     {
+        let mrs_path = "";
+
+        let mrs = {
+            let m = SakMRS::init(&mrs_path).await.unwrap();
+            m
+        };
+
+        let store_accessor = {
+            let a = StoreAccessor::new(mrs);
+            Arc::new(a)
+        };
+
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Query(request, messages_state);
+        let ctr_fn = ContractFn::Query(request, messages_state, store_accessor);
 
         let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -135,8 +149,20 @@ async fn test_messenger_get_ch_list() {
     };
 
     {
+        let mrs_path = "";
+
+        let mrs = {
+            let m = SakMRS::init(&mrs_path).await.unwrap();
+            m
+        };
+
+        let store_accessor = {
+            let a = StoreAccessor::new(mrs);
+            Arc::new(a)
+        };
+
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Query(request, storage);
+        let ctr_fn = ContractFn::Query(request, storage, store_accessor);
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 

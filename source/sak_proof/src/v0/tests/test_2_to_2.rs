@@ -1,10 +1,9 @@
 use super::utils;
 use crate::CoinProof;
-use crate::ProofError;
-use sak_crypto::groth16::{self, Parameters, Proof};
+use sak_crypto::groth16::Proof;
 use sak_crypto::hasher::MiMC;
-use sak_crypto::MerkleTree;
 use sak_crypto::MerkleTreeSim;
+
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_proof_circuit::{CoinProofCircuit2to2, NewCoin, OldCoin};
@@ -192,12 +191,18 @@ pub fn make_test_context_2_to_2() -> TestContext {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 
-    let tree = MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1_old, cm_2_old]).unwrap();
+    let tree_simulator = MerkleTreeSim::init(CM_TREE_DEPTH as u32, vec![cm_1, cm_2]).unwrap();
 
-    let merkle_rt_1 = tree.get_merkle_rt();
+    let merkle_tree = tree_simulator.merkle_tree;
+
+    let merkle_nodes = tree_simulator.nodes;
+
+    let merkle_rt_1 = *merkle_nodes
+        .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        .unwrap();
 
     let auth_path_1 = {
-        let v = tree.merkle_tree.generate_auth_paths(0);
+        let v = merkle_tree.generate_auth_paths(0);
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -207,7 +212,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = match tree.nodes.get(key.as_str()) {
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
                 Some(t) => *t,
                 None => Scalar::default(),
             };
@@ -218,10 +223,12 @@ pub fn make_test_context_2_to_2() -> TestContext {
         ret
     };
 
-    let merkle_rt_2 = tree.get_merkle_rt();
+    let merkle_rt_2 = *merkle_nodes
+        .get(format!("{}_0", CM_TREE_DEPTH).as_str())
+        .unwrap();
 
     let auth_path_2 = {
-        let v = tree.merkle_tree.generate_auth_paths(1);
+        let v = merkle_tree.generate_auth_paths(1);
         let mut ret = [(Scalar::default(), false); CM_TREE_DEPTH as usize];
 
         v.iter().enumerate().for_each(|(idx, p)| {
@@ -231,7 +238,7 @@ pub fn make_test_context_2_to_2() -> TestContext {
 
             let key = format!("{}_{}", idx, p.idx);
 
-            let merkle_node = match tree.nodes.get(key.as_str()) {
+            let merkle_node = match merkle_nodes.get(key.as_str()) {
                 Some(t) => *t,
                 None => Scalar::default(),
             };

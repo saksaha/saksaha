@@ -3,6 +3,7 @@ use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
     RequestArgs, Storage,
 };
+// use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -13,6 +14,15 @@ const VALIDATOR_LEN: usize = PUB_KEY_LEN;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ValidatorStorage {
     pub validators: Vec<String>,
+}
+
+#[link(wasm_import_module = "host")]
+extern "C" {
+    fn hello(param1: i32, param2: i32) -> i32;
+
+    fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+
+    fn get_latest_len(p1: i32, p2: i32) -> i32;
 }
 
 contract_bootstrap!();
@@ -36,7 +46,11 @@ pub fn init2() -> Result<Vec<u8>, ContractError> {
 }
 
 define_query!();
-pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
+pub fn query2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: Storage,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "get_validator" => {
             return handle_get_validator(storage);

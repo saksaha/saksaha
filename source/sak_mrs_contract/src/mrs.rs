@@ -1,11 +1,24 @@
+use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
     InvokeResult, RequestArgs, Storage,
 };
+<<<<<<< HEAD
 
 use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
+=======
+>>>>>>> dev
 
 const SLOT_CAPACITY: usize = 16;
+
+#[link(wasm_import_module = "host")]
+extern "C" {
+    fn hello(param1: i32, param2: i32) -> i32;
+
+    fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+
+    fn get_latest_len(p1: i32, p2: i32) -> i32;
+}
 
 contract_bootstrap!();
 
@@ -21,7 +34,11 @@ pub fn init2() -> Result<Storage, ContractError> {
 }
 
 define_query!();
-pub fn query2(request: CtrRequest, storage: Storage) -> Result<Vec<u8>, ContractError> {
+pub fn query2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: Storage,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "unimplemented" => {
             unimplemented!()
