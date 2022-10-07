@@ -47,7 +47,7 @@ impl Ledger {
             acc_dir.join("mrs")
         };
 
-        let dist_ledger_args = SakMachineArgs {
+        let dist_ledger_args = SakLedgerArgs {
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
             consensus,
@@ -56,8 +56,8 @@ impl Ledger {
             mrs_path,
         };
 
-        let dist_ledger = {
-            let d = SakMachine::init(dist_ledger_args).await?;
+        let ledger = {
+            let d = SakLedger::init(dist_ledger_args).await?;
 
             d
         };
