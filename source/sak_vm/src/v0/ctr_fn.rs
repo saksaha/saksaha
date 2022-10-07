@@ -3,7 +3,7 @@ use sak_store_accessor::StoreAccessor;
 use std::sync::Arc;
 
 pub enum ContractFn {
-    Init,
+    Init(Arc<StoreAccessor>),
     Query(CtrRequest, Storage, Arc<StoreAccessor>),
-    Execute(CtrRequest, Storage),
+    Execute(CtrRequest, Storage, Arc<StoreAccessor>),
 }

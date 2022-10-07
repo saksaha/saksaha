@@ -6,10 +6,6 @@ use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_two_nodes_talk_on_stream_cipher() {
-    // sak_test_utils::init_test_log();
-    // TestUtil::init_test(vec!["test_1", "test_2"]);
-    // let app_prefix_vec = vec![String::from("test_1"), String::from("test_2")];
-
     let test_credential_1 = CredentialProfile::test_1();
     let test_credential_2 = CredentialProfile::test_2();
 

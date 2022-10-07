@@ -8,18 +8,14 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
-#[derive(Serialize, Deserialize)]
-pub struct Data {
-    d: usize,
-}
+use super::linker::make_linker;
 
 pub(crate) struct Wasmtime {}
 
 impl Wasmtime {
-    pub(crate) fn create_instance(
+    pub(crate) fn make_instance(
         wasm: impl AsRef<[u8]>,
-        // accessor,
-        store_accessor: Option<Arc<StoreAccessor>>,
+        store_accessor: Arc<StoreAccessor>,
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
@@ -41,104 +37,106 @@ impl Wasmtime {
             }
         };
 
-        let mut linker = Linker::new(&engine);
+        let linker = make_linker(engine, store_accessor)?;
 
-        linker.func_wrap(
-            "host",
-            "hello",
-            |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-                let state = caller.data_mut();
-                println!("state: {:?}", state);
-                println!("hello(): param1: {}", param);
-                println!("hello(): param2: {}", param2);
+        // let mut linker = Linker::new(&engine);
 
-                param * 2
-            },
-        )?;
+        // linker.func_wrap(
+        //     "host",
+        //     "hello",
+        //     |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+        //         let state = caller.data_mut();
+        //         println!("state: {:?}", state);
+        //         println!("hello(): param1: {}", param);
+        //         println!("hello(): param2: {}", param2);
 
-        linker.func_wrap(
-            "host",
-            "HOST__get_mrs_data",
-            move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-                let state = caller.data_mut();
-                println!("state: {:?}", state);
+        //         param * 2
+        //     },
+        // )?;
 
-                match store_accessor.clone() {
-                    Some(sa) => {
-                        // sa.put_mrs_data();
+        // linker.func_wrap(
+        //     "host",
+        //     "HOST__get_mrs_data",
+        //     move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+        //         let state = caller.data_mut();
+        //         println!("state: {:?}", state);
 
-                        match caller.get_export(Constants::MEMORY) {
-                            Some(exp) => {
-                                let memory = exp.into_memory().unwrap();
-                                let m = memory.data(&mut caller);
+        //         match store_accessor.clone() {
+        //             Some(sa) => {
+        //                 // sa.put_mrs_data();
 
-                                println!("aaaaaaaaaa, {:?}", m);
+        //                 match caller.get_export(Constants::MEMORY) {
+        //                     Some(exp) => {
+        //                         let memory = exp.into_memory().unwrap();
+        //                         let m = memory.data(&mut caller);
 
-                                let a = m
-                                    .get(param as u32 as usize..)
-                                    .and_then(|arr| arr.get(..param2 as u32 as usize))
-                                    .unwrap();
+        //                         println!("aaaaaaaaaa, {:?}", m);
 
-                                let ap = std::str::from_utf8(&a).unwrap();
+        //                         let a = m
+        //                             .get(param as u32 as usize..)
+        //                             .and_then(|arr| arr.get(..param2 as u32 as usize))
+        //                             .unwrap();
 
-                                println!("aaaaaaaaaa22, {:?}", ap);
-                            }
-                            None => {}
-                        }
+        //                         let ap = std::str::from_utf8(&a).unwrap();
 
-                        println!("555 {:?}", sa.get_mrs_data());
-                    }
-                    None => {}
-                };
+        //                         println!("aaaaaaaaaa22, {:?}", ap);
+        //                     }
+        //                     None => {}
+        //                 }
 
-                let data = Data { d: 123 };
+        //                 println!("555 {:?}", sa.get_mrs_data());
+        //             }
+        //             None => {}
+        //         };
 
-                let data_bytes = match serde_json::to_vec(&data) {
-                    Ok(b) => b,
-                    Err(err) => {
-                        error!("Error serializing mrs data, err: {}", err);
+        //         let data = Data { d: 123 };
 
-                        vec![]
-                    }
-                };
+        //         let data_bytes = match serde_json::to_vec(&data) {
+        //             Ok(b) => b,
+        //             Err(err) => {
+        //                 error!("Error serializing mrs data, err: {}", err);
 
-                println!(
-                    "get_mrs_data(): data: {:?}, getting memory allocation",
-                    &data_bytes,
-                );
+        //                 vec![]
+        //             }
+        //         };
 
-                let alloc = caller
-                    .get_export(Constants::ALLOC_FN)
-                    .unwrap()
-                    .into_func()
-                    .unwrap();
-                let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
+        //         println!(
+        //             "get_mrs_data(): data: {:?}, getting memory allocation",
+        //             &data_bytes,
+        //         );
 
-                let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
+        //         let alloc = caller
+        //             .get_export(Constants::ALLOC_FN)
+        //             .unwrap()
+        //             .into_func()
+        //             .unwrap();
+        //         let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
 
-                println!("get_mrs_data(): param: {:?}", param);
-                println!("get_mrs_data(): param2: {}", param2);
-                println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
+        //         let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
 
-                513
-            },
-        )?;
+        //         println!("get_mrs_data(): param: {:?}", param);
+        //         println!("get_mrs_data(): param2: {}", param2);
+        //         println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
 
-        linker.func_wrap(
-            "host",
-            "get_latest_len",
-            |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-                let mut state = caller.data_mut();
-                println!("state: {:?}", state);
-                println!("get_latest_len(): returning get latest len");
+        //         513
+        //     },
+        // )?;
 
-                let ret = state.len as i32;
+        // linker.func_wrap(
+        //     "host",
+        //     "get_latest_len",
+        //     |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+        //         let mut state = caller.data_mut();
+        //         println!("state: {:?}", state);
+        //         println!("get_latest_len(): returning get latest len");
 
-                state.len = 0;
+        //         let ret = state.len as i32;
 
-                ret
-            },
-        )?;
+        //         state.len = 0;
+
+        //         ret
+        //     },
+        // )?;
 
         let instance = match linker.instantiate(&mut store, &module) {
             Ok(i) => i,

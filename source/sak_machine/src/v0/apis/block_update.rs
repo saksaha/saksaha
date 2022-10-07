@@ -328,7 +328,9 @@ impl SakMachine {
     ) -> Result<(), MachineError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                let receipt = self.vm.invoke(&data, ContractFn::Init)?;
+                let receipt = self
+                    .vm
+                    .invoke(&data, ContractFn::Init(self.store_accessor.clone()))?;
                 let storage = receipt
                     .updated_storage
                     .ok_or("Contract state needs to be initialized")?;
@@ -355,7 +357,11 @@ impl SakMachine {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
+                                let ctr_fn = ContractFn::Execute(
+                                    req,
+                                    previous_state.to_vec(),
+                                    self.store_accessor.clone(),
+                                );
 
                                 let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 

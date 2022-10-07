@@ -1,4 +1,5 @@
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_credential::CredentialProfile;
 use sak_logger::SakLogger;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
@@ -76,8 +77,30 @@ async fn test_call_ctr_validator_fn_init() {
 
     let vm = SakVM::init().expect("VM should be initiated");
 
+    let credential = CredentialProfile::test_1();
+
+    let test_dir = {
+        let tempdir = std::env::temp_dir()
+            .join("saksaha_test")
+            .join(credential.public_key_str);
+
+        std::fs::create_dir_all(&tempdir).unwrap();
+        tempdir
+    };
+
+    let ledger_path = { test_dir.join("ledger") };
+
+    let mrs_path = { test_dir.join("mrs") };
+
+    let mrs = SakMRS::init(mrs_path).await.unwrap();
+
+    let store_accessor = {
+        let a = StoreAccessor::new(mrs);
+        Arc::new(a)
+    };
+
     let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = ContractFn::Init;
+    let ctr_fn = ContractFn::Init(store_accessor);
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)
@@ -160,6 +183,28 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
         get_dummy_validator_3(),
     ];
 
+    let credential = CredentialProfile::test_1();
+
+    let test_dir = {
+        let tempdir = std::env::temp_dir()
+            .join("saksaha_test")
+            .join(credential.public_key_str);
+
+        std::fs::create_dir_all(&tempdir).unwrap();
+        tempdir
+    };
+
+    let ledger_path = { test_dir.join("ledger") };
+
+    let mrs_path = { test_dir.join("mrs") };
+
+    let mrs = SakMRS::init(mrs_path).await.unwrap();
+
+    let store_accessor = {
+        let a = StoreAccessor::new(mrs);
+        Arc::new(a)
+    };
+
     let (request, storage) = {
         let req_type = String::from("add_validator");
 
@@ -184,7 +229,7 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
     };
 
     let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = ContractFn::Execute(request, storage);
+    let ctr_fn = ContractFn::Execute(request, storage, store_accessor);
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)

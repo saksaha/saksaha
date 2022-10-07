@@ -46,7 +46,7 @@ impl SakMachine {
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
-        let ctr_fn = ContractFn::Execute(request, ctr_state);
+        let ctr_fn = ContractFn::Execute(request, ctr_state, self.store_accessor.clone());
 
         let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 

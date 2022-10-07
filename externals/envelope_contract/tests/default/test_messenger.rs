@@ -10,6 +10,7 @@ use envelope_contract::{
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_credential::CredentialProfile;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
 use sak_vm::{ContractFn, SakVM};
@@ -185,6 +186,26 @@ async fn test_messenger_open_channel() {
 
     let vm = SakVM::init().expect("VM should be initiated");
 
+    let credential = CredentialProfile::test_1();
+
+    let test_dir = {
+        let tempdir = std::env::temp_dir()
+            .join("saksaha_test")
+            .join(credential.public_key_str);
+
+        std::fs::create_dir_all(&tempdir).unwrap();
+        tempdir
+    };
+
+    let mrs_path = { test_dir.join("mrs") };
+
+    let mrs = SakMRS::init(mrs_path).await.unwrap();
+
+    let store_accessor = {
+        let a = StoreAccessor::new(mrs);
+        Arc::new(a)
+    };
+
     let new_pk = "abcdef".to_string();
 
     let dummy_messeges = get_multi_messages();
@@ -224,7 +245,7 @@ async fn test_messenger_open_channel() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage, store_accessor);
 
         let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
 
@@ -245,6 +266,26 @@ async fn test_messenger_send_msg() {
     EnvelopeTestUtils::init_test_log();
 
     let vm = SakVM::init().expect("VM should be initiated");
+
+    let credential = CredentialProfile::test_1();
+
+    let test_dir = {
+        let tempdir = std::env::temp_dir()
+            .join("saksaha_test")
+            .join(credential.public_key_str);
+
+        std::fs::create_dir_all(&tempdir).unwrap();
+        tempdir
+    };
+
+    let mrs_path = { test_dir.join("mrs") };
+
+    let mrs = SakMRS::init(mrs_path).await.unwrap();
+
+    let store_accessor = {
+        let a = StoreAccessor::new(mrs);
+        Arc::new(a)
+    };
 
     let dummy_messeges = get_multi_messages();
 
@@ -281,7 +322,7 @@ async fn test_messenger_send_msg() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage, store_accessor);
 
         let receipt = vm
             .invoke(ctr_wasm, ctr_fn)
@@ -313,6 +354,26 @@ async fn test_messenger_open_channel_me_and_you() {
     EnvelopeTestUtils::init_test_log();
 
     let vm = SakVM::init().expect("VM should be initiated");
+
+    let credential = CredentialProfile::test_1();
+
+    let test_dir = {
+        let tempdir = std::env::temp_dir()
+            .join("saksaha_test")
+            .join(credential.public_key_str);
+
+        std::fs::create_dir_all(&tempdir).unwrap();
+        tempdir
+    };
+
+    let mrs_path = { test_dir.join("mrs") };
+
+    let mrs = SakMRS::init(mrs_path).await.unwrap();
+
+    let store_accessor = {
+        let a = StoreAccessor::new(mrs);
+        Arc::new(a)
+    };
 
     let my_pk = "my_pk".to_string();
     let your_pk = "your_pk".to_string();
@@ -368,7 +429,7 @@ async fn test_messenger_open_channel_me_and_you() {
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage.clone());
+        let ctr_fn = ContractFn::Execute(request, storage.clone(), store_accessor.clone());
 
         vm.invoke(ctr_wasm, ctr_fn).unwrap()
     };
@@ -394,7 +455,7 @@ async fn test_messenger_open_channel_me_and_you() {
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage);
+        let ctr_fn = ContractFn::Execute(request, storage, store_accessor.clone());
 
         vm.invoke(ctr_wasm, ctr_fn).unwrap()
     };
