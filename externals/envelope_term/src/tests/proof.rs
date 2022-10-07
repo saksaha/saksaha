@@ -51,7 +51,12 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakMachine {
 
     let ledger_path = {
         let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
-        config_dir.join("test").join("db/ledger")
+        config_dir.join("test").join("ledger")
+    };
+
+    let mrs_path = {
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("test").join("mrs")
     };
 
     let dist_ledger_args = SakMachineArgs {
@@ -60,6 +65,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakMachine {
         consensus: pos,
         block_sync_interval: None,
         ledger_path,
+        mrs_path,
     };
 
     let dist_ledger = SakMachine::init(dist_ledger_args)

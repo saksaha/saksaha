@@ -8,7 +8,12 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> SakMachine {
 
     let ledger_path = {
         let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
-        config_dir.join("db/ledger")
+        config_dir.join("ledger")
+    };
+
+    let mrs_path = {
+        let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
+        config_dir.join("mrs")
     };
 
     let dist_ledger_args = SakMachineArgs {
@@ -17,6 +22,7 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> SakMachine {
         consensus: pos,
         block_sync_interval: None,
         ledger_path,
+        mrs_path,
     };
 
     let dist_ledger = SakMachine::init(dist_ledger_args)
@@ -31,7 +37,12 @@ pub async fn mock_dist_ledger_1() -> SakMachine {
 
     let ledger_path = {
         let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
-        config_dir.join("db/ledger")
+        config_dir.join("ledger")
+    };
+
+    let mrs_path = {
+        let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
+        config_dir.join("mrs")
     };
 
     let dist_ledger_args = SakMachineArgs {
@@ -40,6 +51,7 @@ pub async fn mock_dist_ledger_1() -> SakMachine {
         consensus: pos,
         block_sync_interval: None,
         ledger_path,
+        mrs_path,
     };
 
     let dist_ledger = SakMachine::init(dist_ledger_args)

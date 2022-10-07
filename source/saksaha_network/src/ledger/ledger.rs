@@ -39,7 +39,12 @@ impl Ledger {
 
         let ledger_path = {
             let acc_dir = fs::acc_dir(public_key)?;
-            acc_dir.join("db/ledger")
+            acc_dir.join("ledger")
+        };
+
+        let mrs_path = {
+            let acc_dir = fs::acc_dir(public_key)?;
+            acc_dir.join("mrs")
         };
 
         let dist_ledger_args = SakMachineArgs {
@@ -48,6 +53,7 @@ impl Ledger {
             consensus,
             block_sync_interval,
             ledger_path,
+            mrs_path,
         };
 
         let dist_ledger = {
