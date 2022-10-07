@@ -10,6 +10,7 @@ use tokio::sync::broadcast;
 
 pub struct SakMRS {
     db: MRSDB,
+    // ctr_addr: String,
 }
 
 impl SakMRS {

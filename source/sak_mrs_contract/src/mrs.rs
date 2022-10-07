@@ -47,11 +47,11 @@ fn reserve_slot(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult
     Ok(vec![])
 }
 
-fn update(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
-    let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
-    let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
+// fn update(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
+//     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
+//     let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
 
-    *storage = serde_json::to_vec(&mrs)?;
+//     *storage = serde_json::to_vec(&mrs)?;
 
-    Ok(vec![])
-}
+//     Ok(vec![])
+// }
