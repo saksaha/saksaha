@@ -1,8 +1,8 @@
-use crate::{LedgerError, SakDistLedger};
+use crate::{MachineError, SakMachine};
 use sak_logger::warn;
 use sak_types::{BlockCandidate, TxCandidate};
 
-impl SakDistLedger {
+impl SakMachine {
     pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
         for tx in tx_candidates.into_iter() {
             println!("insert into pool, tx: {}", tx.get_tx_hash());
@@ -25,7 +25,9 @@ impl SakDistLedger {
         self.sync_pool.get_txs(tx_hashes).await
     }
 
-    pub(crate) async fn make_block_candidate(&self) -> Result<Option<BlockCandidate>, LedgerError> {
+    pub(crate) async fn make_block_candidate(
+        &self,
+    ) -> Result<Option<BlockCandidate>, MachineError> {
         let tx_candidates = self.sync_pool.get_all_txs().await?;
 
         if tx_candidates.is_empty() {

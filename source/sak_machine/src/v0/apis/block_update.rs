@@ -1,4 +1,4 @@
-use crate::{CtrStateUpdate, LedgerError, MerkleUpdate, SakDistLedger};
+use crate::{CtrStateUpdate, MachineError, MerkleUpdate, SakMachine};
 use colored::Colorize;
 use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
@@ -13,14 +13,14 @@ use sak_types::{
 };
 use sak_vm::ContractFn;
 
-impl SakDistLedger {
+impl SakMachine {
     pub async fn insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
-    ) -> Result<Option<String>, String> {
+    ) -> Result<Option<String>, MachineError> {
         let persisted_gen_block_hash = if let Some(b) = match self.get_block_by_height(&0).await {
             Ok(b) => b,
-            Err(err) => return Err(err.to_string()),
+            Err(err) => return Err(err.into()),
         } {
             let block_hash = b.get_block_hash().to_string();
 
@@ -33,7 +33,7 @@ impl SakDistLedger {
             let b = match self.write_block(Some(genesis_block)).await {
                 Ok(b) => b,
                 Err(err) => {
-                    return Err(format!("Genesis block failed to write, err: {}", err));
+                    return Err(format!("Genesis block failed to write, err: {}", err).into());
                 }
             };
 
@@ -46,7 +46,7 @@ impl SakDistLedger {
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<String>, MachineError> {
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -170,7 +170,7 @@ impl SakDistLedger {
     pub async fn write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
-    ) -> Result<Vec<String>, LedgerError> {
+    ) -> Result<Vec<String>, MachineError> {
         let mut block_hashes = vec![];
 
         blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
@@ -206,7 +206,7 @@ impl SakDistLedger {
         Ok(block_hashes)
     }
 
-    pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
+    pub fn delete_tx(&self, key: &String) -> Result<(), MachineError> {
         self.ledger_db.delete_tx(key)
     }
 
@@ -222,7 +222,7 @@ impl SakDistLedger {
         }
     }
 
-    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, MachineError> {
         if sn == &DUMMY_SN {
             return Ok(true);
         } else {
@@ -240,7 +240,7 @@ impl SakDistLedger {
         }
     }
 
-    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
+    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, MachineError> {
         let hasher = MiMC::new();
 
         let mut public_inputs = vec![];
@@ -279,7 +279,7 @@ impl SakDistLedger {
         Ok(verification_result)
     }
 
-    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
+    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), MachineError> {
         bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
             TxCandidate::Mint(_tc) => {
                 return true;
@@ -325,7 +325,7 @@ impl SakDistLedger {
         data: &[u8],
         tx_ctr_op: TxCtrOp,
         ctr_state_update: &mut CtrStateUpdate,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
                 let receipt = self.vm.invoke(&data, ContractFn::Init)?;
@@ -357,7 +357,7 @@ impl SakDistLedger {
 
                                 let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
 
-                                let receipt = vm.invoke(ctr_wasm, ctr_fn)?;
+                                let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
 
                                 receipt.updated_storage.ok_or("State needs to be updated")?
                             }
@@ -391,7 +391,7 @@ impl SakDistLedger {
         ctr_state_update: &mut CtrStateUpdate,
         merkle_update: &mut MerkleUpdate,
         next_cm_idx: CmIdx,
-    ) -> Result<u128, LedgerError> {
+    ) -> Result<u128, MachineError> {
         let ctr_addr = &tc.ctr_addr;
         let data = &tc.data;
         let tx_ctr_op = tc.get_ctr_op();
@@ -412,7 +412,7 @@ impl SakDistLedger {
         ctr_state_update: &mut CtrStateUpdate,
         merkle_update: &mut MerkleUpdate,
         next_cm_idx: CmIdx,
-    ) -> Result<u128, LedgerError> {
+    ) -> Result<u128, MachineError> {
         let ctr_addr = &tc.ctr_addr;
         let data = &tc.data;
         let tx_ctr_op = tc.get_ctr_op();
@@ -432,7 +432,7 @@ impl SakDistLedger {
         merkle_update: &mut MerkleUpdate,
         cms: &Vec<[u8; 32]>,
         next_cm_idx: CmIdx,
-    ) -> Result<u128, LedgerError> {
+    ) -> Result<u128, MachineError> {
         let cm_count = cms.len() as u128;
 
         for (idx, cm) in cms.iter().enumerate() {

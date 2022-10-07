@@ -1,9 +1,9 @@
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
-use sak_dist_ledger::{Consensus, ConsensusError, SakDistLedger, SakDistLedgerArgs};
 use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
+use sak_machine::{Consensus, ConsensusError, SakMachine, SakMachineArgs};
 use sak_proof::{CoinProof, NewCoin, OldCoin};
 use sak_types::{BlockCandidate, TxCandidate};
 use type_extension::U8Array;
@@ -24,7 +24,7 @@ pub struct DummyPos {}
 impl Consensus for DummyPos {
     async fn do_consensus(
         &self,
-        _dist_ledger: &SakDistLedger,
+        _machine: &SakMachine,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());
@@ -46,7 +46,7 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
     Box::new(DummyPos {})
 }
 
-pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakDistLedger {
+pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakMachine {
     let pos = make_dummy_pos();
 
     let ledger_path = {
@@ -54,7 +54,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakDistLedger {
         config_dir.join("test").join("db/ledger")
     };
 
-    let dist_ledger_args = SakDistLedgerArgs {
+    let dist_ledger_args = SakMachineArgs {
         tx_sync_interval: None,
         genesis_block: Some(block),
         consensus: pos,
@@ -62,7 +62,7 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakDistLedger {
         ledger_path,
     };
 
-    let dist_ledger = SakDistLedger::init(dist_ledger_args)
+    let dist_ledger = SakMachine::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 
@@ -299,7 +299,7 @@ async fn test_real_generate_a_proof() {
 
         let genesis_block = sak_types::mock_block(tx_candidates);
 
-        sak_dist_ledger::mock_dist_ledger(genesis_block).await
+        sak_machine::mock_dist_ledger(genesis_block).await
     };
 
     let cm_1_old_idx: u128 = 0;

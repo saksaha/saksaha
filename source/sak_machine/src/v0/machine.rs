@@ -1,7 +1,7 @@
 use super::DistLedgerEvent;
 use crate::Consensus;
 use crate::LedgerDB;
-use crate::LedgerError;
+use crate::MachineError;
 use crate::SyncPool;
 use colored::Colorize;
 use sak_crypto::hasher::MiMC;
@@ -17,17 +17,17 @@ use tokio::sync::broadcast::Sender;
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
-pub struct SakDistLedger {
+pub struct SakMachine {
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     pub(crate) ledger_db: LedgerDB,
-    // pub vm: SakVM,
+    pub vm: SakVM,
     pub(crate) sync_pool: Arc<SyncPool>,
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
 }
 
-pub struct SakDistLedgerArgs {
+pub struct SakMachineArgs {
     pub tx_sync_interval: Option<u64>,
     pub genesis_block: Option<BlockCandidate>,
     pub consensus: Box<dyn Consensus + Send + Sync>,
@@ -35,15 +35,15 @@ pub struct SakDistLedgerArgs {
     pub ledger_path: PathBuf,
 }
 
-impl SakDistLedger {
-    pub async fn init(dist_ledger_args: SakDistLedgerArgs) -> Result<Self, LedgerError> {
-        let SakDistLedgerArgs {
+impl SakMachine {
+    pub async fn init(machine_args: SakMachineArgs) -> Result<Self, MachineError> {
+        let SakMachineArgs {
             tx_sync_interval,
             genesis_block,
             consensus,
             block_sync_interval,
             ledger_path,
-        } = dist_ledger_args;
+        } = machine_args;
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
 
@@ -67,10 +67,10 @@ impl SakDistLedger {
 
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
-        let dist_ledger = SakDistLedger {
+        let machine = SakMachine {
             ledger_event_tx,
             ledger_db,
-            // vm,
+            vm,
             sync_pool,
             merkle_tree,
             hasher,
@@ -78,10 +78,10 @@ impl SakDistLedger {
         };
 
         if let Some(bc) = genesis_block {
-            dist_ledger.insert_genesis_block(bc).await?;
+            machine.insert_genesis_block(bc).await?;
         }
 
-        let latest_height = match dist_ledger.ledger_db.get_latest_block_height()? {
+        let latest_height = match machine.ledger_db.get_latest_block_height()? {
             Some(h) => h.to_string(),
             None => "No block yet".to_string(),
         };
@@ -92,7 +92,7 @@ impl SakDistLedger {
             latest_height.green(),
         );
 
-        Ok(dist_ledger)
+        Ok(machine)
     }
 
     pub async fn run(&self) {}

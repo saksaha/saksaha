@@ -1,4 +1,4 @@
-use crate::{LedgerDB, LedgerError};
+use crate::{LedgerDB, MachineError};
 use sak_kv_db::WriteBatch;
 use sak_types::Tx;
 
@@ -8,7 +8,7 @@ impl LedgerDB {
     //     &self,
     //     tx: &Tx,
     //     // cm_idx_count: &mut u128,
-    // ) -> Result<String, LedgerError> {
+    // ) -> Result<String, MachineError> {
     //     let mut batch = WriteBatch::default();
 
     //     let tx_hash = match tx {
@@ -31,7 +31,7 @@ impl LedgerDB {
     //     Ok(tx_hash)
     // }
 
-    pub(crate) fn delete_tx(&self, tx_hash: &String) -> Result<(), LedgerError> {
+    pub(crate) fn delete_tx(&self, tx_hash: &String) -> Result<(), MachineError> {
         let mut batch = WriteBatch::default();
 
         self.batch_delete_tx_created_at(&mut batch, tx_hash)?;

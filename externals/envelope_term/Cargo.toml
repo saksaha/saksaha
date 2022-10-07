@@ -35,7 +35,7 @@ sak_rpc_interface = { path = "../../source/sak_rpc_interface" }
 
 [dev-dependencies]
 sak_test_utils = { path = "../../source/sak_test_utils" }
-sak_dist_ledger = { path = "../../source/sak_dist_ledger" }
+sak_machine = { path = "../../source/sak_machine" }
 async-trait = "0.1.57"
 
 [[bin]]

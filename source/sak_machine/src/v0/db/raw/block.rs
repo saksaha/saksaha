@@ -1,5 +1,5 @@
 use crate::{cfs, keys, LedgerDB};
-use crate::{LedgerError, MerkleNodeLoc};
+use crate::{MachineError, MerkleNodeLoc};
 use sak_crypto::Proof;
 use sak_crypto::{Bls12, ScalarExt};
 use sak_kv_db::WriteBatch;
@@ -15,7 +15,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         block_hash: &BlockHash,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<String>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::VALIDATOR_SIG)?;
 
         match self.db.get_cf(&cf, block_hash)? {
@@ -34,7 +34,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         block_hash: &BlockHash,
-    ) -> Result<Option<Vec<String>>, LedgerError> {
+    ) -> Result<Option<Vec<String>>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASHES)?;
 
         match self.db.get_cf(&cf, block_hash)? {
@@ -52,7 +52,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         block_hash: &BlockHash,
-    ) -> Result<Option<Vec<String>>, LedgerError> {
+    ) -> Result<Option<Vec<String>>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::WITNESS_SIGS)?;
 
         match self.db.get_cf(&cf, block_hash)? {
@@ -70,7 +70,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         key: &BlockHash,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<String>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -89,7 +89,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         block_hash: &BlockHash,
-    ) -> Result<Option<BlockHeight>, LedgerError> {
+    ) -> Result<Option<BlockHeight>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
 
         match self.db.get_cf(&cf, block_hash)? {
@@ -107,7 +107,7 @@ impl LedgerDB {
     pub(crate) fn get_block_hash_by_block_height(
         &self,
         block_height: &BlockHeight,
-    ) -> Result<Option<String>, LedgerError> {
+    ) -> Result<Option<String>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
 
         let v = block_height.to_be_bytes();
@@ -128,7 +128,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         block_hash: &BlockHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_MERKLE_RT)?;
 
         match self.db.get_cf(&cf, block_hash)? {
@@ -150,7 +150,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         merkle_rt: &MerkleRt,
-    ) -> Result<Option<[u8; 1]>, LedgerError> {
+    ) -> Result<Option<[u8; 1]>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::EMPTY_VALUE)?;
 
         match self.db.get_cf(&cf, merkle_rt)? {
@@ -172,7 +172,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         key: &BlockHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
+    ) -> Result<Option<[u8; 32]>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -195,7 +195,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
         validator_sig: &String,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::VALIDATOR_SIG)?;
 
         batch.put_cf(&cf, block_hash, validator_sig);
@@ -209,7 +209,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
         witness_sigs: &Vec<String>,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::WITNESS_SIGS)?;
 
         let witness_sigs = serde_json::to_string(witness_sigs)?;
@@ -225,7 +225,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
         tx_hashes: &Vec<String>,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASHES)?;
 
         let transactions = serde_json::to_string(tx_hashes)?;
@@ -241,7 +241,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
         created_at: &String,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
 
         batch.put_cf(&cf, block_hash, created_at);
@@ -255,7 +255,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_height: &BlockHeight,
         block_hash: &BlockHash,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
 
         let v = block_height.to_be_bytes();
@@ -271,7 +271,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
         block_height: &BlockHeight,
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
 
         let v = block_height.to_be_bytes();
@@ -286,7 +286,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         block_hash: &BlockHash,
         merkle_rt: &[u8; 32],
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_MERKLE_RT)?;
 
         batch.put_cf(&cf, block_hash, merkle_rt);
@@ -298,7 +298,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         merkle_rt: &[u8; 32],
-    ) -> Result<(), LedgerError> {
+    ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::EMPTY_VALUE)?;
 
         let empty_value = [0u8; 1];

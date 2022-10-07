@@ -1,4 +1,4 @@
-use crate::{LedgerError, SakDistLedger};
+use crate::{MachineError, SakMachine};
 use sak_contract_std::Storage;
 use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
 use sak_dist_ledger_cfg::CM_TREE_DEPTH;
@@ -6,20 +6,23 @@ use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandida
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
-impl SakDistLedger {
-    pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
+impl SakMachine {
+    pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, MachineError> {
         self.ledger_db.get_blocks(block_hashes).await
     }
 
-    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
+    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, MachineError> {
         self.ledger_db.get_txs(tx_hashes).await
     }
 
-    pub async fn get_merkle_node(&self, location: &String) -> Result<[u8; 32], LedgerError> {
+    pub async fn get_merkle_node(&self, location: &String) -> Result<[u8; 32], MachineError> {
         self.ledger_db.get_merkle_node(location)
     }
 
-    pub async fn get_auth_path(&self, cm_idx: &u128) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
+    pub async fn get_auth_path(
+        &self,
+        cm_idx: &u128,
+    ) -> Result<Vec<([u8; 32], bool)>, MachineError> {
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH);
 
         let auth_path_idx = merkle_tree.generate_auth_paths(cm_idx.to_owned());
@@ -42,13 +45,13 @@ impl SakDistLedger {
         Ok(ret)
     }
 
-    pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
+    pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, MachineError> {
         self.ledger_db.get_cm_idx_by_cm(cm)
     }
 
     pub async fn get_latest_block_hash(
         &self,
-    ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
+    ) -> Result<Option<(BlockHeight, BlockHash)>, MachineError> {
         let latest_block_height = match self.ledger_db.get_latest_block_height()? {
             Some(h) => h,
             None => return Ok(None),
@@ -65,7 +68,7 @@ impl SakDistLedger {
         Ok(Some((latest_block_height, latest_block_hash)))
     }
 
-    pub async fn send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, LedgerError> {
+    pub async fn send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, MachineError> {
         let tx_hash = match tx_candidate.clone() {
             TxCandidate::Mint(_) => self.sync_pool.insert_tx(tx_candidate).await?,
             TxCandidate::Pour(tc) => {
@@ -103,11 +106,11 @@ impl SakDistLedger {
         Ok(tx_hash)
     }
 
-    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
+    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, MachineError> {
         self.ledger_db.get_tx(tx_hash).await
     }
 
-    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
+    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, MachineError> {
         self.ledger_db.get_block(block_hash)
     }
 
@@ -115,7 +118,7 @@ impl SakDistLedger {
         &self,
         offset: Option<u128>,
         limit: Option<u128>,
-    ) -> Result<Vec<Block>, LedgerError> {
+    ) -> Result<Vec<Block>, MachineError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
             None => return Err(format!("Cannot find latest block height").into()),
@@ -179,7 +182,7 @@ impl SakDistLedger {
         Ok(block_list)
     }
 
-    pub async fn get_all_blocks(&self) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
+    pub async fn get_all_blocks(&self) -> Result<Vec<(BlockHeight, BlockHash)>, MachineError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
             None => return Err(format!("Cannot find latest block height").into()),
@@ -209,7 +212,7 @@ impl SakDistLedger {
     pub async fn get_block_by_height(
         &self,
         block_height: &u128,
-    ) -> Result<Option<Block>, LedgerError> {
+    ) -> Result<Option<Block>, MachineError> {
         if let Some(block_hash) = self
             .ledger_db
             .get_block_hash_by_block_height(block_height)?
@@ -220,11 +223,11 @@ impl SakDistLedger {
         }
     }
 
-    pub fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
+    pub fn get_latest_block_height(&self) -> Result<Option<u128>, MachineError> {
         self.ledger_db.get_latest_block_height()
     }
 
-    pub async fn get_latest_block_merkle_rt(&self) -> Result<Option<[u8; 32]>, LedgerError> {
+    pub async fn get_latest_block_merkle_rt(&self) -> Result<Option<[u8; 32]>, MachineError> {
         let latest_block_height = match self.ledger_db.get_latest_block_height()? {
             Some(h) => h,
             None => return Ok(None),
@@ -252,7 +255,7 @@ impl SakDistLedger {
     pub async fn get_ctr_state(
         &self,
         contract_addr: &CtrAddr,
-    ) -> Result<Option<Storage>, LedgerError> {
+    ) -> Result<Option<Storage>, MachineError> {
         self.ledger_db.get_ctr_state(contract_addr)
     }
 }

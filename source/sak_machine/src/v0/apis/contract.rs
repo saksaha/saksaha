@@ -1,15 +1,15 @@
-use crate::LedgerError;
-use crate::SakDistLedger;
+use crate::MachineError;
+use crate::SakMachine;
 use sak_contract_std::CtrRequest;
 use sak_types::CtrAddr;
 use sak_vm::ContractFn;
 
-impl SakDistLedger {
+impl SakMachine {
     pub async fn query_ctr(
         &self,
         ctr_addr: &CtrAddr,
         request: CtrRequest,
-    ) -> Result<Vec<u8>, LedgerError> {
+    ) -> Result<Vec<u8>, MachineError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(ctr_addr)
@@ -34,7 +34,7 @@ impl SakDistLedger {
         &self,
         ctr_addr: &CtrAddr,
         request: CtrRequest,
-    ) -> Result<Vec<u8>, LedgerError> {
+    ) -> Result<Vec<u8>, MachineError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(ctr_addr)
