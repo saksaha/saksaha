@@ -2,10 +2,7 @@ use crate::hasher::MiMC;
 use crate::CryptoError;
 use crate::MerkleTree;
 use crate::Scalar;
-use crate::ScalarExt;
 use std::collections::HashMap;
-use std::convert::TryInto;
-use type_extension::U8Array;
 
 // {height}_{idx}. Index starts from 0.
 // e.g. "0_1" is the second element in the leaf (bottom_most) height.
@@ -29,7 +26,7 @@ impl MerkleTreeSim {
         };
 
         for (leaf_idx, leaf) in leaves.iter().enumerate() {
-            mk_tree_init.update_root(leaf_idx as u32, *leaf);
+            mk_tree_init.update_root(leaf_idx as u32, *leaf)?;
         }
 
         Ok(mk_tree_init)
