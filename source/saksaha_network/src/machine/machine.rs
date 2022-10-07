@@ -1,11 +1,11 @@
-use crate::blockchain::Blockchain;
+use crate::ledger::Ledger;
 
 pub(crate) struct Machine {
-    pub(crate) blockchain: Blockchain,
+    pub(crate) ledger: Ledger,
 }
 
 impl Machine {
     pub async fn run(&self) {
-        tokio::join!(self.blockchain.run(),);
+        tokio::join!(self.ledger.run(),);
     }
 }
