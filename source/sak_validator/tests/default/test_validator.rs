@@ -1,8 +1,10 @@
 use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_logger::SakLogger;
+use sak_mrs::SakMRS;
+use sak_store_accessor::StoreAccessor;
 use sak_validator::{AddValidatorParams, ValidatorStorage};
 use sak_vm::{ContractFn, SakVM};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 pub(crate) const VALIDATOR: &[u8] =
     include_bytes!("../../../prebuild/sak_validator.postprocess.wasm");
@@ -118,9 +120,21 @@ async fn test_call_ctr_validator_fn_query() {
 
     let storage = get_test_validator_state(test_validator_vec.clone());
 
+    let mrs_path = "";
+
+    let mrs = {
+        let m = SakMRS::init(&mrs_path).await.unwrap();
+        m
+    };
+
+    let store_accessor = {
+        let a = StoreAccessor::new(mrs);
+        Arc::new(a)
+    };
+
     let ctr_wasm = VALIDATOR.to_vec();
 
-    let ctr_fn = ContractFn::Query(request, storage);
+    let ctr_fn = ContractFn::Query(request, storage, store_accessor);
 
     let receipt = vm
         .invoke(ctr_wasm, ctr_fn)

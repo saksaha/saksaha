@@ -12,6 +12,10 @@ pub struct SakMRS {
     db: MRSDB,
 }
 
+pub struct PutMrsDataArgs {
+    slot_id: Vec<u64>,
+}
+
 impl SakMRS {
     pub async fn init<P: AsRef<Path>>(mrs_db_path: P) -> Result<Self, MRSError> {
         let db = MRSDB::init(&mrs_db_path).await?;
@@ -28,4 +32,17 @@ impl SakMRS {
     }
 
     pub async fn run(&self) {}
+
+    pub async fn put_data(&self, pks: Vec<usize>, args: PutMrsDataArgs) -> Result<(), MRSError> {
+        // 1. old ts check
+        // args.old_ts
+
+        // 2. data chunk => accumulate
+
+        // 3. verify_sig(accumulated data, args.ts, pk, sig) -> {0, 1}
+
+        // 4. db. store
+
+        Ok(())
+    }
 }

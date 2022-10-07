@@ -1,3 +1,4 @@
+mod linker;
 mod memory;
 mod wasmtm;
 

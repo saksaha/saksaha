@@ -11,6 +11,7 @@ members = [
   "source/sak_dir",
   "source/sak_kv_db",
   "source/sak_mrs",
+  "source/sak_store_accessor",
   "source/sak_rpc_interface",
   "source/sak_p2p_addr",
   "source/sak_p2p_peertable",

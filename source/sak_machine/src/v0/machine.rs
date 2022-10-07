@@ -9,6 +9,7 @@ use sak_crypto::MerkleTree;
 use sak_dist_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_mrs::SakMRS;
+use sak_store_accessor::StoreAccessor;
 use sak_types::BlockCandidate;
 use sak_vm::SakVM;
 use std::path::PathBuf;
@@ -26,6 +27,7 @@ pub struct SakMachine {
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
     pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
+    pub store_accessor: Arc<StoreAccessor>,
 }
 
 pub struct SakMachineArgs {
@@ -50,7 +52,15 @@ impl SakMachine {
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
 
-        let mrs = SakMRS::init(&mrs_path).await;
+        let mrs = {
+            let m = SakMRS::init(&mrs_path).await?;
+            m
+        };
+
+        let store_accessor = {
+            let a = StoreAccessor::new(mrs);
+            Arc::new(a)
+        };
 
         let vm = SakVM::init()?;
 
@@ -80,6 +90,7 @@ impl SakMachine {
             merkle_tree,
             hasher,
             consensus,
+            store_accessor,
         };
 
         if let Some(bc) = genesis_block {
