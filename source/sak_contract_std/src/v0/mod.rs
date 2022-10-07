@@ -1,10 +1,8 @@
-mod accessor;
 mod macros;
 mod request;
 mod result;
 mod storage;
 
-pub use accessor::*;
 pub use request::*;
 pub use result::*;
 pub use std::error::Error;

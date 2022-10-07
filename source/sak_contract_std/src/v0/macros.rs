@@ -25,6 +25,21 @@ macro_rules! contract_bootstrap {
 
             std::mem::drop(data);
         }
+
+        pub struct ContractCtx;
+
+        impl ContractCtx {
+            unsafe fn get_mrs_data(&self, ptr: *mut u8, b: i32) -> usize {
+                HOST__get_mrs_data(ptr, b) as usize
+            }
+
+            unsafe fn put_mrs_data(&self, arg: usize) -> usize {
+                // ptr, len
+
+                // HOST__put_mrs_data(ptr, len) as usize
+                0
+            }
+        }
     };
 }
 
@@ -93,22 +108,6 @@ macro_rules! define_init {
 #[macro_export]
 macro_rules! define_query {
     () => {
-        // struct __StoreAccessor;
-
-        // impl sak_contract_std::StoreAccess for __StoreAccessor {
-        //     fn _get_mrs_data() -> usize {
-        //         get_mrs_data()
-        //     }
-        // }
-
-        pub struct __StoreAccessor;
-
-        impl sak_contract_std::StoreAccess for __StoreAccessor {
-            unsafe fn _get_mrs_data(&self) -> usize {
-                get_mrs_data(1, 3) as usize
-            }
-        }
-
         #[no_mangle]
         pub unsafe extern "C" fn query(
             storage_ptr: *mut u8,
@@ -128,14 +127,13 @@ macro_rules! define_query {
                 request_len,
             );
 
-            // let store_accessor = {};
-
             let request = serde_json::from_slice(&request);
-
             let request: sak_contract_std::CtrRequest = sak_contract_std::return_err_2!(request);
 
+            let ctx = ContractCtx {};
+
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                query2(request, storage, __StoreAccessor);
+                query2(ctx, request, storage);
             // query2(request, storage);
 
             {

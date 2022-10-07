@@ -59,23 +59,38 @@ impl Wasmtime {
 
         linker.func_wrap(
             "host",
-            "get_mrs_data",
+            "HOST__get_mrs_data",
             move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
                 let state = caller.data_mut();
                 println!("state: {:?}", state);
 
                 match store_accessor.clone() {
                     Some(sa) => {
+                        match caller.get_export(Constants::MEMORY) {
+                            Some(exp) => {
+                                let memory = exp.into_memory().unwrap();
+                                let m = memory.data(&mut caller);
+
+                                println!("aaaaaaaaaa, {:?}", m);
+
+                                let a = m
+                                    .get(param as u32 as usize..)
+                                    .and_then(|arr| arr.get(..param2 as u32 as usize))
+                                    .unwrap();
+
+                                let ap = std::str::from_utf8(&a).unwrap();
+
+                                println!("aaaaaaaaaa22, {:?}", ap);
+                            }
+                            None => {}
+                        }
+
                         println!("555 {:?}", sa.get_mrs_data());
                     }
                     None => {}
                 };
 
-                let data = {
-                    // let data = store_accessor.get_mrs_data();
-
-                    Data { d: 123 }
-                };
+                let data = Data { d: 123 };
 
                 let data_bytes = match serde_json::to_vec(&data) {
                     Ok(b) => b,
@@ -100,11 +115,11 @@ impl Wasmtime {
 
                 let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
 
-                println!("get_mrs_data(): param: {}", param);
+                println!("get_mrs_data(): param: {:?}", param);
                 println!("get_mrs_data(): param2: {}", param2);
                 println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
 
-                param * 2
+                513
             },
         )?;
 

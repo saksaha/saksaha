@@ -4,7 +4,7 @@ use crate::{
 };
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
-    InvokeResult, RequestArgs, Storage, StoreAccess,
+    InvokeResult, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -18,7 +18,7 @@ contract_bootstrap!();
 extern "C" {
     fn hello(param1: i32, param2: i32) -> i32;
 
-    fn get_mrs_data(param1: i32, param2: i32) -> i32;
+    fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
 
     fn get_latest_len(p1: i32, p2: i32) -> i32;
 }
@@ -35,34 +35,24 @@ pub fn init2() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-// struct __StoreAccessor {}
-
-// impl sak_contract_std::StoreAccess for __StoreAccessor {
-//     unsafe fn _get_mrs_data() -> usize {
-//         get_mrs_data(1, 3) as usize
-//     }
-// }
-
 define_query!();
 pub fn query2(
+    ctx: ContractCtx,
     request: CtrRequest,
     storage: Storage,
-    store_accessor: __StoreAccessor,
 ) -> Result<Vec<u8>, ContractError> {
     unsafe {
-        // let ptr, len = alloc();
-        // let ptr = get_mrs_data(331, 44);
+        let param = "string";
+        let ptr_param = alloc(param.len());
+        ptr_param.copy_from(param.as_ptr(), param.len());
 
-        let ptr = store_accessor._get_mrs_data();
+        let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
         hello(ptr as i32, 1);
 
         let len = get_latest_len(0, 0);
         hello(len, 2);
 
-        let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
-
-        // let a = hello(33);
-        // return Err(format!("ooo result: {:?}", a).into());
+        // let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
     }
 
     match request.req_type.as_ref() {
@@ -275,6 +265,17 @@ fn handle_send_msg(storage: &mut Storage, args: RequestArgs) -> Result<Vec<u8>, 
     chats.push(send_msg_params.msg);
 
     *storage = serde_json::to_vec(&evl_storage)?;
+
+    // mrs
+    // let arg = struct A {
+    //     data_chunk: vec![],
+    //     sig: "",
+    //     slot_id: 00,
+    //     ts: 0,
+    //     old_ts,
+    // };
+
+    // ctx.put_mrs_data(arg_ptr, arg_len);
 
     Ok(vec![])
 }
