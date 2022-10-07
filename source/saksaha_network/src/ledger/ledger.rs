@@ -17,7 +17,7 @@ impl Ledger {
         block_sync_interval: Option<u64>,
         identity: Arc<Identity>,
     ) -> Result<Self, SaksahaError> {
-        let (gen_block_candidate, consensus, mrs_ctr_addr) = {
+        let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
                 Some(b) => b,
                 None => GenesisBlock::create()?,
@@ -34,7 +34,7 @@ impl Ledger {
                 Box::new(c)
             };
 
-            (genesis_block.block_candidate, consensus, mrs_ctr_addr)
+            (genesis_block.block_candidate, consensus)
         };
 
         let ledger_path = {

@@ -1,6 +1,7 @@
 use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
-    EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
+    EnvelopeStorage, GetChListParams, GetMsgParams, MutableRecordStorage, OpenChParams,
+    SendMsgParams,
 };
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
@@ -19,6 +20,7 @@ extern "C" {
     fn hello(param1: i32, param2: i32) -> i32;
 
     fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+    fn HOST__put_mrs_data(param1: *mut u8, param2: i32) -> i32;
 
     fn get_latest_len(p1: i32, p2: i32) -> i32;
 }
@@ -49,6 +51,9 @@ pub fn query2(
         let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
         hello(ptr as i32, 1);
 
+        let ptr = ctx.put_mrs_data(ptr_param, param.len() as i32);
+        hello(ptr as i32, 1);
+
         let len = get_latest_len(0, 0);
         hello(len, 2);
 
@@ -69,13 +74,17 @@ pub fn query2(
 }
 
 define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn execute2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: &mut Storage,
+) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         OPEN_CH => {
             return handle_open_channel(storage, request.args);
         }
         SEND_MSG => {
-            return handle_send_msg(storage, request.args);
+            return handle_send_msg(ctx, storage, request.args);
         }
         _ => {
             return Err(format!("Wrong request type has been found in execution").into());
@@ -243,7 +252,11 @@ fn handle_open_channel(
     Ok(vec![])
 }
 
-fn handle_send_msg(storage: &mut Storage, args: RequestArgs) -> Result<Vec<u8>, ContractError> {
+fn handle_send_msg(
+    ctx: ContractCtx,
+    storage: &mut Storage,
+    args: RequestArgs,
+) -> Result<Vec<u8>, ContractError> {
     let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(&storage) {
         Ok(e) => e,
         Err(err) => return Err(format!("Failed to restore evl_storage, err: {:?}", err).into()),
@@ -276,6 +289,23 @@ fn handle_send_msg(storage: &mut Storage, args: RequestArgs) -> Result<Vec<u8>, 
     // };
 
     // ctx.put_mrs_data(arg_ptr, arg_len);
+
+    let arg = MutableRecordStorage {
+        data_chunk: HashMap::new(),
+        sig: String::from("sig"),
+        slot_id: 0,
+        ts: 110,
+        old_ts: 109,
+    };
+
+    let arg_serialized = serde_json::to_vec(&arg)?;
+
+    unsafe {
+        let arg_ptr = alloc(arg_serialized.len());
+        arg_ptr.copy_from(arg_serialized.as_ptr(), arg_serialized.len());
+
+        ctx.put_mrs_data(arg_ptr, arg_serialized.len() as i32);
+    }
 
     Ok(vec![])
 }

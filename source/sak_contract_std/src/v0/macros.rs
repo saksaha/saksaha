@@ -33,12 +33,21 @@ macro_rules! contract_bootstrap {
                 HOST__get_mrs_data(ptr, b) as usize
             }
 
-            unsafe fn put_mrs_data(&self, arg: usize) -> usize {
-                // ptr, len
-
-                // HOST__put_mrs_data(ptr, len) as usize
-                0
+            unsafe fn put_mrs_data(&self, ptr: *mut u8, b: i32) -> usize {
+                HOST__put_mrs_data(ptr, b) as usize
             }
+
+            // unsafe fn put_mrs_data(&self, arg: Vec<u8>) -> usize {
+            //     // ptr, len
+
+            //     // HOST__put_mrs_data(ptr, len) as usize
+            //     // 0
+
+            //     let arg_ptr = alloc(arg.len());
+            //     arg_ptr.copy_from(arg.as_ptr(), arg.len());
+
+            //     HOST__put_mrs_data(arg_ptr, arg.len() as i32) as usize
+            // }
         }
     };
 }
@@ -178,8 +187,11 @@ macro_rules! define_execute {
             let request: sak_contract_std::CtrRequest =
                 sak_contract_std::return_err_4!(request, "serde request parsing fail");
 
+            let ctx = ContractCtx {};
+
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                execute2(request, &mut storage);
+                execute2(ctx, request, &mut storage);
+            // execute2(ctx, request, &mut storage);
 
             {
                 let mut result: sak_contract_std::InvokeResult =

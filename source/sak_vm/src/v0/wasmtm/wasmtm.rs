@@ -140,6 +140,12 @@ impl Wasmtime {
             },
         )?;
 
+        linker.func_wrap(
+            "host",
+            "HOST__put_mrs_data",
+            move |mut caller: Caller<InstanceState>, param: i32, param2: i32| 613,
+        )?;
+
         let instance = match linker.instantiate(&mut store, &module) {
             Ok(i) => i,
             Err(err) => return Err(format!("Error creating an instance, err: {}", err).into()),

@@ -70,7 +70,7 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
             path: source_path.join("sak_validator"),
         },
         Contract {
-            name: "sak_mrs",
+            name: "sak_mrs_contract",
             path: source_path.join("sak_mrs_contract"),
         },
     ];

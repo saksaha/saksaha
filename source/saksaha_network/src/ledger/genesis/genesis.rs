@@ -15,7 +15,8 @@ pub(crate) const ENVELOPE: &[u8] =
 
 pub(crate) const MRS_CTR_ADDR: &'static str = "mrs_addr";
 
-pub(crate) const MRS: &[u8] = include_bytes!("../../../../prebuild/sak_mrs.postprocess.wasm");
+pub(crate) const MRS: &[u8] =
+    include_bytes!("../../../../prebuild/sak_mrs_contract.postprocess.wasm");
 
 pub(crate) struct GenesisBlock {
     pub(crate) block_candidate: BlockCandidate,

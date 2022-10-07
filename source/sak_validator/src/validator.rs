@@ -21,6 +21,7 @@ extern "C" {
     fn hello(param1: i32, param2: i32) -> i32;
 
     fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+    fn HOST__put_mrs_data(param1: *mut u8, param2: i32) -> i32;
 
     fn get_latest_len(p1: i32, p2: i32) -> i32;
 }
@@ -75,7 +76,11 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
 }
 
 define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
+pub fn execute2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: &mut Storage,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "add_validator" => {
             return handle_add_validator(storage, request.args);
