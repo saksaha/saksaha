@@ -18,3 +18,5 @@ sak_test_utils = { path = "../sak_test_utils" }
 tokio = { version = "1.20.0", features = ["full"] }
 sak_machine = { path = "../sak_machine" }
 sak_logger = { path = "../sak_logger" }
+sak_mrs = { path = "../sak_mrs" }
+sak_store_accessor = { path = "../sak_store_accessor" }
