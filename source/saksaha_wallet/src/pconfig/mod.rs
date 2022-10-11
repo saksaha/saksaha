@@ -31,22 +31,12 @@ impl PConfig {
     }
 
     pub fn persist() -> Result<(), WalletError> {
-        // let pconfig_fd =
-        //     sak_dir::get_app_root_path(APP_NAME)?.join(PCONFIG_FILE_NAME);
         let pconfig_fd = get_pconfig_file_path()?;
 
         if !pconfig_fd.exists() {
-            // std::fs::create_dir_all(pconfig_fd.clone())?;
         } else {
             return Err(format!("Credential has already been created").into());
         }
-
-        // std::fs::write(receipt_path, serde_json::to_string_pretty(&receipt)?)?;
-
-        // println!(
-        //     "\nPConfig is successfully created under {}",
-        //     self.acc_addr.yellow(),
-        // );
 
         Ok(())
     }

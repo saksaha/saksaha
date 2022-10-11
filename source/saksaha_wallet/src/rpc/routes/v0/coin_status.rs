@@ -10,16 +10,13 @@ pub(in crate::rpc) struct UpdateCoinStatusRequest {
     pub acc_addr: String,
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
-// pub(in crate::rpc) struct UpdateCoinStatusResponse {
-//     pub balance: AccountBalance,
-// }
-
 pub(in crate::rpc) async fn update_coin_status(
     route_state: RouteState,
     params: Params,
     ctx: Arc<RouteCtx>,
 ) -> Response<Body> {
+    println!("11");
+
     debug!("update_coin_status request handling");
 
     let params = require_some_params!(
