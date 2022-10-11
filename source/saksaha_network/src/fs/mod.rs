@@ -1,5 +1,5 @@
-mod paths;
+mod fs;
 
-pub(crate) use paths::*;
+pub use fs::*;
 
 pub type SaksahaFSError = Box<dyn std::error::Error + Send + Sync>;

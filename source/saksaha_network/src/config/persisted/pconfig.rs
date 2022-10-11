@@ -1,5 +1,5 @@
 use super::fs;
-use crate::fs as crate_fs;
+use crate::fs::SaksahaFS;
 use crate::SaksahaError;
 use colored::Colorize;
 use sak_crypto::{SakKey, ToEncodedPoint};
@@ -30,7 +30,7 @@ impl PConfig {
         println!("\n{}", "Initializing persisted config".magenta().bold());
 
         if let Some(pk) = public_key {
-            let config_file_path = fs::get_config_file_path(pk)?;
+            let config_file_path = SaksahaFS::get_config_file_path(pk)?;
 
             println!(
                 "Persisted config file: {}",
@@ -41,7 +41,7 @@ impl PConfig {
 
             return Ok(pconfig);
         } else {
-            let config_dir = crate_fs::config_dir()?;
+            let config_dir = SaksahaFS::config_dir()?;
             let index_file_name = INDEX_FILE_ALIAS.to_uppercase();
             let index_file_path = config_dir.join(index_file_name);
 
@@ -63,7 +63,7 @@ impl PConfig {
                 println!("    {} index file.", "Found".green().bold());
 
                 let pk = std::fs::read_to_string(index_file_path)?;
-                let config_file_path = fs::get_config_file_path(&pk)?;
+                let config_file_path = SaksahaFS::get_config_file_path(&pk)?;
                 let pconfig = Self::load_pconfig(&config_file_path)?;
 
                 println!(
@@ -84,11 +84,11 @@ impl PConfig {
     }
 
     pub fn persist(&self, alias: Option<&String>) -> Result<(), SaksahaError> {
-        let acc_dir = crate_fs::acc_dir(&self.p2p.public_key)?;
+        let acc_dir = SaksahaFS::acc_dir(&self.p2p.public_key)?;
 
         if acc_dir.exists() {
         } else {
-            let config_file_path = fs::get_config_file_path(&self.p2p.public_key)?;
+            let config_file_path = SaksahaFS::get_config_file_path(&self.p2p.public_key)?;
             let data = serde_yaml::to_string(&self)?;
             let _ = std::fs::create_dir_all(acc_dir);
 
@@ -133,7 +133,7 @@ impl PConfig {
     }
 
     fn persist_index_file(cfg_profile: &str, public_key: &String) -> Result<(), SaksahaError> {
-        let config_dir = crate_fs::config_dir()?;
+        let config_dir = SaksahaFS::config_dir()?;
 
         let index_file_name = cfg_profile.to_uppercase();
         let index_file_path = config_dir.join(index_file_name);

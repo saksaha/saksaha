@@ -39,7 +39,7 @@ pub(in crate::rpc) async fn send_pour_tx(
             hyper_rpc_router::make_success_response(route_state, response)
         }
         Err(err) => {
-            println!("err: {}", err);
+            println!("Send pour tx err: {}", err);
 
             hyper_rpc_router::make_error_response(route_state.resp, Some(route_state.id), err)
         }

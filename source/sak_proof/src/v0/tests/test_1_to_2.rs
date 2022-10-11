@@ -3,7 +3,7 @@ use crate::{CoinProof, ProofError};
 use sak_crypto::groth16::{self, Proof};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, MerkleTreeSim, OsRng, Scalar, ScalarExt};
-use sak_dist_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::debug;
 use sak_proof_circuit::{CoinProofCircuit1to2, NewCoin, OldCoin};
 use type_extension::U8Array;
