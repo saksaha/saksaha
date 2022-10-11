@@ -101,18 +101,22 @@ impl Wallet {
     }
 
     pub(crate) fn prepare_dummy_auth_path(&self) -> Vec<([u8; 32], bool)> {
-        let auth_path = {
-            let v = vec![
-                ([0u8; 32], false),
-                ([0u8; 32], false),
-                ([0u8; 32], false),
-                ([0u8; 32], false),
-                ([0u8; 32], false),
-                ([0u8; 32], false),
-            ];
+        let mut auth_path = vec![];
+        for i in 0..CM_TREE_DEPTH {
+            auth_path.push(([0u8; 32], false));
+        }
+        // let auth_path = {
+        //     let v = vec![
+        //         ([0u8; 32], false),
+        //         ([0u8; 32], false),
+        //         ([0u8; 32], false),
+        //         ([0u8; 32], false),
+        //         ([0u8; 32], false),
+        //         ([0u8; 32], false),
+        //     ];
 
-            v
-        };
+        //     v
+        // };
 
         auth_path
     }
@@ -220,6 +224,7 @@ impl Wallet {
 
         let old_coin = self.convert_to_old_coin(coin, auth_path)?;
 
+        println!("coin: {:?}", coin);
         let old_sn_1 = self.compute_sn(coin);
 
         //
@@ -331,7 +336,7 @@ impl Wallet {
 
         let a = v.as_slice();
 
-        println!("aaa ({}): {:?}", a.len(), a);
+        // println!("aaa ({}): {:?}", a.len(), a);
 
         let o = OldCoin {
             addr_pk: Some(coin.addr_pk),
