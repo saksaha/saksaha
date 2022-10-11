@@ -168,6 +168,8 @@ impl Routine {
             P2PHost::init(p2p_host_args).await?
         };
 
+        let vm = SakVM::init()?;
+
         let ledger = {
             let l = Ledger::init(
                 &config.p2p.public_key_str,

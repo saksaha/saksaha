@@ -8,15 +8,16 @@ const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
 impl SakMachine {
     pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, MachineError> {
-        self.ledger_db.get_blocks(block_hashes).await
+        // self.ledger_db.get_blocks(block_hashes).await
+        self.ledger.get_blocks(block_hashes).await
     }
 
     pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, MachineError> {
-        self.ledger_db.get_txs(tx_hashes).await
+        self.ledger.get_txs(tx_hashes).await
     }
 
     pub async fn get_merkle_node(&self, location: &String) -> Result<[u8; 32], MachineError> {
-        self.ledger_db.get_merkle_node(location)
+        self.ledger.get_merkle_node(location).await
     }
 
     pub async fn get_auth_path(
@@ -46,7 +47,7 @@ impl SakMachine {
     }
 
     pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, MachineError> {
-        self.ledger_db.get_cm_idx_by_cm(cm)
+        self.ledger.get_cm_idx_by_cm(cm)
     }
 
     pub async fn get_latest_block_hash(

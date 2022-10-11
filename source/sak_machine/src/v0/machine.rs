@@ -23,7 +23,8 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 pub struct SakMachine {
     // pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     // pub(crate) ledger_db: LedgerDB,
-    pub vm: SakVM,
+    pub vm: Arc<SakVM>,
+    pub ledger: SakLedger,
     // pub(crate) sync_pool: Arc<SyncPool>,
     // pub merkle_tree: MerkleTree,
     // pub hasher: MiMC,
@@ -39,6 +40,7 @@ pub struct SakMachineArgs {
     // pub ledger_path: PathBuf,
     pub ledger: SakLedger,
     pub mrs_path: PathBuf,
+    pub vm: SakVM,
 }
 
 impl SakMachine {
@@ -51,6 +53,7 @@ impl SakMachine {
             // ledger_path,
             ledger,
             mrs_path,
+            vm,
         } = machine_args;
 
         // let ledger_db = LedgerDB::init(&ledger_path).await?;
@@ -67,7 +70,7 @@ impl SakMachine {
             Arc::new(a)
         };
 
-        let vm = SakVM::init()?;
+        // let vm = SakVM::init()?;
 
         // let ledger_event_tx = {
         //     let (tx, _rx) = broadcast::channel(BLOCKCHAIN_EVENT_QUEUE_CAPACITY);
@@ -83,6 +86,8 @@ impl SakMachine {
         //     Arc::new(p)
         // };
 
+        let vm = Arc::new(vm);
+
         let hasher = MiMC::new();
 
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
@@ -91,6 +96,7 @@ impl SakMachine {
             // ledger_event_tx,
             // ledger_db,
             vm,
+            ledger,
             // sync_pool,
             // merkle_tree,
             // hasher,

@@ -3,6 +3,7 @@ use crate::{ContractFn, InvokeReceipt, VMError};
 use sak_contract_std::{CtrRequest, Storage};
 use sak_logger::{error, info};
 use sak_store_accessor::StoreAccessor;
+use sak_vm_interface::ContractInvoke;
 use std::sync::Arc;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 

@@ -1,12 +1,11 @@
 [package]
-name = "sak_vm"
+name = "sak_vm_interface"
 version = "0.1.0"
 edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 sak_kv_db = { path = "../sak_kv_db" }
-sak_vm_interface = { path = "../sak_vm_interface" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_logger = { path = "../sak_logger" }
 sak_mrs = { path = "../sak_mrs" }

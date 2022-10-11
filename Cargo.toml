@@ -29,6 +29,7 @@ members = [
   "source/hyper_server",
   "source/hyper_rpc_router",
   "source/sak_vm",
+  "source/sak_vm_interface",
   "source/sak_test_utils",
   "source/wasm_postprocess",
   "source/type_extension",
