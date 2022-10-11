@@ -2,7 +2,7 @@ use crate::{CoinProof, ProofError};
 use bls12_381::Scalar;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTreeSim, Proof, ScalarExt};
-use sak_dist_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_proof_circuit::{NewCoin, OldCoin};
 use std::os::raw::c_char;
 use type_extension::U8Array;

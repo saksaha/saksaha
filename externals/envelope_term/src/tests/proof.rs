@@ -1,7 +1,7 @@
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
-use sak_dist_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
 use sak_machine::{Consensus, ConsensusError, SakMachine, SakMachineArgs};
 use sak_proof::{CoinProof, NewCoin, OldCoin};

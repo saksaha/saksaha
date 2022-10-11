@@ -1,4 +1,4 @@
-use crate::fs;
+use crate::fs::{self, SaksahaFS};
 use sak_kv_db::{Options, DB};
 use sak_logger::{info, SakLogger};
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ pub struct SaksahaTestUtils {}
 
 impl SaksahaTestUtils {
     pub fn init_test(public_keys: &[&str]) {
-        let log_root_dir = fs::config_dir().unwrap();
+        let log_root_dir = SaksahaFS::config_dir().unwrap();
 
         SakLogger::init_test_console().unwrap();
 
@@ -24,5 +24,5 @@ impl SaksahaTestUtils {
 }
 
 fn get_ledger_path(pk: &String) -> PathBuf {
-    fs::acc_dir(pk).unwrap().join("db/ledger")
+    SaksahaFS::acc_dir(pk).unwrap().join("db/ledger")
 }

@@ -73,7 +73,7 @@ async fn test_print_dummy_merkle_rt() {
 
     let dummy_coin = CoinRecord::new_dummy();
 
-    let dummy_auth_path = wallet.prepare_dummy_auth_path().await.unwrap();
+    let dummy_auth_path = wallet.prepare_dummy_auth_path();
 
     let dummy_merkle_rt = wallet
         .prepare_merkle_rt(&dummy_coin, dummy_auth_path.clone())

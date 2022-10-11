@@ -1,3 +1,3 @@
-mod paths;
+mod fs;
 
-pub(crate) use paths::*;
+pub(crate) use fs::*;

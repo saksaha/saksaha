@@ -1,4 +1,4 @@
-use crate::{fs, WalletError};
+use crate::{fs::SaksahaWalletFS, WalletError};
 use colored::Colorize;
 use sak_credential::Credential;
 use sak_crypto::{SakKey, ToEncodedPoint};
@@ -51,9 +51,7 @@ impl WalletCredential {
     }
 
     pub fn persist(&self) -> Result<(), WalletError> {
-        // let app_path =
-        //     sak_dir::get_app_root_path(APP_NAME)?.join(&self.acc_addr);
-        let acc_dir = fs::acc_dir(&self.acc_addr)?;
+        let acc_dir = SaksahaWalletFS::acc_dir(&self.acc_addr)?;
 
         if !acc_dir.exists() {
             std::fs::create_dir_all(acc_dir.clone())?;

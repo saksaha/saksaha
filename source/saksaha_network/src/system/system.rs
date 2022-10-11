@@ -45,7 +45,7 @@ impl System {
                 match routine.run(sys_run_args).await {
                     Ok(_) => (),
                     Err(err) => {
-                        error!(
+                        println!(
                             "Error initializing (running) main routine, \
                             err: {}",
                             err,

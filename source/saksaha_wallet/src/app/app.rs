@@ -4,8 +4,6 @@ use sak_logger::error;
 
 pub struct App {}
 
-// pub const APP_NAME: &'static str = "saksaha-wallet";
-
 #[derive(Debug)]
 pub struct AppArgs {
     pub rpc_port: Option<u16>,
