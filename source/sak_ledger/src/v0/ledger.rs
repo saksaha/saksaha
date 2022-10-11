@@ -31,7 +31,6 @@ pub struct SakLedgerArgs {
     pub consensus: Box<dyn Consensus + Send + Sync>,
     pub block_sync_interval: Option<u64>,
     pub ledger_path: PathBuf,
-    pub mrs_path: PathBuf,
 }
 
 impl SakLedger {
@@ -42,7 +41,6 @@ impl SakLedger {
             consensus,
             block_sync_interval,
             ledger_path,
-            mrs_path,
         } = machine_args;
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;

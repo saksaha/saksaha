@@ -24,7 +24,7 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> SakLedger {
         consensus: pos,
         block_sync_interval: None,
         ledger_path,
-        mrs_path,
+        // mrs_path,
     };
 
     let dist_ledger = SakLedger::init(dist_ledger_args)
@@ -59,7 +59,7 @@ pub async fn mock_dist_ledger_1() -> SakLedger {
         consensus: pos,
         block_sync_interval: None,
         ledger_path,
-        mrs_path,
+        // mrs_path,
     };
 
     let dist_ledger = SakLedger::init(dist_ledger_args)
