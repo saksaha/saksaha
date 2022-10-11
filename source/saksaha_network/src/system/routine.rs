@@ -3,6 +3,7 @@ use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::config::Config;
 use crate::fs;
+use crate::fs::SaksahaFS;
 use crate::ledger::Ledger;
 use crate::machine::Machine;
 use crate::node::LocalNode;
@@ -78,7 +79,7 @@ impl Routine {
 
         let _logger = {
             let public_key = &config.p2p.public_key_str;
-            let log_root_dir = fs::config_dir()?;
+            let log_root_dir = SaksahaFS::config_dir()?;
             let l = SakLogger::init(&log_root_dir, public_key.as_str())?;
 
             l

@@ -1,5 +1,8 @@
 use super::{consensus::Pos, genesis::GenesisBlock};
-use crate::{fs, SaksahaError};
+use crate::{
+    fs::{self, SaksahaFS},
+    SaksahaError,
+};
 use sak_machine::{Consensus, SakMachine, SakMachineArgs};
 use sak_p2p_id::Identity;
 use sak_proof::CoinProof;
@@ -38,12 +41,12 @@ impl Ledger {
         };
 
         let ledger_path = {
-            let acc_dir = fs::acc_dir(public_key)?;
+            let acc_dir = SaksahaFS::acc_dir(public_key)?;
             acc_dir.join("ledger")
         };
 
         let mrs_path = {
-            let acc_dir = fs::acc_dir(public_key)?;
+            let acc_dir = SaksahaFS::acc_dir(public_key)?;
             acc_dir.join("mrs")
         };
 

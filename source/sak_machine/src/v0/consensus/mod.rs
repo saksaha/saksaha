@@ -6,7 +6,7 @@ use sak_types::{BlockCandidate, TxCandidate};
 pub trait Consensus {
     async fn do_consensus(
         &self,
-        sak_dist_ledger: &SakMachine,
+        sak_machine: &SakMachine,
         txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError>;
 }

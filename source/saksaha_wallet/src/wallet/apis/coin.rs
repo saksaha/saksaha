@@ -5,6 +5,7 @@ use sak_crypto::encode_hex;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
+use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_cfg::GAS;
 use sak_logger::debug;
 use sak_proof::CoinProof;
@@ -99,9 +100,7 @@ impl Wallet {
         Ok(auth_path)
     }
 
-    pub(crate) async fn prepare_dummy_auth_path(
-        &self,
-    ) -> Result<Vec<([u8; 32], bool)>, WalletError> {
+    pub(crate) fn prepare_dummy_auth_path(&self) -> Vec<([u8; 32], bool)> {
         let auth_path = {
             let v = vec![
                 ([0u8; 32], false),
@@ -115,7 +114,7 @@ impl Wallet {
             v
         };
 
-        Ok(auth_path)
+        auth_path
     }
 
     pub(crate) fn prepare_merkle_rt(
@@ -206,8 +205,6 @@ impl Wallet {
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
-        // self.check_balance(&acc_addr).await?;
-
         let mut coin_manager_lock = self.get_coin_manager().write().await;
 
         let coin: &mut CoinRecord = coin_manager_lock
@@ -229,16 +226,17 @@ impl Wallet {
 
         let dummy_coin = CoinRecord::new_dummy();
 
-        let dummy_auth_path = self.prepare_dummy_auth_path().await?;
+        let dummy_auth_path = self.prepare_dummy_auth_path();
 
         let dummy_merkle_rt = DUMMY_MERKLE_RT;
+
+        println!("22201");
 
         let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
         let dummy_old_sn_1 = DUMMY_SN;
 
         //
-
         let (mut new_coin_1, mut new_coin_2) = self.prepare_2_new_coin_records(coin.v)?;
 
         // let pi = self.prepare_proof_1_to_2(
@@ -287,6 +285,8 @@ impl Wallet {
                 .await?;
         }
 
+        println!("333");
+
         new_coin_1.update_tx_hash(tx_hash.clone());
         new_coin_2.update_tx_hash(tx_hash.clone());
 
@@ -321,7 +321,7 @@ impl Wallet {
     pub(crate) fn convert_to_old_coin(
         &self,
         coin: &CoinRecord,
-        auth_path: Vec<([u8; 32], bool)>,
+        auth_path: Vec<([u8; CM_TREE_DEPTH as usize], bool)>,
     ) -> Result<OldCoin, WalletError> {
         let mut v: Vec<Option<(Scalar, bool)>> = vec![];
         for (merkle_node, dir) in auth_path {
@@ -330,6 +330,8 @@ impl Wallet {
         }
 
         let a = v.as_slice();
+
+        println!("aaa ({}): {:?}", a.len(), a);
 
         let o = OldCoin {
             addr_pk: Some(coin.addr_pk),
