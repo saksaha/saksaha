@@ -11,6 +11,7 @@ sak_logger = { path = "../sak_logger" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_ledger = { path = "../sak_ledger" }
 sak_ledger_cfg = { path = "../sak_ledger_cfg" }
+sak_ledger_params = { path = "../sak_ledger_params" }
 sak_dir = { path = "../sak_dir" }
 sak_mrs = { path = "../sak_mrs" }
 sak_store_accessor = { path = "../sak_store_accessor" }
