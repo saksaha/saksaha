@@ -10,8 +10,8 @@ const CIRCUIT_PARAMS_1TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_
 const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
 
 pub const DUMMY_MERKLE_RT: [u8; 32] = [
-    247, 154, 75, 119, 90, 47, 200, 133, 182, 132, 225, 10, 46, 184, 117, 21, 34, 4, 99, 216, 220,
-    128, 7, 244, 99, 90, 167, 93, 251, 176, 236, 18,
+    131, 133, 68, 145, 64, 18, 110, 80, 243, 30, 160, 19, 116, 90, 138, 124, 151, 17, 109, 169,
+    134, 167, 148, 1, 121, 78, 208, 97, 51, 230, 225, 20,
 ];
 
 pub const DUMMY_SN: [u8; 32] = [
