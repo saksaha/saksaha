@@ -210,7 +210,7 @@ impl SakMachine {
     }
 
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
-        let dummy_merkle_rt = sak_ledger_params::generate_dummy_coin_rt().unwrap();
+        let dummy_merkle_rt = sak_ledger_params::mock_rt_1().unwrap();
         if merkle_rt == &dummy_merkle_rt {
             return true;
         } else {
