@@ -3,16 +3,16 @@ use crate::WalletError;
 use sak_contract_std::CtrRequest;
 use sak_crypto::encode_hex;
 use sak_crypto::hasher::MiMC;
+use sak_crypto::MerkleTreeSim;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_cfg::GAS;
+use sak_ledger_param::DUMMY_SN;
 use sak_logger::debug;
 use sak_proof::CoinProof;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
-use sak_proof::DUMMY_MERKLE_RT;
-use sak_proof::DUMMY_SN;
 use sak_types::mock_coin_custom;
 use sak_types::AccountBalance;
 use sak_types::{CoinRecord, CoinStatus};
@@ -233,15 +233,14 @@ impl Wallet {
 
         let dummy_auth_path = self.prepare_dummy_auth_path();
 
-        let dummy_merkle_rt = DUMMY_MERKLE_RT;
-
         println!("22201");
 
         let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
+        let dummy_merkle_rt = sak_ledger_param::generate_dummy_coin_rt().unwrap();
+
         let dummy_old_sn_1 = DUMMY_SN;
 
-        //
         let (mut new_coin_1, mut new_coin_2) = self.prepare_2_new_coin_records(coin.v)?;
 
         // let pi = self.prepare_proof_1_to_2(

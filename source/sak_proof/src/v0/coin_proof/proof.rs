@@ -9,16 +9,6 @@ use sak_proof_circuit::{CoinProofCircuit1to2, CoinProofCircuit2to2, NewCoin, Old
 const CIRCUIT_PARAMS_1TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_1to2");
 const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
 
-pub const DUMMY_MERKLE_RT: [u8; 32] = [
-    131, 133, 68, 145, 64, 18, 110, 80, 243, 30, 160, 19, 116, 90, 138, 124, 151, 17, 109, 169,
-    134, 167, 148, 1, 121, 78, 208, 97, 51, 230, 225, 20,
-];
-
-pub const DUMMY_SN: [u8; 32] = [
-    214, 107, 131, 229, 87, 169, 202, 14, 124, 201, 178, 160, 124, 64, 127, 131, 1, 79, 76, 17,
-    161, 60, 250, 110, 102, 175, 33, 193, 105, 88, 32, 70,
-];
-
 pub struct CoinProof;
 
 pub(crate) fn get_mimc_params_1_to_2(
