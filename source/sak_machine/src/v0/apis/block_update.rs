@@ -4,12 +4,11 @@ use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_params::DUMMY_SN;
 use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
-use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate,
-    TxCtrOp,
+    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp,
 };
 use sak_vm::ContractFn;
 
@@ -211,7 +210,8 @@ impl SakMachine {
     }
 
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
-        if merkle_rt == &DUMMY_MERKLE_RT {
+        let dummy_merkle_rt = sak_ledger_params::mock_rt_1().unwrap();
+        if merkle_rt == &dummy_merkle_rt {
             return true;
         } else {
             match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {

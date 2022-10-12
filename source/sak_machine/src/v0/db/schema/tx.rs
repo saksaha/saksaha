@@ -1,5 +1,6 @@
 use crate::MachineError;
 use crate::{cfs, LedgerDB};
+use sak_crypto::encode_hex;
 use sak_kv_db::{Direction, IteratorMode, WriteBatch};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType};
 
@@ -120,7 +121,8 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         tx: &Tx,
     ) -> Result<TxHash, MachineError> {
-        println!("\n>> tx to put: {}", tx);
+        let cm = tx.get_cms().get(0).unwrap();
+        println!("\n>> tx to put: {}, {}", tx, encode_hex(cm));
 
         let tx_hash = match tx {
             Tx::Mint(t) => self.batch_put_mint_tx(batch, t),

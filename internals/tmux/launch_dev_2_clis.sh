@@ -15,8 +15,8 @@ fi
 PROFILE_1="--cfg-profile dev_local_1"
 PROFILE_2="--cfg-profile dev_local_2"
 
-# ci path 
-SAKSAHA_WORKSPACE=$(dirname $(find $HOME -path \*/saksaha/internals 2>/dev/null))
+# ci path
+SAKSAHA_WORKSPACE="$HOME/work/saksaha/saksaha"
 CI="$SAKSAHA_WORKSPACE/ci"
 
 # endpoint to node 2

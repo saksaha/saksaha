@@ -1,5 +1,4 @@
 use crate::{v0::tests::utils::SakCryptoTestUtils, MerkleTreeSim, ScalarExt};
-
 use type_extension::U8Array;
 
 #[test]
