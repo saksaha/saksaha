@@ -48,14 +48,14 @@ pub fn query2(
         let ptr_param = alloc(param.len());
         ptr_param.copy_from(param.as_ptr(), param.len());
 
-        let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
-        hello(ptr as i32, 1);
+        // let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
+        // hello(ptr as i32, 1);
 
-        let ptr = ctx.put_mrs_data(ptr_param, param.len() as i32);
-        hello(ptr as i32, 1);
+        let ptr = ctx.put_mrs_data(0 as *mut u8, 0);
+        // hello(ptr as i32, 10);
 
-        let len = get_latest_len(0, 0);
-        hello(len, 2);
+        // let len = get_latest_len(0, 0);
+        // hello(len, 2);
 
         // let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
     }

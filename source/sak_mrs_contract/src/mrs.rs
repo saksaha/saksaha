@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
 use sak_contract_std::{
     contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
@@ -58,6 +60,16 @@ pub fn execute2(
 fn reserve_slot(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
     let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
+
+    let next_slot_number = mrs.slots.len() + 1;
+
+    let new_slot = Slot::new(
+        reserve_slot_params.public_key,
+        String::from("Current Time"),
+        next_slot_number,
+    );
+
+    mrs.slots.push(new_slot);
 
     *storage = serde_json::to_vec(&mrs)?;
 

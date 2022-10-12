@@ -4,8 +4,11 @@ use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_logger::info;
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use tokio::sync::broadcast;
 
 pub struct SakMRS {

@@ -30,4 +30,12 @@ impl Slot {
             slot_number: usize::default(),
         }
     }
+
+    pub fn new(pk: PublicKey, timestamp: String, slot_number: usize) -> Slot {
+        Slot {
+            pk,
+            timestamp,
+            slot_number,
+        }
+    }
 }

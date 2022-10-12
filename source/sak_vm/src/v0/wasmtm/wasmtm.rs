@@ -72,7 +72,7 @@ impl Wasmtime {
                                 let memory = exp.into_memory().unwrap();
                                 let m = memory.data(&mut caller);
 
-                                println!("aaaaaaaaaa, {:?}", m);
+                                // println!("aaaaaaaaaa, {:?}", m);
 
                                 let a = m
                                     .get(param as u32 as usize..)
@@ -143,7 +143,10 @@ impl Wasmtime {
         linker.func_wrap(
             "host",
             "HOST__put_mrs_data",
-            move |mut caller: Caller<InstanceState>, param: i32, param2: i32| 613,
+            move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+                println!("put mrs data");
+                613
+            },
         )?;
 
         let instance = match linker.instantiate(&mut store, &module) {
