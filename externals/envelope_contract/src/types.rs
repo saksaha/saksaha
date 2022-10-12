@@ -99,7 +99,7 @@ pub struct EnvelopeStorage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MutableRecordStorage {
     pub data_chunk: HashMap<String, Vec<u8>>,
-    pub sig: String,
+    pub sig: Vec<u8>,
     pub slot_id: usize,
     pub ts: usize,
     pub old_ts: usize,

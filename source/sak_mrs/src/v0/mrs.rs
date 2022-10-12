@@ -1,8 +1,8 @@
 use crate::v0::db::MRSDB;
 use crate::MRSError;
 use colored::Colorize;
-use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
+use sak_crypto::{hasher::MiMC, Signature};
 use sak_logger::info;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -21,7 +21,7 @@ pub struct SakMRS {
 pub struct PutMrsDataArgs {
     // slot_id: Vec<u64>,
     pub data_chunk: HashMap<String, Vec<u8>>,
-    pub sig: String,
+    pub sig: Vec<u8>,
     pub slot_id: usize,
     pub ts: usize,
     pub old_ts: usize,
