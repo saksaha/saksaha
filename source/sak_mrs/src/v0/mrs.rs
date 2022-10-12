@@ -4,6 +4,7 @@ use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_logger::info;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::{
     collections::HashMap,
@@ -16,8 +17,14 @@ pub struct SakMRS {
     // ctr_addr: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PutMrsDataArgs {
-    slot_id: Vec<u64>,
+    // slot_id: Vec<u64>,
+    pub data_chunk: HashMap<String, Vec<u8>>,
+    pub sig: String,
+    pub slot_id: usize,
+    pub ts: usize,
+    pub old_ts: usize,
 }
 
 impl SakMRS {

@@ -51,8 +51,22 @@ pub fn query2(
         // let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
         // hello(ptr as i32, 1);
 
-        let ptr = ctx.put_mrs_data(0 as *mut u8, 0);
+        // let ptr = ctx.put_mrs_data(0 as *mut u8, 0);
         // hello(ptr as i32, 10);
+        let arg = MutableRecordStorage {
+            data_chunk: HashMap::new(),
+            sig: String::from("sig"),
+            slot_id: 0,
+            ts: 110,
+            old_ts: 109,
+        };
+
+        let arg_serialized = serde_json::to_vec(&arg)?;
+
+        let arg_ptr = alloc(arg_serialized.len());
+        arg_ptr.copy_from(arg_serialized.as_ptr(), arg_serialized.len());
+
+        ctx.put_mrs_data(arg_ptr, arg_serialized.len() as i32);
 
         // let len = get_latest_len(0, 0);
         // hello(len, 2);

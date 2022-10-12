@@ -15,7 +15,10 @@ impl StoreAccessor {
         123123
     }
 
-    pub fn put_mrs_data(&self, args: PutMrsDataArgs) {
+    pub fn put_mrs_data(&self, args: &[u8]) {
+        let args: PutMrsDataArgs = serde_json::from_slice(args).unwrap();
+        println!("args: {:?}", args);
+
         let pks: Vec<usize> = // self.ledger.get(MRS_CTR_ADDR, args.slot_ids);
         vec![1];
 

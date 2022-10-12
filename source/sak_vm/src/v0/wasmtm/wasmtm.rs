@@ -60,65 +60,65 @@ impl Wasmtime {
             "host",
             "HOST__get_mrs_data",
             move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-                let state = caller.data_mut();
-                println!("state: {:?}", state);
+                // let state = caller.data_mut();
+                // println!("state: {:?}", state);
 
-                match store_accessor.clone() {
-                    Some(sa) => {
-                        // sa.put_mrs_data();
+                // match store_accessor {
+                //     Some(sa) => {
+                //         // sa.put_mrs_data();
 
-                        match caller.get_export(Constants::MEMORY) {
-                            Some(exp) => {
-                                let memory = exp.into_memory().unwrap();
-                                let m = memory.data(&mut caller);
+                //         match caller.get_export(Constants::MEMORY) {
+                //             Some(exp) => {
+                //                 let memory = exp.into_memory().unwrap();
+                //                 let m = memory.data(&mut caller);
 
-                                // println!("aaaaaaaaaa, {:?}", m);
+                //                 // println!("aaaaaaaaaa, {:?}", m);
 
-                                let a = m
-                                    .get(param as u32 as usize..)
-                                    .and_then(|arr| arr.get(..param2 as u32 as usize))
-                                    .unwrap();
+                //                 let a = m
+                //                     .get(param as u32 as usize..)
+                //                     .and_then(|arr| arr.get(..param2 as u32 as usize))
+                //                     .unwrap();
 
-                                let ap = std::str::from_utf8(&a).unwrap();
+                //                 let ap = std::str::from_utf8(&a).unwrap();
 
-                                println!("aaaaaaaaaa22, {:?}", ap);
-                            }
-                            None => {}
-                        }
+                //                 println!("aaaaaaaaaa22, {:?}", ap);
+                //             }
+                //             None => {}
+                //         }
 
-                        println!("555 {:?}", sa.get_mrs_data());
-                    }
-                    None => {}
-                };
+                //         println!("555 {:?}", sa.get_mrs_data());
+                //     }
+                //     None => {}
+                // };
 
-                let data = Data { d: 123 };
+                // let data = Data { d: 123 };
 
-                let data_bytes = match serde_json::to_vec(&data) {
-                    Ok(b) => b,
-                    Err(err) => {
-                        error!("Error serializing mrs data, err: {}", err);
+                // let data_bytes = match serde_json::to_vec(&data) {
+                //     Ok(b) => b,
+                //     Err(err) => {
+                //         error!("Error serializing mrs data, err: {}", err);
 
-                        vec![]
-                    }
-                };
+                //         vec![]
+                //     }
+                // };
 
-                println!(
-                    "get_mrs_data(): data: {:?}, getting memory allocation",
-                    &data_bytes,
-                );
+                // println!(
+                //     "get_mrs_data(): data: {:?}, getting memory allocation",
+                //     &data_bytes,
+                // );
 
-                let alloc = caller
-                    .get_export(Constants::ALLOC_FN)
-                    .unwrap()
-                    .into_func()
-                    .unwrap();
-                let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
+                // let alloc = caller
+                //     .get_export(Constants::ALLOC_FN)
+                //     .unwrap()
+                //     .into_func()
+                //     .unwrap();
+                // let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
 
-                let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
+                // let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
 
-                println!("get_mrs_data(): param: {:?}", param);
-                println!("get_mrs_data(): param2: {}", param2);
-                println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
+                // println!("get_mrs_data(): param: {:?}", param);
+                // println!("get_mrs_data(): param2: {}", param2);
+                // println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
 
                 513
             },
@@ -144,7 +144,27 @@ impl Wasmtime {
             "host",
             "HOST__put_mrs_data",
             move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-                println!("put mrs data");
+                let state = caller.data_mut();
+                println!("state: {:?}", state);
+
+                match store_accessor.clone() {
+                    Some(sa) => match caller.get_export(Constants::MEMORY) {
+                        Some(exp) => {
+                            let memory = exp.into_memory().unwrap();
+                            let m = memory.data(&mut caller);
+
+                            let a = m
+                                .get(param as u32 as usize..)
+                                .and_then(|arr| arr.get(..param2 as u32 as usize))
+                                .unwrap();
+
+                            // sa.put_mrs_data(a);
+                            println!("555 {:?}", sa.put_mrs_data(a));
+                        }
+                        None => {}
+                    },
+                    None => {}
+                };
                 613
             },
         )?;
