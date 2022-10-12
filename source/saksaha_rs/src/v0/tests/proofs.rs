@@ -1,7 +1,7 @@
 use sak_crypto::hasher::MiMC;
 use sak_crypto::ScalarExt;
 use sak_crypto::{MerkleTreeSim, Scalar};
-use sak_dist_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
 use sak_proof::{CoinProof, NewCoin, OldCoin};
 

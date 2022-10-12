@@ -1,5 +1,5 @@
 use super::WalletDBSchema;
-use crate::fs;
+use crate::fs::{self, SaksahaWalletFS};
 use crate::{credential::WalletCredential, wallet::CoinManager, WalletError};
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
@@ -74,10 +74,7 @@ impl WalletDB {
     }
 
     pub fn get_db_path(acc_addr: &String) -> Result<PathBuf, WalletError> {
-        // let app_path =
-        //     sak_dir::create_or_get_app_path(APP_NAME)?.join(&acc_addr);
-
-        let acc_dir = fs::acc_dir(acc_addr)?;
+        let acc_dir = SaksahaWalletFS::acc_dir(acc_addr)?;
 
         let db_path = acc_dir.join("db");
 

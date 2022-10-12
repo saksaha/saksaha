@@ -34,7 +34,10 @@ impl RPC {
                 (socket, socket_addr)
             }
             Err(err) => {
-                error!("Could not bind a tcp socket for RPC, err: {}", err);
+                error!(
+                    "Could not bind a tcp socket for RPC, port: {}, err: {}",
+                    rpc_port, err,
+                );
 
                 return Err(err.into());
             }

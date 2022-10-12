@@ -21,6 +21,7 @@ pub(in crate::rpc) async fn get_balance(
     params: Params,
     ctx: Arc<RouteCtx>,
 ) -> Response<Body> {
+    println!("22");
     debug!("get_balance request handling");
 
     let params = require_some_params!(route_state, params, "get_balance should contain params",);
