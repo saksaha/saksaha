@@ -8,7 +8,7 @@ edition = "2018"
 sak_crypto = { path = "../sak_crypto" }
 sak_proof = { path = "../sak_proof" }
 sak_ledger_cfg = { path = "../sak_ledger_cfg" }
-sak_ledger_param = { path = "../sak_ledger_param" }
+sak_ledger_params = { path = "../sak_ledger_params" }
 type_extension = { path = "../type_extension" }
 chrono = "0.4"
 serde = { version = "1.0.130", features = ["derive"] }

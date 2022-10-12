@@ -25,7 +25,7 @@ members = [
   "source/sak_contract_std",
   "source/sak_machine",
   "source/sak_ledger_cfg",
-  "source/sak_ledger_param",
+  "source/sak_ledger_params",
   "source/hyper_server",
   "source/hyper_rpc_router",
   "source/sak_vm",

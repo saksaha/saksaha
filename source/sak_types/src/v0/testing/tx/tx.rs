@@ -8,7 +8,7 @@ use sak_crypto::hasher::MiMC;
 use sak_crypto::{rand, Scalar};
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
-use sak_ledger_param::DUMMY_SN;
+use sak_ledger_params::DUMMY_SN;
 use sak_proof::CoinProof;
 use sak_proof::NewCoin;
 use sak_proof::OldCoin;
@@ -202,7 +202,7 @@ pub fn mock_pour_tc_random() -> TxCandidate {
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
-    let dummy_merkle_rt = sak_ledger_param::generate_dummy_coin_rt().unwrap();
+    let dummy_merkle_rt = sak_ledger_params::generate_dummy_coin_rt().unwrap();
 
     let pour_tc = PourTxCandidate::new(
         "created_at".to_string(),
@@ -360,7 +360,7 @@ pub fn mock_pour_tc_1() -> TxCandidate {
 
     let pi_serialized = CoinProof::serialize_pi(&pi).unwrap();
 
-    let dummy_merkle_rt = sak_ledger_param::generate_dummy_coin_rt().unwrap();
+    let dummy_merkle_rt = sak_ledger_params::generate_dummy_coin_rt().unwrap();
 
     let pour_tc = PourTxCandidate::new(
         "created_at".to_string(),

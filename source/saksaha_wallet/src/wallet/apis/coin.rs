@@ -8,7 +8,7 @@ use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_cfg::GAS;
-use sak_ledger_param::DUMMY_SN;
+use sak_ledger_params::DUMMY_SN;
 use sak_logger::debug;
 use sak_proof::CoinProof;
 use sak_proof::NewCoin;
@@ -237,7 +237,7 @@ impl Wallet {
 
         let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
-        let dummy_merkle_rt = sak_ledger_param::generate_dummy_coin_rt().unwrap();
+        let dummy_merkle_rt = sak_ledger_params::generate_dummy_coin_rt().unwrap();
 
         let dummy_old_sn_1 = DUMMY_SN;
 
