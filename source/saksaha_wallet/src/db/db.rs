@@ -22,7 +22,8 @@ impl WalletDB {
         force_reset: bool,
     ) -> Result<WalletDB, WalletError> {
         if force_reset {
-            let db_path = Self::get_db_path(&credential.acc_addr)?;
+            // let db_path = Self::get_db_path(&credential.public_key)?;
+            let db_path = Self::get_db_path(&credential.public_key)?;
 
             info!(
                 "'Force reset' is on. Removing db path if exists, \
@@ -36,7 +37,7 @@ impl WalletDB {
         }
 
         let wallet_db_path = {
-            let db_path = Self::get_db_path(&credential.acc_addr)?;
+            let db_path = Self::get_db_path(&credential.public_key)?;
 
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;
@@ -73,8 +74,8 @@ impl WalletDB {
         Ok(wallet_db)
     }
 
-    pub fn get_db_path(acc_addr: &String) -> Result<PathBuf, WalletError> {
-        let acc_dir = SaksahaWalletFS::acc_dir(acc_addr)?;
+    pub fn get_db_path(public_key: &String) -> Result<PathBuf, WalletError> {
+        let acc_dir = SaksahaWalletFS::acc_dir(public_key)?;
 
         let db_path = acc_dir.join("db");
 

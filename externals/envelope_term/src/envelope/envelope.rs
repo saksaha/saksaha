@@ -71,7 +71,7 @@ impl Envelope {
             Arc::new(RwLock::new(s))
         };
 
-        let db = EnvelopeDB::init(&credential.acc_addr).await?;
+        let db = EnvelopeDB::init(&credential.public_key_str).await?;
 
         let dispatcher = {
             let ctx = {
