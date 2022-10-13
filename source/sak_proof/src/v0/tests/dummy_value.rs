@@ -50,7 +50,3 @@ pub async fn test_123() {
         (addr_sk, addr_pk, r, s, rho, v, cm)
     };
 }
-
-// // ...
-// const DUMMY_CM = &[11,22,33,44,22,33,11];
-// const DUMMY_MERKLE_RT = &[11,22,11,23];
