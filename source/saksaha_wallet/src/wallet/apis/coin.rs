@@ -37,7 +37,7 @@ impl Wallet {
             .into());
         }
 
-        self.update_coin_status(acc_addr).await?;
+        self.update_coin_status().await?;
 
         let mut balance: u64 = 0;
 
@@ -201,7 +201,7 @@ impl Wallet {
 
     pub async fn send_pour_tx(
         &self,
-        acc_addr: String,
+        _acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
@@ -369,7 +369,7 @@ impl Wallet {
         sn
     }
 
-    pub async fn update_coin_status(&self, _acc_addr: &String) -> Result<(), WalletError> {
+    pub async fn update_coin_status(&self) -> Result<(), WalletError> {
         let mut coin_manager_lock = self.coin_manager.write().await;
 
         let wallet_db = self.get_db();

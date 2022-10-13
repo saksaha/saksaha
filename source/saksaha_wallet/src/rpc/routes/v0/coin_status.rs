@@ -31,7 +31,7 @@ pub(in crate::rpc) async fn update_coin_status(
 
     // debug!("\trb: {:#?}", rb);
 
-    match ctx.wallet.update_coin_status(&rb.acc_addr).await {
+    match ctx.wallet.update_coin_status().await {
         Ok(_) => {
             let response_msg = String::from("success");
 
