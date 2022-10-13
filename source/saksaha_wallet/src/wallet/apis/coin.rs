@@ -37,7 +37,7 @@ impl Wallet {
             .into());
         }
 
-        self.update_coin_status(acc_addr).await?;
+        self.update_coin_status().await?;
 
         let mut balance: u64 = 0;
 
@@ -205,7 +205,7 @@ impl Wallet {
 
     pub async fn send_pour_tx(
         &self,
-        acc_addr: String,
+        _acc_addr: String,
         ctr_addr: String,
         ctr_request: CtrRequest,
     ) -> Result<String, WalletError> {
@@ -237,7 +237,7 @@ impl Wallet {
 
         let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
-        let dummy_merkle_rt = sak_ledger_params::generate_dummy_coin_rt().unwrap();
+        let dummy_merkle_rt = sak_ledger_params::mock_rt_1().unwrap();
 
         let dummy_old_sn_1 = DUMMY_SN;
 
@@ -373,7 +373,7 @@ impl Wallet {
         sn
     }
 
-    pub async fn update_coin_status(&self, _acc_addr: &String) -> Result<(), WalletError> {
+    pub async fn update_coin_status(&self) -> Result<(), WalletError> {
         let mut coin_manager_lock = self.coin_manager.write().await;
 
         let wallet_db = self.get_db();
