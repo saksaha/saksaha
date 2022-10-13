@@ -1,6 +1,6 @@
 use crate::{CtrStateUpdate, MachineError, MerkleUpdate, SakLedger};
 use colored::Colorize;
-use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
+use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;

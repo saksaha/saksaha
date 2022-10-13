@@ -1,7 +1,9 @@
+use crate::{CtrRequest, Storage};
+use sak_store_interface::StoreAccess;
 use std::sync::Arc;
 
 pub enum ContractFn {
-    Init(Arc<StoreAccessor>),
-    Query(CtrRequest, Storage, Arc<StoreAccessor>),
-    Execute(CtrRequest, Storage, Arc<StoreAccessor>),
+    Init(Box<dyn StoreAccess>),
+    Query(CtrRequest, Storage),
+    Execute(CtrRequest, Storage),
 }
