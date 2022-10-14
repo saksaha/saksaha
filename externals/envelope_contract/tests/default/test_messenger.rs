@@ -9,7 +9,7 @@ use envelope_contract::{
     request_type::OPEN_CH, Channel, ChannelId, ChatMessage, EncryptedChatMessage, EnvelopeStorage,
     GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
-use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
 use sak_credential::CredentialProfile;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
@@ -97,16 +97,16 @@ async fn test_messenger_get_msgs() {
             m
         };
 
-        let store_accessor = {
-            let a = StoreAccessor::new(mrs);
-            Arc::new(a)
-        };
+        // let store_accessor = {
+        //     let a = StoreAccessor::new(mrs);
+        //     Arc::new(a)
+        // };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Query(request, messages_state, store_accessor);
+        let ctr_fn = ContractFn::Query(request, messages_state);
 
         let receipt = vm
-            .invoke(ctr_wasm, ctr_fn)
+            .invoke(&ctr_wasm, ctr_fn)
             .expect("message should be obtained");
 
         let result = receipt.result;
