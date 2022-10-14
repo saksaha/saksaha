@@ -5,7 +5,7 @@ use sak_kv_db::WriteBatch;
 use sak_types::CtrAddr;
 
 impl LedgerDB {
-    pub(crate) async fn get_ctr_data_by_ctr_addr(
+    pub async fn get_ctr_data_by_ctr_addr(
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, MachineError> {
@@ -54,7 +54,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_ctr_state(
+    pub fn get_ctr_state(
         &self,
         // db: &DB,
         ctr_addr: &CtrAddr,

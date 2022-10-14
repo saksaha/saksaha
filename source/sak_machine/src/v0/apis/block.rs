@@ -47,18 +47,19 @@ impl SakMachine {
     }
 
     pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, MachineError> {
-        self.ledger.get_cm_idx_by_cm(cm)
+        self.ledger.get_cm_idx_by_cm(cm).await
     }
 
     pub async fn get_latest_block_hash(
         &self,
     ) -> Result<Option<(BlockHeight, BlockHash)>, MachineError> {
-        let latest_block_height = match self.ledger_db.get_latest_block_height()? {
+        let latest_block_height = match self.ledger.ledger_db.get_latest_block_height()? {
             Some(h) => h,
             None => return Ok(None),
         };
 
         let latest_block_hash = match self
+            .ledger
             .ledger_db
             .get_block_hash_by_block_height(&latest_block_height)?
         {
@@ -71,7 +72,7 @@ impl SakMachine {
 
     pub async fn send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, MachineError> {
         let tx_hash = match tx_candidate.clone() {
-            TxCandidate::Mint(_) => self.sync_pool.insert_tx(tx_candidate).await?,
+            TxCandidate::Mint(_) => self.ledger.sync_pool.insert_tx(tx_candidate).await?,
             TxCandidate::Pour(tc) => {
                 let mut is_valid_sn = true;
                 let mut is_valid_merkle_rt = true;
@@ -93,7 +94,7 @@ impl SakMachine {
                 let is_valid_tx = self.verify_proof(&tc)?;
 
                 if is_valid_merkle_rt & is_valid_sn & is_valid_tx {
-                    self.sync_pool.insert_tx(tx_candidate).await?
+                    self.ledger.sync_pool.insert_tx(tx_candidate).await?
                 } else {
                     return Err(format!(
                         "Is valid sn: {}, merkle_rt: {}, verified tx:{} ",
@@ -108,11 +109,11 @@ impl SakMachine {
     }
 
     pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, MachineError> {
-        self.ledger_db.get_tx(tx_hash).await
+        self.ledger.ledger_db.get_tx(tx_hash).await
     }
 
     pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, MachineError> {
-        self.ledger_db.get_block(block_hash)
+        self.ledger.ledger_db.get_block(block_hash)
     }
 
     pub async fn get_block_list(
@@ -215,26 +216,28 @@ impl SakMachine {
         block_height: &u128,
     ) -> Result<Option<Block>, MachineError> {
         if let Some(block_hash) = self
+            .ledger
             .ledger_db
             .get_block_hash_by_block_height(block_height)?
         {
-            return self.ledger_db.get_block(&block_hash);
+            return self.ledger.ledger_db.get_block(&block_hash);
         } else {
             return Ok(None);
         }
     }
 
     pub fn get_latest_block_height(&self) -> Result<Option<u128>, MachineError> {
-        self.ledger_db.get_latest_block_height()
+        self.ledger.ledger_db.get_latest_block_height()
     }
 
     pub async fn get_latest_block_merkle_rt(&self) -> Result<Option<[u8; 32]>, MachineError> {
-        let latest_block_height = match self.ledger_db.get_latest_block_height()? {
+        let latest_block_height = match self.ledger.ledger_db.get_latest_block_height()? {
             Some(h) => h,
             None => return Ok(None),
         };
 
         let latest_block_hash = match self
+            .ledger
             .ledger_db
             .get_block_hash_by_block_height(&latest_block_height)?
         {
@@ -248,7 +251,10 @@ impl SakMachine {
             }
         };
 
-        let latest_merkle_rt = self.ledger_db.get_block_merkle_rt(&latest_block_hash)?;
+        let latest_merkle_rt = self
+            .ledger
+            .ledger_db
+            .get_block_merkle_rt(&latest_block_hash)?;
 
         Ok(latest_merkle_rt)
     }
@@ -257,6 +263,6 @@ impl SakMachine {
         &self,
         contract_addr: &CtrAddr,
     ) -> Result<Option<Storage>, MachineError> {
-        self.ledger_db.get_ctr_state(contract_addr)
+        self.ledger.ledger_db.get_ctr_state(contract_addr)
     }
 }

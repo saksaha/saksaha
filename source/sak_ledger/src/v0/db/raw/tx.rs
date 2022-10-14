@@ -95,7 +95,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, MachineError> {
+    pub fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
         match self.db.get_cf(&cf, cm)? {
@@ -155,7 +155,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_tx_hash_by_sn(&self, key: &Sn) -> Result<Option<String>, MachineError> {
+    pub fn get_tx_hash_by_sn(&self, key: &Sn) -> Result<Option<String>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
         // let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();

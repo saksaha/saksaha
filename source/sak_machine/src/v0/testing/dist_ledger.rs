@@ -1,13 +1,16 @@
 use crate::v0::tests;
 use crate::{mock_pos, DistLedgerTestUtils, SakMachine, SakMachineArgs};
-
 use sak_credential::{Credential as SakCredential, CredentialProfile};
+use sak_ledger::{ConsensusResolver, SakLedger, SakLedgerArgs};
 use sak_types::BlockCandidate;
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcessor;
 
 const APP_NAME: &str = "saksaha";
 
-pub async fn mock_dist_ledger(block: BlockCandidate) -> SakMachine {
-    let pos = mock_pos();
+pub async fn mock_machine(block: BlockCandidate) -> SakMachine {
+    let pos: ConsensusResolver = mock_pos();
+    let credential = CredentialProfile::test_1();
 
     let ledger_path = {
         let config_dir = sak_dir::get_config_dir(APP_NAME).unwrap();
@@ -19,13 +22,35 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> SakMachine {
         config_dir.join("mrs")
     };
 
-    let dist_ledger_args = SakMachineArgs {
+    let vm: ContractProcessor = {
+        let v = SakVM::init().unwrap();
+        Box::new(v)
+    };
+
+    let sak_ledger_args = SakLedgerArgs {
         tx_sync_interval: None,
-        genesis_block: Some(block),
-        consensus: pos,
+        genesis_block: None,
         block_sync_interval: None,
+        consensus: pos,
         ledger_path,
+        contract_processor: vm,
+    };
+
+    let ledger = {
+        let l = SakLedger::init(sak_ledger_args).await.unwrap();
+
+        l
+    };
+
+    let dist_ledger_args = SakMachineArgs {
+        // tx_sync_interval: None,
+        // genesis_block: Some(block),
+        // consensus: pos,
+        // block_sync_interval: None,
+        // ledger_path,
+        ledger,
         mrs_path,
+        // vm,
     };
 
     let dist_ledger = SakMachine::init(dist_ledger_args)
@@ -35,7 +60,7 @@ pub async fn mock_dist_ledger(block: BlockCandidate) -> SakMachine {
     dist_ledger
 }
 
-pub async fn mock_dist_ledger_1() -> SakMachine {
+pub async fn mock_machine_1() -> SakMachine {
     let pos = mock_pos();
     let credential = CredentialProfile::test_1();
 
@@ -54,18 +79,31 @@ pub async fn mock_dist_ledger_1() -> SakMachine {
 
     let mrs_path = { test_dir.join("mrs") };
 
-    let dist_ledger_args = SakMachineArgs {
-        tx_sync_interval: None,
-        genesis_block: Some(sak_types::mock_block_1()),
-        consensus: pos,
-        block_sync_interval: None,
-        ledger_path,
-        mrs_path,
+    let vm: ContractProcessor = {
+        let v = SakVM::init().unwrap();
+        Box::new(v)
     };
 
-    let dist_ledger = SakMachine::init(dist_ledger_args)
+    let sak_ledger_args = SakLedgerArgs {
+        tx_sync_interval: None,
+        genesis_block: None,
+        block_sync_interval: None,
+        consensus: pos,
+        ledger_path,
+        contract_processor: vm,
+    };
+
+    let ledger = {
+        let l = SakLedger::init(sak_ledger_args).await.unwrap();
+
+        l
+    };
+
+    let dist_ledger_args = SakMachineArgs { mrs_path, ledger };
+
+    let machine = SakMachine::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 
-    dist_ledger
+    machine
 }

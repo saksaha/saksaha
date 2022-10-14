@@ -69,7 +69,7 @@ impl LedgerDB {
     //     }
     // }
 
-    pub(crate) fn get_latest_block_height(
+    pub fn get_latest_block_height(
         &self,
         // db: &DB,
     ) -> Result<Option<u128>, MachineError> {

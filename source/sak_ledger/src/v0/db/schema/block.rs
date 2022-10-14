@@ -62,7 +62,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) async fn put_block(
+    pub async fn put_block(
         &self,
         block: &Block,
         txs: &Vec<Tx>,

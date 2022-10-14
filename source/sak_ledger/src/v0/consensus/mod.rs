@@ -11,4 +11,6 @@ pub trait Consensus {
     ) -> Result<BlockCandidate, ConsensusError>;
 }
 
+pub type ConsensusResolver = Box<dyn Consensus + Send + Sync>;
+
 pub type ConsensusError = Box<dyn std::error::Error + Send + Sync>;

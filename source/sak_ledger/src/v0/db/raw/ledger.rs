@@ -3,7 +3,7 @@ use crate::{MachineError, MerkleNodeLoc};
 use sak_kv_db::{IteratorMode, WriteBatch};
 
 impl LedgerDB {
-    pub(crate) fn get_latest_cm_idx(&self) -> Result<Option<u128>, MachineError> {
+    pub fn get_latest_cm_idx(&self) -> Result<Option<u128>, MachineError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
 
         let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);

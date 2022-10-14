@@ -13,7 +13,7 @@ use sak_contract_std::{CtrCallType, CtrRequest, Storage};
 use sak_credential::CredentialProfile;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
-use sak_vm::{ContractFn, SakVM};
+use sak_vm::SakVM;
 use std::{collections::HashMap, sync::Arc};
 
 fn get_single_message() -> String {

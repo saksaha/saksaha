@@ -1,8 +1,4 @@
-use super::DistLedgerEvent;
-use crate::Consensus;
-use crate::LedgerDB;
 use crate::MachineError;
-use crate::SyncPool;
 use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
@@ -23,7 +19,7 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 pub struct SakMachine {
     // pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
     // pub(crate) ledger_db: LedgerDB,
-    pub vm: Arc<SakVM>,
+    // pub vm: Arc<SakVM>,
     pub ledger: SakLedger,
     // pub(crate) sync_pool: Arc<SyncPool>,
     // pub merkle_tree: MerkleTree,
@@ -40,7 +36,7 @@ pub struct SakMachineArgs {
     // pub ledger_path: PathBuf,
     pub ledger: SakLedger,
     pub mrs_path: PathBuf,
-    pub vm: SakVM,
+    // pub vm: BoxSakVM,
 }
 
 impl SakMachine {
@@ -53,7 +49,7 @@ impl SakMachine {
             // ledger_path,
             ledger,
             mrs_path,
-            vm,
+            // vm,
         } = machine_args;
 
         // let ledger_db = LedgerDB::init(&ledger_path).await?;
@@ -86,7 +82,7 @@ impl SakMachine {
         //     Arc::new(p)
         // };
 
-        let vm = Arc::new(vm);
+        // let vm = Arc::new(vm);
 
         let hasher = MiMC::new();
 
@@ -95,7 +91,7 @@ impl SakMachine {
         let machine = SakMachine {
             // ledger_event_tx,
             // ledger_db,
-            vm,
+            // vm,
             ledger,
             // sync_pool,
             // merkle_tree,

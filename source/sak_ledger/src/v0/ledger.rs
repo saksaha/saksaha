@@ -19,11 +19,11 @@ const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
 pub struct SakLedger {
     pub ledger_event_tx: Arc<Sender<DistLedgerEvent>>,
-    pub(crate) ledger_db: LedgerDB,
-    pub(crate) sync_pool: Arc<SyncPool>,
+    pub ledger_db: LedgerDB,
+    pub sync_pool: Arc<SyncPool>,
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
-    pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
+    pub consensus: Box<dyn Consensus + Send + Sync>,
     pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
 }
 

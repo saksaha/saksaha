@@ -11,7 +11,7 @@ use sak_types::{
 use std::convert::TryInto;
 
 impl LedgerDB {
-    pub(crate) fn get_validator_sig(
+    pub fn get_validator_sig(
         &self,
         // db: &DB,
         block_hash: &BlockHash,
@@ -30,7 +30,7 @@ impl LedgerDB {
         };
     }
 
-    pub(crate) fn get_tx_hashes(
+    pub fn get_tx_hashes(
         &self,
         // db: &DB,
         block_hash: &BlockHash,
@@ -48,7 +48,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_witness_sigs(
+    pub fn get_witness_sigs(
         &self,
         // db: &DB,
         block_hash: &BlockHash,
@@ -66,7 +66,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_block_created_at(
+    pub fn get_block_created_at(
         &self,
         // db: &DB,
         key: &BlockHash,
@@ -104,7 +104,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_block_hash_by_block_height(
+    pub fn get_block_hash_by_block_height(
         &self,
         block_height: &BlockHeight,
     ) -> Result<Option<String>, MachineError> {
@@ -124,7 +124,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_block_merkle_rt(
+    pub fn get_block_merkle_rt(
         &self,
         // db: &DB,
         block_hash: &BlockHash,
@@ -146,7 +146,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_block_merkle_rt_key(
+    pub fn get_block_merkle_rt_key(
         &self,
         // db: &DB,
         merkle_rt: &MerkleRt,
@@ -168,7 +168,7 @@ impl LedgerDB {
         }
     }
 
-    pub(crate) fn get_prf_merkle_rt(
+    pub fn get_prf_merkle_rt(
         &self,
         // db: &DB,
         key: &BlockHash,
@@ -189,7 +189,8 @@ impl LedgerDB {
             }
         }
     }
-    pub(crate) fn batch_put_validator_sig(
+
+    pub fn batch_put_validator_sig(
         &self,
         // db: &DB,
         batch: &mut WriteBatch,

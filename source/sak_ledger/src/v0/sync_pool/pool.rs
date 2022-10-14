@@ -12,7 +12,7 @@ const SYNC_POOL_CAPACITY: usize = 100;
 const TX_SYNC_INTERVAL: u64 = 2000;
 const BLOCK_SYNC_INTERVAL: u64 = 2000;
 
-pub(crate) struct SyncPool {
+pub struct SyncPool {
     new_blocks: Arc<RwLock<HashSet<(BlockHeight, BlockHash)>>>,
     tx_hash_set: Arc<RwLock<HashSet<TxHash>>>,
     tx_map: RwLock<HashMap<TxHash, TxCandidate>>,
@@ -65,7 +65,7 @@ impl SyncPool {
     }
 
     // Returns hashes of transactions that I do not have
-    pub(crate) async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
+    pub async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
         let tx_map_lock = self.tx_map.write().await;
 
         let mut ret = vec![];
@@ -79,7 +79,7 @@ impl SyncPool {
         return ret;
     }
 
-    pub(crate) async fn insert_block(&self, block: &Block) -> Result<(), String> {
+    pub async fn insert_block(&self, block: &Block) -> Result<(), String> {
         let height = block.block_height;
         let block_hash = block.get_block_hash();
 
@@ -122,7 +122,7 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn insert_tx(&self, tc: TxCandidate) -> Result<TxHash, String> {
+    pub async fn insert_tx(&self, tc: TxCandidate) -> Result<TxHash, String> {
         {
             // Check if tx is valid ctr deploying type
             let tx_ctr_op = tc.get_ctr_op();
@@ -131,7 +131,7 @@ impl SyncPool {
                 TxCtrOp::ContractDeploy => {
                     let maybe_wasm = tc.get_data();
                     // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-                    // if !SakVM::is_valid_wasm(maybe_wasm) {
+                    // if !self.contract_processor.is_valid_wasm(maybe_wasm) {
                     //     return Err("Not valid wasm data".to_string());
                     // }
                 }
@@ -192,7 +192,7 @@ impl SyncPool {
         Ok(tx_hash)
     }
 
-    pub(crate) async fn get_all_txs(&self) -> Result<Vec<TxCandidate>, String> {
+    pub async fn get_all_txs(&self) -> Result<Vec<TxCandidate>, String> {
         let tx_map_lock = self.tx_map.read().await;
 
         let txs = tx_map_lock.values().map(|v| v.clone()).collect();
@@ -200,7 +200,7 @@ impl SyncPool {
         Ok(txs)
     }
 
-    pub(crate) async fn remove_tcs(&self, txs: &Vec<TxCandidate>) -> Result<(), String> {
+    pub async fn remove_tcs(&self, txs: &Vec<TxCandidate>) -> Result<(), String> {
         let mut tx_map_lock = self.tx_map.write().await;
 
         for tx in txs {
@@ -210,7 +210,7 @@ impl SyncPool {
         Ok(())
     }
 
-    pub(crate) async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate> {
+    pub async fn get_txs(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate> {
         let tx_map_lock = self.tx_map.read().await;
         let mut tx_pool = vec![];
 
@@ -229,7 +229,7 @@ impl SyncPool {
         tx_pool
     }
 
-    pub(crate) async fn contains_tx(&self, tx_hash: &String) -> bool {
+    pub async fn contains_tx(&self, tx_hash: &String) -> bool {
         let tx_map_lock = self.tx_map.read().await;
 
         tx_map_lock.contains_key(tx_hash)

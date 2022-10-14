@@ -31,7 +31,7 @@ impl LedgerDB {
     //     Ok(tx_hash)
     // }
 
-    pub(crate) fn delete_tx(&self, tx_hash: &String) -> Result<(), MachineError> {
+    pub fn delete_tx(&self, tx_hash: &String) -> Result<(), MachineError> {
         let mut batch = WriteBatch::default();
 
         self.batch_delete_tx_created_at(&mut batch, tx_hash)?;
