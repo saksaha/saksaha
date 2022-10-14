@@ -1,4 +1,3 @@
-mod default;
 mod machine;
 
-pub(crate) use machine::Machine;
+pub(crate) use machine::*;

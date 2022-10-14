@@ -4,9 +4,9 @@ use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
+use sak_ledger_params::DUMMY_SN;
 use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
-use sak_proof::{DUMMY_MERKLE_RT, DUMMY_SN};
 use sak_types::{
     Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate,
     TxCtrOp,
@@ -210,7 +210,9 @@ impl SakLedger {
     }
 
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
-        if merkle_rt == &DUMMY_MERKLE_RT {
+        let dummy_merkle_rt = sak_ledger_params::mock_rt_1().unwrap();
+
+        if merkle_rt == &dummy_merkle_rt {
             return true;
         } else {
             match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
@@ -327,9 +329,7 @@ impl SakLedger {
     ) -> Result<(), MachineError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                let receipt = self
-                    .vm
-                    .invoke(&data, ContractFn::Init(self.store_accessor.clone()))?;
+                let receipt = self.contract_processor.invoke(&data, ContractFn::Init)?;
                 let storage = receipt
                     .updated_storage
                     .ok_or("Contract state needs to be initialized")?;
@@ -356,13 +356,9 @@ impl SakLedger {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                let ctr_fn = ContractFn::Execute(
-                                    req,
-                                    previous_state.to_vec(),
-                                    self.store_accessor.clone(),
-                                );
+                                let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
 
-                                let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
+                                let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
                                 receipt.updated_storage.ok_or("State needs to be updated")?
                             }

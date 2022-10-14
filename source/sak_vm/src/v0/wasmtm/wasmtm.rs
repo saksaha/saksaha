@@ -14,7 +14,7 @@ pub(crate) struct Wasmtime {}
 impl Wasmtime {
     pub(crate) fn make_instance(
         wasm: impl AsRef<[u8]>,
-        store_accessor: Arc<StoreAccessor>,
+        // store_accessor: Arc<StoreAccessor>,
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
@@ -36,7 +36,10 @@ impl Wasmtime {
             }
         };
 
-        let linker = make_linker(engine, store_accessor)?;
+        let linker = make_linker(
+            engine,
+            // store_accessor
+        )?;
 
         // let mut linker = Linker::new(&engine);
 

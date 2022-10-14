@@ -10,6 +10,7 @@ sak_kv_db = { path = "../sak_kv_db" }
 sak_logger = { path = "../sak_logger" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_ledger_cfg = { path = "../sak_ledger_cfg" }
+sak_ledger_params = { path = "../sak_ledger_params" }
 sak_dir = { path = "../sak_dir" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_crypto = { path = "../sak_crypto" }
@@ -27,9 +28,11 @@ async-trait = "0.1.57"
 saksaha = { path = "../../source/saksaha_rs" }
 sak_credential = { path = "../sak_credential" }
 # sak_vm = { path = "../sak_vm" }
+sak_vm_interface = { path = "../sak_vm_interface" }
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
+sak_vm = { path = "../sak_vm" }
 
 [lib]
 doctest = false # until stable beta is released

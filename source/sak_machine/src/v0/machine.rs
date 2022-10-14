@@ -29,7 +29,7 @@ pub struct SakMachine {
     // pub merkle_tree: MerkleTree,
     // pub hasher: MiMC,
     // pub(crate) consensus: Box<dyn Consensus + Send + Sync>,
-    pub store_accessor: Arc<StoreAccessor>,
+    // pub store_accessor: Arc<StoreAccessor>,
 }
 
 pub struct SakMachineArgs {
@@ -65,10 +65,10 @@ impl SakMachine {
             m
         };
 
-        let store_accessor = {
-            let a = StoreAccessor::new(mrs, ledger);
-            Arc::new(a)
-        };
+        // let store_accessor = {
+        //     let a = StoreAccessor::new(mrs, ledger);
+        //     Arc::new(a)
+        // };
 
         // let vm = SakVM::init()?;
 
@@ -101,7 +101,7 @@ impl SakMachine {
             // merkle_tree,
             // hasher,
             // consensus,
-            store_accessor,
+            // store_accessor,
         };
 
         // if let Some(bc) = genesis_block {

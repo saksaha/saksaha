@@ -17,6 +17,8 @@ use sak_logger::SakLogger;
 use sak_logger::{debug, error, info, warn};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 
 pub(super) struct Routine {
@@ -169,7 +171,10 @@ impl Routine {
             P2PHost::init(p2p_host_args).await?
         };
 
-        let vm = SakVM::init()?;
+        let vm: ContractProcessor = {
+            let v = SakVM::init()?;
+            Box::new(v)
+        };
 
         let ledger = {
             let l = Ledger::init(
@@ -178,6 +183,7 @@ impl Routine {
                 None,
                 config.blockchain.block_sync_interval,
                 identity.clone(),
+                vm,
             )
             .await?;
 
@@ -185,7 +191,7 @@ impl Routine {
         };
 
         let machine = {
-            let m = Machine { ledger };
+            let m = Machine::init(ledger);
 
             Arc::new(m)
         };

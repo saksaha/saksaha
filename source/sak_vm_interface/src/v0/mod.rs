@@ -1,5 +1,9 @@
-mod invoke;
+mod interface;
+mod receipt;
+mod state;
 
-pub use invoke::*;
+pub use interface::*;
+pub use receipt::*;
+pub use state::*;
 
-pub(crate) type VMInterfaceError = Box<dyn std::error::Error + Send + Sync>;
+pub type VMInterfaceError = Box<dyn std::error::Error + Send + Sync>;

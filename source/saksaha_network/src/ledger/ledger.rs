@@ -3,9 +3,11 @@ use crate::{
     fs::{self, SaksahaFS},
     SaksahaError,
 };
+use sak_ledger::SakLedgerArgs;
 use sak_machine::{Consensus, SakMachine, SakMachineArgs};
 use sak_p2p_id::Identity;
 use sak_proof::CoinProof;
+use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 
 pub(crate) struct Ledger {
@@ -19,6 +21,7 @@ impl Ledger {
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
         identity: Arc<Identity>,
+        contract_processor: ContractProcessor,
     ) -> Result<Self, SaksahaError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
@@ -56,7 +59,8 @@ impl Ledger {
             consensus,
             block_sync_interval,
             ledger_path,
-            mrs_path,
+            contract_processor,
+            // mrs_path,
         };
 
         let ledger = {

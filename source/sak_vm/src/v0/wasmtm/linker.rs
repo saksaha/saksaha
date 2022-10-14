@@ -15,7 +15,7 @@ pub struct Data {
 
 pub(crate) fn make_linker(
     engine: Engine,
-    store_accessor: Arc<StoreAccessor>,
+    // store_accessor: Arc<StoreAccessor>,
 ) -> Result<Linker<InstanceState>, VMError> {
     let mut linker = Linker::new(&engine);
 
@@ -58,7 +58,7 @@ pub(crate) fn make_linker(
                 None => {}
             }
 
-            println!("555 {:?}", store_accessor.get_mrs_data());
+            // println!("555 {:?}", store_accessor.get_mrs_data());
 
             let data = Data { d: 123 };
 

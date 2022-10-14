@@ -1,7 +1,6 @@
+use crate::LedgerParamsError;
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
-
-use crate::LedgerParamsError;
 
 pub const DUMMY_CM: [u8; 32] = [
     235, 141, 62, 187, 86, 12, 228, 147, 136, 201, 197, 117, 154, 229, 95, 155, 20, 131, 251, 178,
