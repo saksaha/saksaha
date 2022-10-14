@@ -30,5 +30,10 @@ pub fn get_value(storage: Storage, args: RequestArgs) -> Result<Vec<u8>, Contrac
         }
     };
 
-    Ok(value)
+    let res = match serde_json::to_vec(&value) {
+        Ok(r) => r,
+        Err(err) => return Err(format!("Could not serialize the value, err: {:?}", err).into()),
+    };
+
+    Ok(res)
 }

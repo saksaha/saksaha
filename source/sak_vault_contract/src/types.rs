@@ -2,8 +2,11 @@ use sak_contract_std::ContractError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub type VaultKey = Vec<u8>;
-pub type VaultValue = Vec<u8>;
+// pub type VaultKey = Vec<u8>;
+// pub type VaultValue = Vec<u8>;
+
+pub type VaultKey = String;
+pub type VaultValue = String;
 
 pub mod request_type {
     pub const GET_VALUE: &'static str = "get_value";

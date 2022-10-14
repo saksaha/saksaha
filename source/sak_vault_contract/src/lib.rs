@@ -1,8 +1,8 @@
 mod types;
 mod vault;
 
-mod execute;
-mod query;
+pub mod execute;
+pub mod query;
 
 pub use types::*;
 pub use vault::*;
