@@ -43,7 +43,11 @@ pub fn query2(
 }
 
 define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn execute2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: &mut Storage,
+) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         RESERVE => reserve_slot(storage, request.args),
         _ => Err(("Wrong request type has been found in execution").into()),

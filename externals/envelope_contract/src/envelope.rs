@@ -69,7 +69,11 @@ pub fn query2(
 }
 
 define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn execute2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: &mut Storage,
+) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         OPEN_CH => {
             return handle_open_channel(storage, request.args);

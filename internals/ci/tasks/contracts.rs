@@ -73,6 +73,10 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
             name: "sak_mrs_contract",
             path: source_path.join("sak_mrs_contract"),
         },
+        Contract {
+            name: "sak_vault_contract",
+            path: source_path.join("sak_vault_contract"),
+        },
     ];
 
     let receipt = sys_contracts

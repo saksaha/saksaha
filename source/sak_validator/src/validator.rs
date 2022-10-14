@@ -75,7 +75,11 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
 }
 
 define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
+pub fn execute2(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    storage: &mut Storage,
+) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "add_validator" => {
             return handle_add_validator(storage, request.args);

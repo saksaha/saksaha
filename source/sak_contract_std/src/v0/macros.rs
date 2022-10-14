@@ -178,8 +178,10 @@ macro_rules! define_execute {
             let request: sak_contract_std::CtrRequest =
                 sak_contract_std::return_err_4!(request, "serde request parsing fail");
 
+            let ctx = ContractCtx {};
+
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                execute2(request, &mut storage);
+                execute2(ctx, request, &mut storage);
 
             {
                 let mut result: sak_contract_std::InvokeResult =
