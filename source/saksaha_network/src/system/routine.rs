@@ -15,6 +15,8 @@ use crate::PConfig;
 use colored::Colorize;
 use sak_logger::SakLogger;
 use sak_logger::{debug, error, info, warn};
+use sak_machine::SakMachine;
+use sak_machine::SakMachineArgs;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use sak_vm::SakVM;
@@ -191,7 +193,14 @@ impl Routine {
         };
 
         let machine = {
-            let m = Machine::init(ledger);
+            let mrs_path = {
+                let config_dir = SaksahaFS::acc_dir(&config.p2p.public_key_str)?;
+                config_dir.join("mrs")
+            };
+
+            let machine_args = SakMachineArgs { ledger };
+
+            let m = SakMachine::init(machine_args).await?;
 
             Arc::new(m)
         };

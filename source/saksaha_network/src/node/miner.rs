@@ -1,6 +1,7 @@
 use crate::machine::Machine;
 use colored::Colorize;
 use sak_logger::{error, info, warn};
+use sak_machine::SakMachine;
 use std::{
     sync::Arc,
     time::{Duration, SystemTime},
@@ -9,12 +10,12 @@ use std::{
 const MINE_INTERVAL: u64 = 5000;
 
 pub(super) struct Miner {
-    pub(super) machine: Arc<Machine>,
+    pub(super) machine: Arc<SakMachine>,
     pub(super) mine_interval: Option<u64>,
 }
 
 impl Miner {
-    pub fn init(machine: Arc<Machine>, mine_interval: Option<u64>) -> Miner {
+    pub fn init(machine: Arc<SakMachine>, mine_interval: Option<u64>) -> Miner {
         Miner {
             machine,
             mine_interval,
@@ -36,7 +37,7 @@ impl Miner {
         loop {
             let time_since = SystemTime::now();
 
-            match self.machine.ledger.dist_ledger.write_block(None).await {
+            match self.machine.ledger.write_block(None).await {
                 Ok(_) => (),
                 Err(err) => {
                     error!("write_block failed, err: {}", err.to_string());

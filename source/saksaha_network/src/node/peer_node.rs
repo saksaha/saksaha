@@ -6,6 +6,7 @@ use crate::{
     node::event_handle::{self, LedgerEventRoutine},
 };
 use sak_logger::{debug, error, warn};
+use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerStatus, PeerTable};
 use sak_task_queue::TaskQueue;
@@ -15,7 +16,7 @@ use std::time::Duration;
 pub(in crate::node) struct PeerNode {
     pub peer_table: Arc<PeerTable>,
     pub peer: Arc<Peer>,
-    pub machine: Arc<Machine>,
+    pub machine: Arc<SakMachine>,
     pub discovery: Arc<Discovery>,
     pub node_task_min_interval: Duration,
 }
@@ -32,13 +33,7 @@ impl PeerNode {
 
         {
             let ledger_event_rx = {
-                let rx = self
-                    .machine
-                    .ledger
-                    .dist_ledger
-                    .ledger_event_tx
-                    .clone()
-                    .subscribe();
+                let rx = self.machine.ledger.ledger_event_tx.clone().subscribe();
 
                 rx
             };
@@ -67,7 +62,13 @@ impl PeerNode {
 
         {
             // Late sync routine
-            if let Ok(new_blocks) = self.machine.ledger.dist_ledger.get_all_blocks().await {
+            if let Ok(new_blocks) = self
+                .machine
+                .ledger
+                // .dist_ledger
+                .get_all_blocks()
+                .await
+            {
                 if new_blocks.len() > 1 {
                     node_task_queue
                         .push_back(NodeTask::SendBlockHashSyn { new_blocks })

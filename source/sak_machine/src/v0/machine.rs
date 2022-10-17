@@ -35,7 +35,7 @@ pub struct SakMachineArgs {
     // pub block_sync_interval: Option<u64>,
     // pub ledger_path: PathBuf,
     pub ledger: SakLedger,
-    pub mrs_path: PathBuf,
+    // pub mrs_path: PathBuf,
     // pub vm: BoxSakVM,
 }
 
@@ -48,7 +48,7 @@ impl SakMachine {
             // block_sync_interval,
             // ledger_path,
             ledger,
-            mrs_path,
+            // mrs_path,
             // vm,
         } = machine_args;
 
@@ -56,10 +56,10 @@ impl SakMachine {
 
         // let ledger = SakLedger::init();
 
-        let mrs = {
-            let m = SakMRS::init(&mrs_path).await?;
-            m
-        };
+        // let mrs = {
+        //     let m = SakMRS::init(&mrs_path).await?;
+        //     m
+        // };
 
         // let store_accessor = {
         //     let a = StoreAccessor::new(mrs, ledger);

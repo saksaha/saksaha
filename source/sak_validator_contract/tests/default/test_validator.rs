@@ -1,10 +1,11 @@
-use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
 use sak_credential::CredentialProfile;
 use sak_logger::SakLogger;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
 use sak_validator_contract::{AddValidatorParams, ValidatorStorage};
-use sak_vm::{ContractFn, SakVM};
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcess;
 use std::{collections::HashMap, sync::Arc};
 
 pub(crate) const VALIDATOR: &[u8] =
@@ -94,16 +95,16 @@ async fn test_call_ctr_validator_fn_init() {
 
     let mrs = SakMRS::init(mrs_path).await.unwrap();
 
-    let store_accessor = {
-        let a = StoreAccessor::new(mrs);
-        Arc::new(a)
-    };
+    // let store_accessor = {
+    //     let a = StoreAccessor::new(mrs);
+    //     Arc::new(a)
+    // };
 
     let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = ContractFn::Init(store_accessor);
+    let ctr_fn = ContractFn::Init;
 
     let receipt = vm
-        .invoke(ctr_wasm, ctr_fn)
+        .invoke(&ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
     let updated_state = receipt
@@ -150,17 +151,17 @@ async fn test_call_ctr_validator_fn_query() {
         m
     };
 
-    let store_accessor = {
-        let a = StoreAccessor::new(mrs);
-        Arc::new(a)
-    };
+    // let store_accessor = {
+    //     let a = StoreAccessor::new(mrs);
+    //     Arc::new(a)
+    // };
 
     let ctr_wasm = VALIDATOR.to_vec();
 
-    let ctr_fn = ContractFn::Query(request, storage, store_accessor);
+    let ctr_fn = ContractFn::Query(request, storage);
 
     let receipt = vm
-        .invoke(ctr_wasm, ctr_fn)
+        .invoke(&ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
     let validators: Vec<String> = serde_json::from_slice(&receipt.result).unwrap();
@@ -200,10 +201,10 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
 
     let mrs = SakMRS::init(mrs_path).await.unwrap();
 
-    let store_accessor = {
-        let a = StoreAccessor::new(mrs);
-        Arc::new(a)
-    };
+    // let store_accessor = {
+    //     let a = StoreAccessor::new(mrs);
+    //     Arc::new(a)
+    // };
 
     let (request, storage) = {
         let req_type = String::from("add_validator");
@@ -229,10 +230,10 @@ async fn test_call_ctr_validator_fn_execute_add_validator() {
     };
 
     let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = ContractFn::Execute(request, storage, store_accessor);
+    let ctr_fn = ContractFn::Execute(request, storage);
 
     let receipt = vm
-        .invoke(ctr_wasm, ctr_fn)
+        .invoke(&ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
     let updated_storage = receipt.updated_storage.unwrap();

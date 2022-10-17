@@ -96,14 +96,14 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
 
     machine_1
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .send_tx(dummy_tx1.clone())
         .await
         .expect("Node should be able to send a transaction");
 
     machine_1
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .send_tx(dummy_tx2.clone())
         .await
         .expect("Node should be able to send a transaction");
@@ -113,13 +113,13 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     {
         let tx_pool_2_contains_tx1 = machine_2
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 
         let tx_pool_2_contains_tx2 = machine_2
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .tx_pool_contains(dummy_tx2.get_tx_hash())
             .await;
 
@@ -131,14 +131,14 @@ async fn test_two_nodes_tx_pool_marshal_check_true() {
     {
         machine_1
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .write_block(Some(block))
             .await
             .expect("Block should be written");
 
         let tx_pool_1_contains_tx1 = machine_1
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .tx_pool_contains(dummy_tx1.get_tx_hash())
             .await;
 

@@ -21,3 +21,4 @@ sak_logger = { path = "../sak_logger" }
 sak_mrs = { path = "../sak_mrs" }
 sak_store_accessor = { path = "../sak_store_accessor" }
 sak_credential = { path = "../sak_credential" }
+sak_vm_interface = { path = "../sak_vm_interface" }

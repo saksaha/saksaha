@@ -10,6 +10,7 @@ pub(in crate::node) use block::*;
 pub(in crate::node) use block_hash::*;
 pub(in crate::node) use hello::*;
 use sak_logger::{debug, info, warn};
+use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::{Peer, PeerTable};
 use sak_p2p_transport::{Msg, TxHashSyncMsg, TxSynMsg, UpgradedConn, UpgradedP2PCodec};
@@ -21,7 +22,7 @@ pub(in crate::node) use tx_hash::*;
 
 pub(in crate::node) async fn handle_msg<'a>(
     msg: Msg,
-    machine: &Arc<Machine>,
+    machine: &Arc<SakMachine>,
     conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     peer_table: &Arc<PeerTable>,

@@ -4,17 +4,21 @@ use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::rpc::{RPCArgs, RPC};
 use crate::system::SystemHandle;
 use colored::*;
+use sak_ledger::SakLedger;
 use sak_logger::info;
+use sak_machine::{SakMachine, SakMachineArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcessor;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
 pub(in crate::rpc) struct TestContext {
     pub rpc: RPC,
     pub rpc_socket_addr: SocketAddr,
-    pub machine: Arc<Machine>,
+    pub machine: Arc<SakMachine>,
 }
 
 pub(in crate::rpc) async fn make_test_context(
@@ -43,16 +47,23 @@ pub(in crate::rpc) async fn make_test_context(
         Arc::new(id)
     };
 
+    let vm: ContractProcessor = {
+        let v = SakVM::init().unwrap();
+        Box::new(v)
+    };
+
     let ledger = {
         let pk = String::from("test");
 
-        Ledger::init(&pk, None, None, None, identity.clone())
+        Ledger::init(&pk, None, None, None, identity.clone(), vm)
             .await
             .unwrap()
     };
 
     let machine = {
-        let m = Machine { ledger };
+        let machine_args = SakMachineArgs { ledger };
+        // let m = Machine { ledger };
+        let m = SakMachine::init(machine_args).await.unwrap();
 
         Arc::new(m)
     };
@@ -139,7 +150,7 @@ pub fn make_dummy_tx_pour_block() -> BlockCandidate {
     tx_pour_block
 }
 
-pub(crate) async fn make_blockchain(secret: &String, public_key_str: &String) -> Ledger {
+pub(crate) async fn make_ledger(secret: &String, public_key_str: &String) -> SakLedger {
     let (_disc_socket, disc_port) = {
         let (socket, socket_addr) = sak_utils_net::setup_udp_socket(None).await.unwrap();
 
@@ -158,9 +169,21 @@ pub(crate) async fn make_blockchain(secret: &String, public_key_str: &String) ->
         Arc::new(id)
     };
 
-    let blockchain = Ledger::init(&String::from("test"), None, None, None, identity.clone())
-        .await
-        .expect("Blockchain should be made");
+    let vm: ContractProcessor = {
+        let v = SakVM::init().unwrap();
+        Box::new(v)
+    };
 
-    blockchain
+    let sak_ledger = Ledger::init(
+        &String::from("test"),
+        None,
+        None,
+        None,
+        identity.clone(),
+        vm,
+    )
+    .await
+    .expect("Blockchain should be made");
+
+    sak_ledger
 }

@@ -4,6 +4,7 @@ use crate::{
     node::{msg_handle, SaksahaNodeError},
 };
 use sak_logger::{debug, error, warn};
+use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;
 use sak_p2p_transport::UpgradedConn;
 use sak_task_queue::TaskQueue;
@@ -14,7 +15,7 @@ pub(in crate::node) async fn handle_task<'a>(
     task: NodeTask,
     task_queue: &Arc<TaskQueue<NodeTask>>,
     conn_lock: RwLockWriteGuard<'a, UpgradedConn>,
-    machine: &Arc<Machine>,
+    machine: &Arc<SakMachine>,
     discovery: &Arc<Discovery>,
 ) -> Result<(), SaksahaNodeError> {
     match task {

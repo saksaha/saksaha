@@ -11,7 +11,7 @@ use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 
 pub(crate) struct Ledger {
-    pub(crate) dist_ledger: SakMachine,
+    pub(crate) sak_ledger: SakLedger,
 }
 
 impl Ledger {
@@ -22,7 +22,7 @@ impl Ledger {
         block_sync_interval: Option<u64>,
         identity: Arc<Identity>,
         contract_processor: ContractProcessor,
-    ) -> Result<Self, SaksahaError> {
+    ) -> Result<SakLedger, SaksahaError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
                 Some(b) => b,
@@ -63,18 +63,14 @@ impl Ledger {
             // mrs_path,
         };
 
-        let ledger = {
-            let d = SakLedger::init(dist_ledger_args).await?;
+        let sak_ledger = SakLedger::init(dist_ledger_args).await?;
 
-            d
-        };
+        // let ledger = Ledger { sak_ledger };
 
-        let blockchain = Ledger { dist_ledger };
-
-        Ok(blockchain)
+        Ok(sak_ledger)
     }
 
     pub async fn run(&self) {
-        self.dist_ledger.run().await;
+        self.sak_ledger.run().await;
     }
 }

@@ -49,7 +49,7 @@ pub async fn mock_machine(block: BlockCandidate) -> SakMachine {
         // block_sync_interval: None,
         // ledger_path,
         ledger,
-        mrs_path,
+        // mrs_path,
         // vm,
     };
 
@@ -99,7 +99,10 @@ pub async fn mock_machine_1() -> SakMachine {
         l
     };
 
-    let dist_ledger_args = SakMachineArgs { mrs_path, ledger };
+    let dist_ledger_args = SakMachineArgs {
+        // mrs_path,
+        ledger,
+    };
 
     let machine = SakMachine::init(dist_ledger_args)
         .await

@@ -1,11 +1,14 @@
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
+use sak_ledger::{Consensus, ConsensusError, SakLedger, SakLedgerArgs};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
-use sak_machine::{Consensus, ConsensusError, SakMachine, SakMachineArgs};
+use sak_machine::{SakMachine, SakMachineArgs};
 use sak_proof::{CoinProof, NewCoin, OldCoin};
 use sak_types::{BlockCandidate, TxCandidate};
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcessor;
 use type_extension::U8Array;
 
 const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
@@ -24,7 +27,7 @@ pub struct DummyPos {}
 impl Consensus for DummyPos {
     async fn do_consensus(
         &self,
-        _machine: &SakMachine,
+        _machine: &SakLedger,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());
@@ -59,20 +62,40 @@ pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakMachine {
         config_dir.join("test").join("mrs")
     };
 
-    let dist_ledger_args = SakMachineArgs {
-        tx_sync_interval: None,
-        genesis_block: Some(block),
-        consensus: pos,
-        block_sync_interval: None,
-        ledger_path,
-        mrs_path,
+    let vm: ContractProcessor = {
+        let v = SakVM::init().unwrap();
+        Box::new(v)
     };
 
-    let dist_ledger = SakMachine::init(dist_ledger_args)
+    let ledger = {
+        let ledger_args = SakLedgerArgs {
+            tx_sync_interval: None,
+            genesis_block: Some(block),
+            consensus: pos,
+            block_sync_interval: None,
+            ledger_path,
+            // mrs_path,
+            contract_processor: vm,
+        };
+
+        SakLedger::init(ledger_args).await.unwrap()
+    };
+
+    let dist_ledger_args = SakMachineArgs {
+        // tx_sync_interval: None,
+        // genesis_block: Some(block),
+        // consensus: pos,
+        // block_sync_interval: None,
+        // ledger_path,
+        // mrs_path,
+        ledger,
+    };
+
+    let machine = SakMachine::init(dist_ledger_args)
         .await
         .expect("Blockchain should be initialized");
 
-    dist_ledger
+    machine
 }
 
 pub struct Coin {
@@ -305,7 +328,7 @@ async fn test_real_generate_a_proof() {
 
         let genesis_block = sak_types::mock_block(tx_candidates);
 
-        sak_machine::mock_dist_ledger(genesis_block).await
+        sak_machine::mock_machine(genesis_block).await
     };
 
     let cm_1_old_idx: u128 = 0;

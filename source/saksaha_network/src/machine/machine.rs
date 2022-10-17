@@ -1,11 +1,12 @@
 use crate::{ledger::Ledger, SaksahaError};
+use sak_ledger::SakLedger;
 
 pub(crate) struct Machine {
-    ledger: Ledger,
+    pub ledger: SakLedger,
 }
 
 impl Machine {
-    pub fn init(ledger: Ledger) -> Result<Machine, SaksahaError> {
+    pub fn init(ledger: SakLedger) -> Result<Machine, SaksahaError> {
         let m = Machine { ledger };
 
         Ok(m)

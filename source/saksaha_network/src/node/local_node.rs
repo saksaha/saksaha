@@ -1,6 +1,7 @@
 use super::{miner::Miner, peer_node::PeerNode};
 use crate::machine::Machine;
 use sak_logger::{debug, info, warn};
+use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;
 use sak_p2p_peertable::PeerTable;
 use std::{sync::Arc, time::Duration};
@@ -12,7 +13,7 @@ const MINER: bool = false;
 
 pub(crate) struct LocalNode {
     pub peer_table: Arc<PeerTable>,
-    pub machine: Arc<Machine>,
+    pub machine: Arc<SakMachine>,
     pub miner: Option<bool>,
     pub mine_interval: Option<u64>,
     pub node_task_interval: Duration,
@@ -23,7 +24,7 @@ pub(crate) struct LocalNode {
 impl LocalNode {
     pub fn new(
         peer_table: Arc<PeerTable>,
-        machine: Arc<Machine>,
+        machine: Arc<SakMachine>,
         miner: Option<bool>,
         mine_interval: Option<u64>,
         node_task_interval: Option<u64>,

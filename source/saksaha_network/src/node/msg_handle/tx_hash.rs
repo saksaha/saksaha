@@ -3,6 +3,7 @@ use crate::{
     node::{task::NodeTask, SaksahaNodeError},
 };
 use sak_logger::{debug, info, warn};
+use sak_machine::SakMachine;
 use sak_p2p_peertable::Peer;
 use sak_p2p_transport::{Msg, TxHashSyncMsg, UpgradedConn};
 use sak_task_queue::TaskQueue;
@@ -36,12 +37,12 @@ pub(in crate::node) async fn recv_tx_hash_ack(
 
 pub(in crate::node) async fn recv_tx_hash_syn(
     tx_hash_syn_msg: TxHashSyncMsg,
-    machine: &Arc<Machine>,
+    machine: &Arc<SakMachine>,
     mut conn: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaNodeError> {
     let txs_to_request = machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .get_tx_pool_diff(tx_hash_syn_msg.tx_hashes)
         .await;
 
