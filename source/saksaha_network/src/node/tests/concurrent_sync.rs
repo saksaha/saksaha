@@ -1,7 +1,7 @@
 use super::utils::{make_test_context, TestContext};
 use crate::tests::SaksahaTestUtils;
 use sak_credential::CredentialProfile;
-use sak_machine::DistLedgerEvent;
+use sak_ledger::DistLedgerEvent;
 use std::{collections::HashMap, time::Duration};
 
 #[tokio::test(flavor = "multi_thread")]

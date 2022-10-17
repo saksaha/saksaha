@@ -2,8 +2,8 @@ use super::utils::make_dual_node_test_context;
 use super::utils::DualNodeTestContext;
 use crate::tests::SaksahaTestUtils;
 use sak_credential::CredentialProfile;
+use sak_ledger::DistLedgerEvent;
 use sak_logger::{error, info};
-use sak_machine::DistLedgerEvent;
 use std::time::Duration;
 
 #[tokio::test(flavor = "multi_thread")]

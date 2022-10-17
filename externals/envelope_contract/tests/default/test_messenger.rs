@@ -14,6 +14,7 @@ use sak_credential::CredentialProfile;
 use sak_mrs::SakMRS;
 use sak_store_accessor::StoreAccessor;
 use sak_vm::SakVM;
+use sak_vm_interface::{ContractProcess, ContractProcessor};
 use std::{collections::HashMap, sync::Arc};
 
 fn get_single_message() -> String {
@@ -69,7 +70,10 @@ fn make_mock_open_ch() -> Channel {
 async fn test_messenger_get_msgs() {
     EnvelopeTestUtils::init_test_log();
 
-    let vm = SakVM::init().expect("VM should be initiated");
+    let vm: ContractProcessor = {
+        let v = SakVM::init().expect("VM should be initiated");
+        Box::new(v)
+    };
 
     let test_dummy_messege = get_multi_messages();
 
@@ -157,15 +161,15 @@ async fn test_messenger_get_ch_list() {
             m
         };
 
-        let store_accessor = {
-            let a = StoreAccessor::new(mrs);
-            Arc::new(a)
-        };
+        // let store_accessor = {
+        //     let a = StoreAccessor::new(mrs);
+        //     Arc::new(a)
+        // };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Query(request, storage, store_accessor);
+        let ctr_fn = ContractFn::Query(request, storage);
 
-        let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
+        let receipt = vm.invoke(&ctr_wasm, ctr_fn).unwrap();
 
         let open_ch_data_vec: Vec<Channel> = serde_json::from_slice(&receipt.result).unwrap();
 
@@ -201,10 +205,10 @@ async fn test_messenger_open_channel() {
 
     let mrs = SakMRS::init(mrs_path).await.unwrap();
 
-    let store_accessor = {
-        let a = StoreAccessor::new(mrs);
-        Arc::new(a)
-    };
+    // let store_accessor = {
+    //     let a = StoreAccessor::new(mrs);
+    //     Arc::new(a)
+    // };
 
     let new_pk = "abcdef".to_string();
 
@@ -245,9 +249,9 @@ async fn test_messenger_open_channel() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage, store_accessor);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
-        let receipt = vm.invoke(ctr_wasm, ctr_fn).unwrap();
+        let receipt = vm.invoke(&ctr_wasm, ctr_fn).unwrap();
 
         let updated_storage = receipt
             .updated_storage
@@ -282,10 +286,10 @@ async fn test_messenger_send_msg() {
 
     let mrs = SakMRS::init(mrs_path).await.unwrap();
 
-    let store_accessor = {
-        let a = StoreAccessor::new(mrs);
-        Arc::new(a)
-    };
+    // let store_accessor = {
+    //     let a = StoreAccessor::new(mrs);
+    //     Arc::new(a)
+    // };
 
     let dummy_messeges = get_multi_messages();
 
@@ -322,10 +326,10 @@ async fn test_messenger_send_msg() {
 
     {
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage, store_accessor);
+        let ctr_fn = ContractFn::Execute(request, storage);
 
         let receipt = vm
-            .invoke(ctr_wasm, ctr_fn)
+            .invoke(&ctr_wasm, ctr_fn)
             .expect("State should be obtained");
 
         let updated_storage = receipt.updated_storage.unwrap();
@@ -370,10 +374,10 @@ async fn test_messenger_open_channel_me_and_you() {
 
     let mrs = SakMRS::init(mrs_path).await.unwrap();
 
-    let store_accessor = {
-        let a = StoreAccessor::new(mrs);
-        Arc::new(a)
-    };
+    // let store_accessor = {
+    //     let a = StoreAccessor::new(mrs);
+    //     Arc::new(a)
+    // };
 
     let my_pk = "my_pk".to_string();
     let your_pk = "your_pk".to_string();
@@ -429,9 +433,9 @@ async fn test_messenger_open_channel_me_and_you() {
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage.clone(), store_accessor.clone());
+        let ctr_fn = ContractFn::Execute(request, storage.clone());
 
-        vm.invoke(ctr_wasm, ctr_fn).unwrap()
+        vm.invoke(&ctr_wasm, ctr_fn).unwrap()
     };
 
     let receipt_2 = {
@@ -455,9 +459,9 @@ async fn test_messenger_open_channel_me_and_you() {
         };
 
         let ctr_wasm = ENVELOPE_CONTRACT.to_vec();
-        let ctr_fn = ContractFn::Execute(request, storage, store_accessor.clone());
+        let ctr_fn = ContractFn::Execute(request, storage);
 
-        vm.invoke(ctr_wasm, ctr_fn).unwrap()
+        vm.invoke(&ctr_wasm, ctr_fn).unwrap()
     };
 
     {

@@ -3,8 +3,8 @@ use crate::{
     fs::{self, SaksahaFS},
     SaksahaError,
 };
-use sak_ledger::SakLedgerArgs;
-use sak_machine::{Consensus, SakMachine, SakMachineArgs};
+use sak_ledger::{Consensus, SakLedger, SakLedgerArgs};
+use sak_machine::{SakMachine, SakMachineArgs};
 use sak_p2p_id::Identity;
 use sak_proof::CoinProof;
 use sak_vm_interface::ContractProcessor;

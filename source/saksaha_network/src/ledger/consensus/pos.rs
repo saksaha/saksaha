@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 use sak_contract_std::{CtrCallType, CtrRequest};
-use sak_machine::{Consensus, ConsensusError, SakMachine};
+use sak_ledger::SakLedger;
+use sak_ledger::{Consensus, ConsensusError};
+use sak_machine::SakMachine;
 use sak_p2p_id::Identity;
 use sak_types::{BlockCandidate, TxCandidate};
 use std::{collections::HashMap, sync::Arc};
@@ -14,7 +16,7 @@ pub struct Pos {
 impl Consensus for Pos {
     async fn do_consensus(
         &self,
-        dist_ledger: &SakMachine,
+        dist_ledger: &SakLedger,
         tx_candidates: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = CtrRequest {
