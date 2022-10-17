@@ -2,7 +2,6 @@ use super::shutdown::ShutdownMng;
 use super::SaksahaError;
 use super::SystemRunArgs;
 use crate::config::Config;
-use crate::fs;
 use crate::fs::SaksahaFS;
 use crate::ledger::Ledger;
 use crate::node::LocalNode;
