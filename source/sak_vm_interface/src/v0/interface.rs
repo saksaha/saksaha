@@ -1,6 +1,6 @@
 use crate::{InstanceState, InvokeReceipt, VMInterfaceError};
 use sak_contract_std::{ContractFn, CtrRequest, Storage};
-use wasmtime::{Instance, Memory, Store};
+// use wasmtime::{Instance, Memory, Store};
 
 pub type ContractProcessor = Box<dyn ContractProcess + Send + Sync>;
 
