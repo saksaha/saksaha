@@ -1,7 +1,4 @@
-use crate::{
-    machine::Machine,
-    node::{event_handle, task::NodeTask},
-};
+use crate::node::{event_handle, task::NodeTask};
 use sak_ledger::DistLedgerEvent;
 use sak_logger::{debug, error, warn};
 use sak_machine::SakMachine;

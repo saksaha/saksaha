@@ -1,5 +1,4 @@
 use crate::ledger::Ledger;
-use crate::machine::Machine;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::rpc::{RPCArgs, RPC};
 use crate::system::SystemHandle;

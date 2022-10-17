@@ -5,7 +5,7 @@ mod tx;
 mod tx_hash;
 
 use super::task::NodeTask;
-use crate::{machine::Machine, SaksahaError};
+use crate::SaksahaError;
 pub(in crate::node) use block::*;
 pub(in crate::node) use block_hash::*;
 pub(in crate::node) use hello::*;

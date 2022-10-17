@@ -1,8 +1,5 @@
 use super::NodeTask;
-use crate::{
-    machine::Machine,
-    node::{msg_handle, SaksahaNodeError},
-};
+use crate::node::{msg_handle, SaksahaNodeError};
 use sak_logger::{debug, error, warn};
 use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;

@@ -5,7 +5,6 @@ use crate::config::Config;
 use crate::fs;
 use crate::fs::SaksahaFS;
 use crate::ledger::Ledger;
-use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::rpc::RPCArgs;

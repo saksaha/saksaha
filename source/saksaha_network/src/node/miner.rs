@@ -1,4 +1,3 @@
-use crate::machine::Machine;
 use colored::Colorize;
 use sak_logger::{error, info, warn};
 use sak_machine::SakMachine;

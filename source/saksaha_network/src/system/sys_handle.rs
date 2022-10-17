@@ -1,4 +1,4 @@
-use crate::{machine::Machine, p2p::P2PMonitor};
+use crate::p2p::P2PMonitor;
 use sak_machine::SakMachine;
 use std::sync::Arc;
 

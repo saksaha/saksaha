@@ -1,5 +1,4 @@
 use super::{miner::Miner, peer_node::PeerNode};
-use crate::machine::Machine;
 use sak_logger::{debug, info, warn};
 use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;

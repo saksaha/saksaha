@@ -1,4 +1,4 @@
-use crate::{machine::Machine, node::SaksahaNodeError};
+use crate::node::SaksahaNodeError;
 use sak_machine::SakMachine;
 use sak_p2p_transport::{BlockAckMsg, BlockSynMsg, ErrorMsg, Msg, UpgradedConn};
 use sak_types::{BlockHash, BlockHeight};

@@ -1,10 +1,7 @@
 use super::task;
 use super::{msg_handle, SaksahaNodeError};
+use crate::node::event_handle::{self, LedgerEventRoutine};
 use crate::node::task::NodeTask;
-use crate::{
-    machine::Machine,
-    node::event_handle::{self, LedgerEventRoutine},
-};
 use sak_logger::{debug, error, warn};
 use sak_machine::SakMachine;
 use sak_p2p_discovery::Discovery;

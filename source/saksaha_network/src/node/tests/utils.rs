@@ -1,5 +1,4 @@
 use crate::ledger::Ledger;
-use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::P2PHost;
 use crate::p2p::P2PHostArgs;
