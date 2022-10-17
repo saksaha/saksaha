@@ -1,8 +1,6 @@
-use crate::{
-    machine::Machine,
-    node::{task::NodeTask, SaksahaNodeError},
-};
+use crate::node::{task::NodeTask, SaksahaNodeError};
 use sak_logger::{debug, info, warn};
+use sak_machine::SakMachine;
 use sak_p2p_transport::{ErrorMsg, Msg, TxAckMsg, TxSynMsg, UpgradedConn};
 use sak_task_queue::TaskQueue;
 use sak_types::TxHash;
@@ -12,11 +10,11 @@ use tokio::sync::RwLockWriteGuard;
 pub(in crate::node) async fn send_tx_syn<'a>(
     mut conn_lock: RwLockWriteGuard<'a, UpgradedConn>,
     tx_hashes: Vec<TxHash>,
-    machine: &Arc<Machine>,
+    machine: &Arc<SakMachine>,
 ) -> Result<(), SaksahaNodeError> {
     let tx_candidates = machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .get_txs_from_pool(tx_hashes)
         .await;
 
@@ -29,7 +27,7 @@ pub(in crate::node) async fn send_tx_syn<'a>(
 
 pub(in crate::node) async fn recv_tx_ack(
     tx_syn: TxAckMsg,
-    machine: &Machine,
+    machine: &SakMachine,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaNodeError> {
     Ok(())
@@ -37,12 +35,12 @@ pub(in crate::node) async fn recv_tx_ack(
 
 pub(in crate::node) async fn recv_tx_syn(
     tx_syn: TxSynMsg,
-    machine: &Machine,
+    machine: &SakMachine,
     mut conn_lock: RwLockWriteGuard<'_, UpgradedConn>,
 ) -> Result<(), SaksahaNodeError> {
     machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .insert_into_pool(tx_syn.tx_candidates)
         .await;
 

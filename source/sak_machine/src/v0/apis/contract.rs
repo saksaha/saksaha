@@ -1,8 +1,8 @@
 use crate::MachineError;
 use crate::SakMachine;
+use sak_contract_std::ContractFn;
 use sak_contract_std::CtrRequest;
 use sak_types::CtrAddr;
-use sak_vm::ContractFn;
 
 impl SakMachine {
     pub async fn query_ctr(
@@ -11,19 +11,21 @@ impl SakMachine {
         request: CtrRequest,
     ) -> Result<Vec<u8>, MachineError> {
         let ctr_wasm = self
+            .ledger
             .ledger_db
             .get_ctr_data_by_ctr_addr(ctr_addr)
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
         let ctr_state = self
+            .ledger
             .ledger_db
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
-        let ctr_fn = ContractFn::Query(request, ctr_state, self.store_accessor.clone());
+        let ctr_fn = ContractFn::Query(request, ctr_state);
 
-        let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
+        let receipt = self.ledger.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
         let result = receipt.result;
 
@@ -36,19 +38,21 @@ impl SakMachine {
         request: CtrRequest,
     ) -> Result<Vec<u8>, MachineError> {
         let ctr_wasm = self
+            .ledger
             .ledger_db
             .get_ctr_data_by_ctr_addr(ctr_addr)
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
         let ctr_state = self
+            .ledger
             .ledger_db
             .get_ctr_state(ctr_addr)?
             .ok_or("ctr state should exist")?;
 
         let ctr_fn = ContractFn::Execute(request, ctr_state);
 
-        let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
+        let receipt = self.ledger.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
         let state = receipt
             .updated_storage

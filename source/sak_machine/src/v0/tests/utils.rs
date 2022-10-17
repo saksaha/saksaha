@@ -1,4 +1,3 @@
-use crate::{LedgerDB, MachineError};
 use sak_kv_db::{Options, DB};
 use sak_logger::{info, SakLogger};
 use std::{fs, path::Path};

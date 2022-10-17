@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 clap = { version = "3.1.6", features = ["cargo"] }
 sak_logger = { path = "../sak_logger" }
+sak_store_interface = { path = "../sak_store_interface" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 thiserror = "1.0"
