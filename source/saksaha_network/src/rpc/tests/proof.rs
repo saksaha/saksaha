@@ -15,9 +15,8 @@ async fn test_rpc_client_handle_get_cm_idx() {
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
     let (expected_tx_hash, cms) = {
-        let blockchain =
-            utils::make_blockchain(&test_credential_1.secret, &test_credential_1.public_key_str)
-                .await;
+        let ledger =
+            utils::make_ledger(&test_credential_1.secret, &test_credential_1.public_key_str).await;
 
         let dummy_tx = sak_types::mock_pour_tc_1();
 
@@ -27,7 +26,7 @@ async fn test_rpc_client_handle_get_cm_idx() {
 
         let old_tx_hash = (&dummy_tx).get_tx_hash();
 
-        let dist_ledger = blockchain.dist_ledger;
+        // let dist_ledger = blockchain.ledger;
 
         let bc = Some(BlockCandidate {
             validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
@@ -36,9 +35,9 @@ async fn test_rpc_client_handle_get_cm_idx() {
             created_at: format!("{}", 0),
         });
 
-        dist_ledger.write_block(bc).await.unwrap();
+        ledger.write_block(bc).await.unwrap();
 
-        let tx = dist_ledger
+        let tx = ledger
             .get_tx(&old_tx_hash.clone())
             .await
             .expect("Tx should be exist")

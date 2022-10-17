@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 sak_kv_db = { path = "../sak_kv_db" }
+sak_vm_interface = { path = "../sak_vm_interface" }
 sak_contract_std = { path = "../sak_contract_std" }
 sak_logger = { path = "../sak_logger" }
 sak_mrs = { path = "../sak_mrs" }

@@ -1,6 +1,6 @@
 use crate::{CtrStateUpdate, MachineError, MerkleUpdate, SakMachine};
 use colored::Colorize;
-use sak_contract_std::{CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
+use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
@@ -10,7 +10,6 @@ use sak_proof::CoinProof;
 use sak_types::{
     Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp,
 };
-use sak_vm::ContractFn;
 
 impl SakMachine {
     pub async fn insert_genesis_block(
@@ -68,7 +67,7 @@ impl SakMachine {
             }
         };
 
-        let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
+        let next_cm_idx = match self.ledger.ledger_db.get_latest_cm_idx()? {
             Some(i) => {
                 if i >= 2_u128.pow(CM_TREE_DEPTH).into() {
                     return Err("CM idx exceeded the tree depth".into());
@@ -122,7 +121,7 @@ impl SakMachine {
             added_cm_count += cm_count;
         }
 
-        if let Err(err) = self.sync_pool.remove_tcs(tcs).await {
+        if let Err(err) = self.ledger.sync_pool.remove_tcs(tcs).await {
             warn!("Error removing txs into the tx pool, err: {}", err);
         }
 
@@ -149,11 +148,12 @@ impl SakMachine {
         };
 
         let block_hash = self
+            .ledger
             .ledger_db
             .put_block(&block, &txs, &ctr_state_update, &merkle_update)
             .await?;
 
-        if let Err(err) = self.sync_pool.insert_block(&block).await {
+        if let Err(err) = self.ledger.sync_pool.insert_block(&block).await {
             warn!("Error inserting block into the sync pool, err: {}", err);
         }
 
@@ -206,7 +206,7 @@ impl SakMachine {
     }
 
     pub fn delete_tx(&self, key: &String) -> Result<(), MachineError> {
-        self.ledger_db.delete_tx(key)
+        self.ledger.ledger_db.delete_tx(key)
     }
 
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
@@ -214,7 +214,7 @@ impl SakMachine {
         if merkle_rt == &dummy_merkle_rt {
             return true;
         } else {
-            match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+            match self.ledger.ledger_db.get_block_merkle_rt_key(merkle_rt) {
                 Ok(Some(_)) => return true,
                 Ok(None) => return false,
                 Err(_err) => return false,
@@ -226,7 +226,7 @@ impl SakMachine {
         if sn == &DUMMY_SN {
             return Ok(true);
         } else {
-            match self.ledger_db.get_tx_hash_by_sn(sn) {
+            match self.ledger.ledger_db.get_tx_hash_by_sn(sn) {
                 Ok(Some(_)) => {
                     return Err(format!("Serial numbers already exists, sns: {:?}", sn).into())
                 }
@@ -328,7 +328,10 @@ impl SakMachine {
     ) -> Result<(), MachineError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                let receipt = self.vm.invoke(&data, ContractFn::Init)?;
+                let receipt = self
+                    .ledger
+                    .contract_processor
+                    .invoke(&data, ContractFn::Init)?;
                 let storage = receipt
                     .updated_storage
                     .ok_or("Contract state needs to be initialized")?;
@@ -350,6 +353,7 @@ impl SakMachine {
                         let new_state = match ctr_state_update.get(ctr_addr) {
                             Some(previous_state) => {
                                 let ctr_wasm = self
+                                    .ledger
                                     .ledger_db
                                     .get_ctr_data_by_ctr_addr(ctr_addr)
                                     .await?
@@ -357,7 +361,8 @@ impl SakMachine {
 
                                 let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
 
-                                let receipt = self.vm.invoke(ctr_wasm, ctr_fn)?;
+                                let receipt =
+                                    self.ledger.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
                                 receipt.updated_storage.ok_or("State needs to be updated")?
                             }
@@ -437,7 +442,7 @@ impl SakMachine {
 
         for (idx, cm) in cms.iter().enumerate() {
             let cm_idx = next_cm_idx + idx as u128;
-            let auth_path = self.merkle_tree.generate_auth_paths(cm_idx);
+            let auth_path = self.ledger.merkle_tree.generate_auth_paths(cm_idx);
 
             let leaf_loc = format!("{}_{}", 0, cm_idx);
             merkle_update.insert(leaf_loc, *cm);
@@ -465,7 +470,7 @@ impl SakMachine {
                     rv = sibling_node;
                 }
 
-                let merkle_node = self.hasher.mimc(&lv, &rv)?.to_bytes();
+                let merkle_node = self.ledger.hasher.mimc(&lv, &rv)?.to_bytes();
 
                 let parent_idx = MerkleTree::get_parent_idx(curr_idx);
                 let update_loc = format!("{}_{}", height + 1, parent_idx);

@@ -12,6 +12,7 @@ members = [
   "source/sak_kv_db",
   "source/sak_mrs",
   "source/sak_store_accessor",
+  "source/sak_store_interface",
   "source/sak_rpc_interface",
   "source/sak_p2p_addr",
   "source/sak_p2p_peertable",
@@ -24,11 +25,13 @@ members = [
   "source/sak_utils_net",
   "source/sak_contract_std",
   "source/sak_machine",
+  "source/sak_ledger",
   "source/sak_ledger_cfg",
   "source/sak_ledger_params",
   "source/hyper_server",
   "source/hyper_rpc_router",
   "source/sak_vm",
+  "source/sak_vm_interface",
   "source/sak_test_utils",
   "source/wasm_postprocess",
   "source/type_extension",
@@ -36,7 +39,7 @@ members = [
   "source/saksaha_wallet",
 
   # Contracts (independently compiled and processed)
-  "source/sak_validator",
+  "source/sak_validator_contract",
   "source/sak_mrs_contract",
 
   # internals

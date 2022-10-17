@@ -12,6 +12,7 @@ sak_crypto = { path = "../sak_crypto" }
 sak_kv_db = { path = "../sak_kv_db" }
 sak_machine = { path = "../sak_machine" }
 sak_dir = { path = "../sak_dir" }
+sak_ledger = { path = "../sak_ledger" }
 sak_proof = { path = "../sak_proof" }
 sak_credential = { path = "../sak_credential" }
 sak_p2p_addr = { path = "../sak_p2p_addr" }
@@ -19,6 +20,8 @@ sak_p2p_peertable = { path = "../sak_p2p_peertable" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_p2p_discovery = { path = "../sak_p2p_discovery" }
 sak_p2p_transport = { path = "../sak_p2p_transport" }
+sak_vm = { path = "../sak_vm" }
+sak_vm_interface = { path = "../sak_vm_interface" }
 hyper_server = { path = "../hyper_server" }
 hyper_rpc_router = { path = "../hyper_rpc_router" }
 sak_utils_time = { path = "../sak_utils_time" }

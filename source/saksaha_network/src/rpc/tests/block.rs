@@ -27,7 +27,7 @@ async fn test_call_get_block_with_good_params() {
     let original_block_hash = {
         let block_hash = match machine
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .write_block(Some(block_candidate_same))
             .await
         {
@@ -107,7 +107,7 @@ async fn test_call_get_block_with_wrong_params() {
     let original_block_hash = {
         let block_hash = match machine
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .write_block(Some(block_candidate))
             .await
         {
@@ -200,7 +200,7 @@ async fn test_call_get_block_list() {
         let block_hash = {
             let block_hash = match machine
                 .ledger
-                .dist_ledger
+                // .dist_ledger
                 .write_block(Some(block_candidate))
                 .await
             {

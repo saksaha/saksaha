@@ -1,5 +1,5 @@
-use crate::{Consensus, ConsensusError, SakMachine};
 use async_trait::async_trait;
+use sak_ledger::{Consensus, ConsensusError, SakLedger};
 use sak_types::{BlockCandidate, TxCandidate};
 
 pub struct MockPos {}
@@ -8,7 +8,7 @@ pub struct MockPos {}
 impl Consensus for MockPos {
     async fn do_consensus(
         &self,
-        dist_ledger: &SakMachine,
+        dist_ledger: &SakLedger,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());

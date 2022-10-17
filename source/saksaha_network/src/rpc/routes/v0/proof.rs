@@ -30,7 +30,7 @@ pub(in crate::rpc) async fn get_auth_path(
     match sys_handle
         .machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .get_auth_path(&rb.cm_idx)
         .await
     {
@@ -67,7 +67,7 @@ pub(in crate::rpc) async fn get_cm_idx(
     match sys_handle
         .machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .get_cm_idx_by_cm(&rb.cm)
         .await
     {

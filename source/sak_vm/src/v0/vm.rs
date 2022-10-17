@@ -1,43 +1,44 @@
-use std::sync::Arc;
-
 use super::{constants::Constants, state::InstanceState, wasmtm::Wasmtime};
-use crate::{ContractFn, InvokeReceipt, VMError};
-use sak_contract_std::{CtrRequest, Storage};
+use crate::VMError;
+use sak_contract_std::{ContractFn, CtrRequest, Storage};
 use sak_logger::{error, info};
 use sak_store_accessor::StoreAccessor;
+use sak_vm_interface::{ContractProcess, InvokeReceipt, VMInterfaceError};
+use std::sync::Arc;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 pub struct SakVM {}
+
+impl ContractProcess for SakVM {
+    fn invoke(
+        &self,
+        contract_wasm: &[u8],
+        ctr_fn: ContractFn,
+    ) -> Result<InvokeReceipt, VMInterfaceError> {
+        match ctr_fn {
+            ContractFn::Init => {
+                let (instance, store, memory) = Self::init_module(contract_wasm)?;
+
+                return Self::invoke_init(instance, store, memory);
+            }
+            ContractFn::Query(request, storage) => {
+                let (instance, store, memory) = Self::init_module(contract_wasm)?;
+
+                return Self::invoke_query(instance, store, memory, request, storage);
+            }
+            ContractFn::Execute(request, storage) => {
+                let (instance, store, memory) = Self::init_module(contract_wasm)?;
+
+                return Self::invoke_execute(instance, store, memory, request, storage);
+            }
+        };
+    }
+}
 
 impl SakVM {
     pub fn init() -> Result<Self, String> {
         let vm = SakVM {};
         Ok(vm)
-    }
-
-    pub fn invoke(
-        &self,
-        contract_wasm: impl AsRef<[u8]>,
-        ctr_fn: ContractFn,
-    ) -> Result<InvokeReceipt, VMError> {
-        match ctr_fn {
-            ContractFn::Init => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, None)?;
-
-                return Self::invoke_init(instance, store, memory);
-            }
-            ContractFn::Query(request, storage, store_accessor) => {
-                let (instance, store, memory) =
-                    Self::init_module(contract_wasm, Some(store_accessor))?;
-
-                return Self::invoke_query(instance, store, memory, request, storage);
-            }
-            ContractFn::Execute(request, storage) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, None)?;
-
-                return Self::invoke_execute(instance, store, memory, request, storage);
-            }
-        };
     }
 
     fn invoke_init(
@@ -175,9 +176,12 @@ impl SakVM {
 
     fn init_module(
         contract_wasm: impl AsRef<[u8]>,
-        store_accessor: Option<Arc<StoreAccessor>>,
+        // store_accessor: Arc<StoreAccessor>,
     ) -> Result<(Instance, Store<InstanceState>, Memory), VMError> {
-        let (instance, mut store) = match Wasmtime::create_instance(contract_wasm, store_accessor) {
+        let (instance, mut store) = match Wasmtime::make_instance(
+            contract_wasm,
+            // store_accessor
+        ) {
             Ok(r) => r,
             Err(err) => {
                 return Err(format!("Error creating an instance, err: {}", err).into());

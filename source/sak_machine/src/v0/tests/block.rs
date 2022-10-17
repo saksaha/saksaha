@@ -5,9 +5,9 @@ pub const REPEAT_NUM: u128 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_insert_genesis_block_and_check_wrong_block_hash() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
-    let gen_block = dist_ledger
+    let gen_block = machine
         .get_block_by_height(&0)
         .await
         .unwrap()
@@ -17,7 +17,7 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
     let gen_tx_hashes = &gen_block.tx_hashes;
 
     for tx_hash in gen_tx_hashes {
-        let tx = match dist_ledger.get_tx(&tx_hash).await {
+        let tx = match machine.get_tx(&tx_hash).await {
             Ok(t) => t,
             Err(err) => panic!("Error : {}", err),
         };
@@ -32,18 +32,18 @@ async fn test_insert_genesis_block_and_check_wrong_block_hash() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_genesis_block() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let dist_ledger = testing::mock_machine_1().await;
 
     dist_ledger.run().await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_a_new_block_after_genesis() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
-    dist_ledger.run().await;
+    machine.run().await;
 
-    dist_ledger
+    machine
         .write_block(Some(sak_types::mock_block_2()))
         .await
         .expect("Block_1 must be written");
@@ -51,7 +51,7 @@ async fn test_write_a_new_block_after_genesis() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block_1() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     for i in 0..REPEAT_NUM as u64 {
         let block = BlockCandidate {
@@ -61,7 +61,7 @@ async fn test_sequential_write_block_1() {
             created_at: format!("{}", i),
         };
 
-        match dist_ledger.write_block(Some(block)).await {
+        match machine.write_block(Some(block)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
@@ -70,7 +70,7 @@ async fn test_sequential_write_block_1() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_write_block_and_get_tx_height() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     for i in 0..1 as u64 {
         let block = BlockCandidate {
@@ -80,7 +80,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
             created_at: format!("{}", i),
         };
 
-        match dist_ledger.write_block(Some(block)).await {
+        match machine.write_block(Some(block)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
@@ -100,7 +100,7 @@ async fn test_sequential_write_block_and_get_tx_height() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_write_block_and_check_merkle_rt_changed() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let dist_ledger = testing::mock_machine_1().await;
 
     for i in 0..REPEAT_NUM as u64 {
         let bc = BlockCandidate {
@@ -127,9 +127,9 @@ async fn test_write_block_and_check_merkle_rt_changed() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_sequential_sync_block_if_block_is_correct() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
-    let latest_block_height = dist_ledger.get_latest_block_height().unwrap().unwrap();
+    let latest_block_height = machine.get_latest_block_height().unwrap().unwrap();
 
     println!("latest_block_height: {}", latest_block_height);
 
@@ -157,13 +157,13 @@ async fn test_sequential_sync_block_if_block_is_correct() {
             created_at: block.created_at,
         };
 
-        match dist_ledger.write_block(Some(bc_candidate)).await {
+        match machine.write_block(Some(bc_candidate)).await {
             Ok(v) => v,
             Err(err) => panic!("Failed to write dummy block, err: {}", err),
         };
     }
 
-    let latest_block_height = dist_ledger.get_latest_block_height().unwrap().unwrap();
+    let latest_block_height = machine.get_latest_block_height().unwrap().unwrap();
 
     assert_eq!(latest_block_height, REPEAT_NUM);
 }

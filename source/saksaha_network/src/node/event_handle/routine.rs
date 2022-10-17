@@ -1,16 +1,14 @@
-use crate::{
-    machine::Machine,
-    node::{event_handle, task::NodeTask},
-};
+use crate::node::{event_handle, task::NodeTask};
+use sak_ledger::DistLedgerEvent;
 use sak_logger::{debug, error, warn};
-use sak_machine::DistLedgerEvent;
+use sak_machine::SakMachine;
 use sak_task_queue::TaskQueue;
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 
 pub(in crate::node) struct LedgerEventRoutine {
     pub ledger_event_rx: Receiver<DistLedgerEvent>,
-    pub machine: Arc<Machine>,
+    pub machine: Arc<SakMachine>,
     pub node_task_queue: Arc<TaskQueue<NodeTask>>,
 }
 

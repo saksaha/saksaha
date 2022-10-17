@@ -66,8 +66,8 @@ pub(crate) fn build_system_contracts() -> Result<(), CIError> {
 
     let sys_contracts = vec![
         Contract {
-            name: "sak_validator",
-            path: source_path.join("sak_validator"),
+            name: "sak_validator_contract",
+            path: source_path.join("sak_validator_contract"),
         },
         Contract {
             name: "sak_mrs_contract",
