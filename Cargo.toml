@@ -38,7 +38,7 @@ members = [
   # Contracts (independently compiled and processed)
   "source/sak_validator",
   "source/sak_mrs_contract",
-  "source/sak_vault_contract",
+  "source/sak_store_contract",
 
   # internals
   "internals/ci",

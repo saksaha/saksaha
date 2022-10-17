@@ -6,10 +6,10 @@ use sak_contract_std::{
 };
 
 use crate::{
-    execute::{put_key_spec, put_value},
+    execute::put_value,
     query::get_value,
-    request_type::{GET_VALUE, PUT_KEY_SPEC, PUT_VALUE},
-    VaultStorage,
+    request_type::{GET_VALUE, PUT_VALUE},
+    StoreStorage,
 };
 
 contract_bootstrap!();
@@ -25,25 +25,24 @@ extern "C" {
 
 define_init!();
 pub fn init2() -> Result<Storage, ContractError> {
-    let vault_storage = VaultStorage {
-        vault: HashMap::new(),
+    let store_storage = StoreStorage {
+        store: HashMap::new(),
     };
 
-    let v = serde_json::to_vec(&vault_storage)?;
+    let v = serde_json::to_vec(&store_storage)?;
 
     Ok(v)
 }
 
 define_query!();
 pub fn query2(
-    _ctx: ContractCtx,
+    ctx: ContractCtx,
     request: CtrRequest,
     storage: Storage,
 ) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         GET_VALUE => {
-            // ctx.get_mrs_data(ptr, b)
-            return get_value(storage, request.args);
+            return get_value(ctx, storage, request.args);
         }
         _ => {
             return Err(format!("Wrong request type has been found in query").into());
@@ -53,18 +52,18 @@ pub fn query2(
 
 define_execute!();
 pub fn execute2(
-    _ctx: ContractCtx,
+    ctx: ContractCtx,
     request: CtrRequest,
     storage: &mut Storage,
 ) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         PUT_VALUE => {
             // ctx.put_mrs_data(arg)
-            return put_value(storage, request.args);
+            return put_value(ctx, storage, request.args);
         }
-        PUT_KEY_SPEC => {
-            return put_key_spec(storage, request.args);
-        }
+        // PUT_KEY_SPEC => {
+        //     return put_key_spec(storage, request.args);
+        // }
         _ => {
             return Err(format!("Wrong request type has been found in execution").into());
         }

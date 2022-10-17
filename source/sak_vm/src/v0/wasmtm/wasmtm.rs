@@ -70,9 +70,10 @@ impl Wasmtime {
                         match caller.get_export(Constants::MEMORY) {
                             Some(exp) => {
                                 let memory = exp.into_memory().unwrap();
+
                                 let m = memory.data(&mut caller);
 
-                                println!("aaaaaaaaaa, {:?}", m);
+                                println!("memory.data, len: {:?}", m.len());
 
                                 let a = m
                                     .get(param as u32 as usize..)
@@ -81,12 +82,12 @@ impl Wasmtime {
 
                                 let ap = std::str::from_utf8(&a).unwrap();
 
-                                println!("aaaaaaaaaa22, {:?}", ap);
+                                println!("param put from the contract, {:?}", ap);
                             }
                             None => {}
                         }
 
-                        println!("555 {:?}", sa.get_mrs_data());
+                        println!("get_mrs_dat: {:?}", sa.get_mrs_data());
                     }
                     None => {}
                 };
@@ -103,8 +104,8 @@ impl Wasmtime {
                 };
 
                 println!(
-                    "get_mrs_data(): data: {:?}, getting memory allocation",
-                    &data_bytes,
+                    "get_mrs_data(): data: {:?}",
+                    String::from_utf8(data_bytes.clone()),
                 );
 
                 let alloc = caller
@@ -112,6 +113,7 @@ impl Wasmtime {
                     .unwrap()
                     .into_func()
                     .unwrap();
+
                 let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
 
                 let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
