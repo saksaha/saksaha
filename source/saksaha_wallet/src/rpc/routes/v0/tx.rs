@@ -1,7 +1,7 @@
 use crate::rpc::ctx::RouteCtx;
 use hyper::{Body, Response};
 use hyper_rpc_router::{require_params_parsed, require_some_params, Params, RouteState};
-use sak_contract_std::CtrRequest;
+use sak_contract_std::{CtrRequest, CtrRequestData};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -9,7 +9,7 @@ use std::sync::Arc;
 pub struct SendTxRequest {
     pub acc_addr: String,
     pub ctr_addr: String,
-    pub ctr_request: CtrRequest,
+    pub ctr_request_data: CtrRequestData,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,7 +29,7 @@ pub(in crate::rpc) async fn send_pour_tx(
     let wallet = &ctx.wallet;
 
     let res = wallet
-        .send_pour_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request)
+        .send_pour_tx(rb.acc_addr, rb.ctr_addr, rb.ctr_request_data)
         .await;
 
     match res {

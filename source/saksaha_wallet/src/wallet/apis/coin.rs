@@ -1,6 +1,7 @@
 use crate::wallet::Wallet;
 use crate::WalletError;
 use sak_contract_std::CtrRequest;
+use sak_contract_std::CtrRequestData;
 use sak_crypto::encode_hex;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTreeSim;
@@ -207,7 +208,7 @@ impl Wallet {
         &self,
         _acc_addr: String,
         ctr_addr: String,
-        ctr_request: CtrRequest,
+        ctr_request_data: CtrRequestData,
     ) -> Result<String, WalletError> {
         let mut coin_manager_lock = self.get_coin_manager().write().await;
 
@@ -263,7 +264,7 @@ impl Wallet {
             vec![merkle_rt, dummy_merkle_rt],
             pi,
             ctr_addr,
-            ctr_request,
+            ctr_request_data,
         )
         .await?;
 

@@ -3,7 +3,7 @@ use crate::{
     VMError,
 };
 use sak_logger::{error, info};
-use sak_store_accessor::StoreAccessor;
+// use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};

@@ -5,7 +5,7 @@ use crate::{
 use envelope_contract::{request_type, Channel, OpenChParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::CtrRequest;
+use sak_contract_std::{CtrRequest, CtrRequestData};
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use std::sync::Arc;
@@ -126,7 +126,7 @@ pub(crate) async fn mock_send_pour_tx(
 
         let args = serde_json::to_vec(&open_ch_params).unwrap();
 
-        let ctr_request = CtrRequest {
+        let ctr_request_data = CtrRequestData {
             req_type: request_type::SEND_MSG.to_string(),
             args,
             ctr_call_type: sak_contract_std::CtrCallType::Execute,
@@ -135,7 +135,7 @@ pub(crate) async fn mock_send_pour_tx(
         let send_tx_req = SendTxRequest {
             acc_addr: acc_addr.clone(),
             ctr_addr: ENVELOPE_CTR_ADDR.to_string(),
-            ctr_request,
+            ctr_request_data,
         };
 
         let params = serde_json::to_vec(&send_tx_req).unwrap();
@@ -180,7 +180,7 @@ pub(crate) async fn mock_update_coin_status(
     };
 
     let body = {
-        let ctr_request = CtrRequest {
+        let ctr_request_data = CtrRequestData {
             req_type: request_type::SEND_MSG.to_string(),
             args: vec![],
             ctr_call_type: sak_contract_std::CtrCallType::Execute,
@@ -189,7 +189,7 @@ pub(crate) async fn mock_update_coin_status(
         let send_tx_req = SendTxRequest {
             acc_addr: acc_addr.clone(),
             ctr_addr: ENVELOPE_CTR_ADDR.to_string(),
-            ctr_request,
+            ctr_request_data,
         };
 
         let params = serde_json::to_vec(&send_tx_req).unwrap();

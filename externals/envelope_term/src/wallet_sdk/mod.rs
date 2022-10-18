@@ -1,6 +1,6 @@
 use crate::EnvelopeError;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::CtrRequest;
+use sak_contract_std::{CtrRequest, CtrRequestData};
 use sak_logger::{error, info, warn};
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 use sak_types::AccountBalance;
@@ -58,7 +58,7 @@ pub async fn send_tx_pour(
     wallet_endpoint: String,
     acc_addr: String,
     ctr_addr: String,
-    ctr_request: CtrRequest,
+    ctr_request_data: CtrRequestData,
 ) -> Result<JsonResponse<SendTxResponse>, EnvelopeError> {
     let client = Client::new();
     let uri: Uri = { wallet_endpoint.parse().expect("URI should be made") };
@@ -67,7 +67,7 @@ pub async fn send_tx_pour(
         let send_req = SendTxRequest {
             acc_addr,
             ctr_addr,
-            ctr_request,
+            ctr_request_data,
         };
 
         let params = serde_json::to_vec(&send_req)?;

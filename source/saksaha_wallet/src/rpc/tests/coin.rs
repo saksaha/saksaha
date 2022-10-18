@@ -1,7 +1,7 @@
 use super::utils::{self, MockWalletContext};
 use envelope_contract::{request_type, Channel, OpenChParams};
 use envelope_term::ENVELOPE_CTR_ADDR;
-use sak_contract_std::CtrRequest;
+use sak_contract_std::{CtrRequest, CtrRequestData};
 use sak_crypto::{SakKey, ToEncodedPoint};
 use sak_logger::{warn, SakLogger};
 use sak_types::CoinRecord;
@@ -194,7 +194,7 @@ async fn test_send_tx_with_2_old_coins() {
         serde_json::to_vec(&open_ch_params).unwrap()
     };
 
-    let ctr_request = CtrRequest {
+    let ctr_request_data = CtrRequestData {
         req_type: request_type::OPEN_CH.to_string(),
         args,
         ctr_call_type: sak_contract_std::CtrCallType::Execute,
@@ -208,7 +208,7 @@ async fn test_send_tx_with_2_old_coins() {
         pi,
         // ctr_addr,
         ENVELOPE_CTR_ADDR.to_string(),
-        ctr_request,
+        ctr_request_data,
     )
     .await
     .unwrap();
