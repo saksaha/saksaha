@@ -11,7 +11,7 @@ sak_crypto = { path = "../sak_crypto" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 serde_bytes = "0.11.6"
-tokio = { version = "1.12.0", features = ["full"] }
+tokio = { version = "1.21.2", features = ["full"] }
 sak_utils_net = { path = "../sak_utils_net" }
 type_extension = { path = "../type_extension" }
 
