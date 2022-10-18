@@ -48,11 +48,6 @@ impl Ledger {
             acc_dir.join("ledger")
         };
 
-        let mrs_path = {
-            let acc_dir = SaksahaFS::acc_dir(public_key)?;
-            acc_dir.join("mrs")
-        };
-
         let dist_ledger_args = SakLedgerArgs {
             tx_sync_interval,
             genesis_block: Some(gen_block_candidate),
@@ -60,17 +55,10 @@ impl Ledger {
             block_sync_interval,
             ledger_path,
             contract_processor,
-            // mrs_path,
         };
 
         let sak_ledger = SakLedger::init(dist_ledger_args).await?;
 
-        // let ledger = Ledger { sak_ledger };
-
         Ok(sak_ledger)
-    }
-
-    pub async fn run(&self) {
-        self.sak_ledger.run().await;
     }
 }

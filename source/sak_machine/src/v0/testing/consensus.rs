@@ -8,7 +8,7 @@ pub struct MockPos {}
 impl Consensus for MockPos {
     async fn do_consensus(
         &self,
-        dist_ledger: &SakLedger,
+        sak_ledger: &SakLedger,
         _txs: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         return Err("awel".into());
