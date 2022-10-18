@@ -49,7 +49,7 @@ pub(crate) fn make_dummy_pos() -> Box<DummyPos> {
     Box::new(DummyPos {})
 }
 
-pub(crate) async fn make_dist_ledger(block: BlockCandidate) -> SakMachine {
+pub(crate) async fn make_machine(block: BlockCandidate) -> SakMachine {
     let pos = make_dummy_pos();
 
     let ledger_path = {
@@ -162,7 +162,7 @@ async fn test_generate_a_proof() {
 
     let genesis_block = make_dummy_genesis_block(tx);
 
-    let dist_ledger = make_dist_ledger(genesis_block).await;
+    let machine = make_machine(genesis_block).await;
 
     let cm_1_old_idx: u128 = 0;
 
@@ -181,7 +181,7 @@ async fn test_generate_a_proof() {
         println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
-        let merkle_node = dist_ledger.get_merkle_node(&key).await.unwrap();
+        let merkle_node = machine.ledger.get_merkle_node(&key).await.unwrap();
 
         let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
 
@@ -307,7 +307,7 @@ async fn test_real_generate_a_proof() {
     let validator_wasm = VALIDATOR.to_vec();
     let envelope_wasm = ENVELOPE.to_vec();
 
-    let dist_ledger = {
+    let machine = {
         let coin_1_old = sak_types::mock_mint_tc_3();
         let coin_2_old = sak_types::mock_mint_tc_4();
         let tx_deploy_validator = sak_types::mock_mint_tc_deploying_contract(
@@ -348,7 +348,7 @@ async fn test_real_generate_a_proof() {
         println!("auth_path: {}_{}", idx, p.idx);
         let key = format!("{}_{}", idx, p.idx);
 
-        let merkle_node = dist_ledger.get_merkle_node(&key).await.unwrap();
+        let merkle_node = machine.ledger.get_merkle_node(&key).await.unwrap();
 
         let merkle_node = ScalarExt::parse_arr(&merkle_node).unwrap();
 

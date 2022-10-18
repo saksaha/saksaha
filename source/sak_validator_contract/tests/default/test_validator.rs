@@ -125,126 +125,126 @@ async fn test_call_ctr_validator_fn_init() {
     assert_eq!(validator_list_expected, ctr_validator_state.validators);
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn test_call_ctr_validator_fn_query() {
-    let vm = SakVM::init().expect("VM should be initiated");
+// #[tokio::test(flavor = "multi_thread")]
+// async fn test_call_ctr_validator_fn_query() {
+//     let vm = SakVM::init().expect("VM should be initiated");
 
-    let test_validator_vec = vec![
-        get_test_validator(),
-        get_dummy_validator_1(),
-        get_dummy_validator_2(),
-        get_dummy_validator_3(),
-    ];
+//     let test_validator_vec = vec![
+//         get_test_validator(),
+//         get_dummy_validator_1(),
+//         get_dummy_validator_2(),
+//         get_dummy_validator_3(),
+//     ];
 
-    let request = CtrRequest {
-        req_type: "get_validator".to_string(),
-        args: vec![],
-        ctr_call_type: CtrCallType::Query,
-    };
+//     let request = CtrRequest {
+//         req_type: "get_validator".to_string(),
+//         args: vec![],
+//         ctr_call_type: CtrCallType::Query,
+//     };
 
-    let storage = get_test_validator_state(test_validator_vec.clone());
+//     let storage = get_test_validator_state(test_validator_vec.clone());
 
-    let mrs_path = "";
+//     let mrs_path = "";
 
-    let mrs = {
-        let m = SakMRS::init(&mrs_path).await.unwrap();
-        m
-    };
+//     let mrs = {
+//         let m = SakMRS::init(&mrs_path).await.unwrap();
+//         m
+//     };
 
-    // let store_accessor = {
-    //     let a = StoreAccessor::new(mrs);
-    //     Arc::new(a)
-    // };
+//     // let store_accessor = {
+//     //     let a = StoreAccessor::new(mrs);
+//     //     Arc::new(a)
+//     // };
 
-    let ctr_wasm = VALIDATOR.to_vec();
+//     let ctr_wasm = VALIDATOR.to_vec();
 
-    let ctr_fn = ContractFn::Query(request, storage);
+//     let ctr_fn = ContractFn::Query(request, storage);
 
-    let receipt = vm
-        .invoke(&ctr_wasm, ctr_fn)
-        .expect("validator should be obtained");
+//     let receipt = vm
+//         .invoke(&ctr_wasm, ctr_fn)
+//         .expect("validator should be obtained");
 
-    let validators: Vec<String> = serde_json::from_slice(&receipt.result).unwrap();
+//     let validators: Vec<String> = serde_json::from_slice(&receipt.result).unwrap();
 
-    println!("validator expected: {:?}", test_validator_vec[0]);
+//     println!("validator expected: {:?}", test_validator_vec[0]);
 
-    println!("validator acquired: {:?}", validators[0]);
+//     println!("validator acquired: {:?}", validators[0]);
 
-    assert_eq!(test_validator_vec[0], validators[0]);
-}
+//     assert_eq!(test_validator_vec[0], validators[0]);
+// }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn test_call_ctr_validator_fn_execute_add_validator() {
-    let vm = SakVM::init().expect("VM should be initiated");
+// #[tokio::test(flavor = "multi_thread")]
+// async fn test_call_ctr_validator_fn_execute_add_validator() {
+//     let vm = SakVM::init().expect("VM should be initiated");
 
-    let test_validator_vec = vec![
-        get_test_validator(),
-        get_dummy_validator_1(),
-        get_dummy_validator_2(),
-        get_dummy_validator_3(),
-    ];
+//     let test_validator_vec = vec![
+//         get_test_validator(),
+//         get_dummy_validator_1(),
+//         get_dummy_validator_2(),
+//         get_dummy_validator_3(),
+//     ];
 
-    let credential = CredentialProfile::test_1();
+//     let credential = CredentialProfile::test_1();
 
-    let test_dir = {
-        let tempdir = std::env::temp_dir()
-            .join("saksaha_test")
-            .join(credential.public_key_str);
+//     let test_dir = {
+//         let tempdir = std::env::temp_dir()
+//             .join("saksaha_test")
+//             .join(credential.public_key_str);
 
-        std::fs::create_dir_all(&tempdir).unwrap();
-        tempdir
-    };
+//         std::fs::create_dir_all(&tempdir).unwrap();
+//         tempdir
+//     };
 
-    let ledger_path = { test_dir.join("ledger") };
+//     let ledger_path = { test_dir.join("ledger") };
 
-    let mrs_path = { test_dir.join("mrs") };
+//     let mrs_path = { test_dir.join("mrs") };
 
-    let mrs = SakMRS::init(mrs_path).await.unwrap();
+//     let mrs = SakMRS::init(mrs_path).await.unwrap();
 
-    // let store_accessor = {
-    //     let a = StoreAccessor::new(mrs);
-    //     Arc::new(a)
-    // };
+//     // let store_accessor = {
+//     //     let a = StoreAccessor::new(mrs);
+//     //     Arc::new(a)
+//     // };
 
-    let (request, storage) = {
-        let req_type = String::from("add_validator");
+//     let (request, storage) = {
+//         let req_type = String::from("add_validator");
 
-        // let mut args = HashMap::with_capacity(10);
-        // args.insert(String::from("validator"), get_dummy_validator_4());
+//         // let mut args = HashMap::with_capacity(10);
+//         // args.insert(String::from("validator"), get_dummy_validator_4());
 
-        let add_validator_params = AddValidatorParams {
-            validator: get_dummy_validator_4(),
-        };
+//         let add_validator_params = AddValidatorParams {
+//             validator: get_dummy_validator_4(),
+//         };
 
-        let args = serde_json::to_vec(&add_validator_params).unwrap();
+//         let args = serde_json::to_vec(&add_validator_params).unwrap();
 
-        let request = CtrRequest {
-            req_type,
-            args,
-            ctr_call_type: CtrCallType::Execute,
-        };
+//         let request = CtrRequest {
+//             req_type,
+//             args,
+//             ctr_call_type: CtrCallType::Execute,
+//         };
 
-        let storage = get_test_validator_state(test_validator_vec.clone());
+//         let storage = get_test_validator_state(test_validator_vec.clone());
 
-        (request, storage)
-    };
+//         (request, storage)
+//     };
 
-    let ctr_wasm = VALIDATOR.to_vec();
-    let ctr_fn = ContractFn::Execute(request, storage);
+//     let ctr_wasm = VALIDATOR.to_vec();
+//     let ctr_fn = ContractFn::Execute(request, storage);
 
-    let receipt = vm
-        .invoke(&ctr_wasm, ctr_fn)
-        .expect("validator should be obtained");
+//     let receipt = vm
+//         .invoke(&ctr_wasm, ctr_fn)
+//         .expect("validator should be obtained");
 
-    let updated_storage = receipt.updated_storage.unwrap();
+//     let updated_storage = receipt.updated_storage.unwrap();
 
-    let validator_storage: ValidatorStorage = serde_json::from_slice(&updated_storage).unwrap();
+//     let validator_storage: ValidatorStorage = serde_json::from_slice(&updated_storage).unwrap();
 
-    let validators = validator_storage.validators;
+//     let validators = validator_storage.validators;
 
-    println!("original validator list: {:?}", test_validator_vec);
+//     println!("original validator list: {:?}", test_validator_vec);
 
-    println!("updated validator list: {:?}", validators);
+//     println!("updated validator list: {:?}", validators);
 
-    assert!(validators.contains(&get_dummy_validator_4()));
-}
+//     assert!(validators.contains(&get_dummy_validator_4()));
+// }

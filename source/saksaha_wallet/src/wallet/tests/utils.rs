@@ -1,8 +1,8 @@
 use envelope_contract::{request_type, Channel, OpenChParams};
-use sak_contract_std::CtrRequest;
+use sak_contract_std::{CtrRequest, CtrRequestData};
 use sak_crypto::{SakKey, ToEncodedPoint};
 
-pub fn mock_open_ch_ctr_request() -> CtrRequest {
+pub fn mock_open_ch_ctr_request() -> CtrRequestData {
     let (_, eph_pub_key) = SakKey::generate();
 
     let channel = Channel::new(
@@ -43,11 +43,11 @@ pub fn mock_open_ch_ctr_request() -> CtrRequest {
 
     let args = serde_json::to_vec(&open_ch_params).unwrap();
 
-    let ctr_request = CtrRequest {
+    let ctr_request_data = CtrRequestData {
         req_type: request_type::SEND_MSG.to_string(),
         args,
         ctr_call_type: sak_contract_std::CtrCallType::Execute,
     };
 
-    ctr_request
+    ctr_request_data
 }

@@ -1,5 +1,5 @@
 use crate::v0::tests;
-use crate::{mock_pos, DistLedgerTestUtils, SakMachine, SakMachineArgs};
+use crate::{mock_pos, SakMachine, SakMachineArgs, SakMachineTestUtils};
 use sak_credential::{Credential as SakCredential, CredentialProfile};
 use sak_ledger::{ConsensusResolver, SakLedger, SakLedgerArgs};
 use sak_types::BlockCandidate;
@@ -64,7 +64,7 @@ pub async fn mock_machine_1() -> SakMachine {
     let pos = mock_pos();
     let credential = CredentialProfile::test_1();
 
-    DistLedgerTestUtils::init_saksaha_test(credential.public_key_str.clone());
+    SakMachineTestUtils::init_saksaha_test(credential.public_key_str.clone());
 
     let test_dir = {
         let tempdir = std::env::temp_dir()
