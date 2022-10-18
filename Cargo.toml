@@ -7,6 +7,7 @@ members = [
   "source/sak_crypto",
   "source/sak_jni",
   "source/sak_proof",
+  "source/sak_proof_types",
   "source/sak_proof_circuit",
   "source/sak_dir",
   "source/sak_kv_db",

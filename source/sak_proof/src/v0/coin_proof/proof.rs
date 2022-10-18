@@ -4,12 +4,8 @@ use sak_crypto::{
     groth16, Groth16VerifyingKey, MultiMillerLoop, Parameters, PreparedVerifyingKey, Proof,
 };
 use sak_crypto::{Bls12, OsRng, Scalar};
-use sak_proof_circuit::{
-    // CoinProofCircuit1to2,
-    CoinProofCircuit2to2,
-    NewCoin,
-    OldCoin,
-};
+use sak_proof_circuit::CoinProofCircuit2to2;
+use sak_proof_types::{NewCoin, OldCoin};
 
 // const CIRCUIT_PARAMS_1TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_1to2");
 const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
