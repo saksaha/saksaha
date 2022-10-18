@@ -34,6 +34,8 @@ impl Miner {
         );
 
         loop {
+            println!("1111");
+
             let time_since = SystemTime::now();
 
             match self.machine.ledger.write_block(None).await {

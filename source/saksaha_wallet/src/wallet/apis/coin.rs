@@ -167,23 +167,23 @@ impl Wallet {
         Ok((new_coin_1, new_coin_2))
     }
 
-    pub(crate) fn prepare_proof_1_to_2(
-        &self,
-        old_coin: OldCoin,
-        new_coin_1: NewCoin,
-        new_coin_2: NewCoin,
-    ) -> Result<Vec<u8>, WalletError> {
-        println!("[+] making proof...");
+    // pub(crate) fn prepare_proof_1_to_2(
+    //     &self,
+    //     old_coin: OldCoin,
+    //     new_coin_1: NewCoin,
+    //     new_coin_2: NewCoin,
+    // ) -> Result<Vec<u8>, WalletError> {
+    //     println!("[+] making proof...");
 
-        let pi = CoinProof::generate_proof_1_to_2(old_coin, new_coin_1, new_coin_2)?;
+    //     let pi = CoinProof::generate_proof_1_to_2(old_coin, new_coin_1, new_coin_2)?;
 
-        let mut pi_ser = Vec::new();
-        pi.write(&mut pi_ser).unwrap();
+    //     let mut pi_ser = Vec::new();
+    //     pi.write(&mut pi_ser).unwrap();
 
-        println!("[!] pi serialized: {}", encode_hex(&pi_ser));
+    //     println!("[!] pi serialized: {}", encode_hex(&pi_ser));
 
-        Ok(pi_ser)
-    }
+    //     Ok(pi_ser)
+    // }
 
     pub(crate) fn prepare_proof_2_to_2(
         &self,
