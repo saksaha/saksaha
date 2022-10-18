@@ -338,13 +338,13 @@ impl SakLedger {
             }
 
             TxCtrOp::ContractCall => {
-                let req = CtrRequest::parse(data)?;
+                let req = CtrRequest::parse(ctr_addr, data)?;
 
                 match req.ctr_call_type {
                     CtrCallType::Query => {
                         warn!(
                             "Tx may contain contract 'execute' request, \
-                        but not 'query'"
+                            but not 'query'"
                         );
                     }
                     CtrCallType::Execute => {
@@ -356,13 +356,20 @@ impl SakLedger {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
+                                // let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
+                                let ctr_fn = ContractFn::Execute(req);
 
                                 let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
                                 receipt.updated_storage.ok_or("State needs to be updated")?
                             }
-                            None => self.execute_ctr(ctr_addr, req).await?,
+                            None => {
+                                self.execute_ctr(
+                                    // ctr_addr,
+                                    req,
+                                )
+                                .await?
+                            }
                         };
 
                         let maybe_error_placehorder = match &new_state.get(0..6) {

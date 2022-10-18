@@ -4,14 +4,14 @@ use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed, require_some_params, Params,
     RouteState,
 };
-use sak_contract_std::CtrRequest;
+use sak_contract_std::{CtrRequest, CtrRequestData};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct QueryCtrRequest {
     pub ctr_addr: String,
-    pub req: CtrRequest,
+    pub req: CtrRequestData,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,11 +28,21 @@ pub(in crate::rpc) async fn query_ctr(
 
     let rb: QueryCtrRequest = require_params_parsed!(route_state, &params);
 
+    let ctr_request = CtrRequest {
+        ctr_addr: rb.ctr_addr.clone(),
+        req_type: rb.req.req_type,
+        args: rb.req.args,
+        ctr_call_type: rb.req.ctr_call_type,
+    };
+
     match sys_handle
         .machine
         .ledger
         // .dist_ledger
-        .query_ctr(&rb.ctr_addr, rb.req)
+        .query_ctr(
+            // &rb.ctr_addr, rb.req
+            ctr_request,
+        )
         .await
     {
         Ok(result) => make_success_response(route_state, QueryCtrResponse { result }),

@@ -1,6 +1,6 @@
 use crate::SaksahaSDKError;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::{CtrCallType, CtrRequest, RequestArgs};
+use sak_contract_std::{CtrCallType, CtrRequest, CtrRequestData, RequestArgs};
 use sak_crypto::encode_hex;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_rpc_interface::{JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest};
@@ -11,7 +11,7 @@ use std::time;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryCtrRequest {
     pub ctr_addr: String,
-    pub req: CtrRequest,
+    pub req: CtrRequestData,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -34,7 +34,7 @@ pub async fn send_tx_pour(
     merkle_rts: Vec<[u8; 32]>,
     pi: Vec<u8>,
     ctr_addr: String,
-    ctr_request: CtrRequest,
+    ctr_request: CtrRequestData,
 ) -> Result<JsonResponse<String>, SaksahaSDKError> {
     let client = Client::new();
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
@@ -109,7 +109,7 @@ pub async fn send_tx_mint(
     let uri: Uri = { endpoint.parse().expect("URI should be made") };
 
     let body = {
-        let req = CtrRequest {
+        let req = CtrRequestData {
             req_type: req_type.clone(),
             args,
             ctr_call_type: CtrCallType::Execute,
@@ -166,7 +166,7 @@ pub async fn query_ctr(
     let uri: Uri = { saksaha_endpoint.parse().expect("URI should be made") };
 
     let body = {
-        let req = CtrRequest {
+        let req = CtrRequestData {
             req_type: req_type.clone(),
             args,
             ctr_call_type: CtrCallType::Query,

@@ -2,7 +2,7 @@ use super::{constants::Constants, state::InstanceState, wasmtm::Wasmtime};
 use crate::VMError;
 use sak_contract_std::{ContractFn, CtrRequest, Storage};
 use sak_logger::{error, info};
-use sak_store_accessor::StoreAccessor;
+// use sak_store_accessor::StoreAccessor;
 use sak_vm_interface::{ContractProcess, InvokeReceipt, VMInterfaceError};
 use std::sync::Arc;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
@@ -21,15 +21,27 @@ impl ContractProcess for SakVM {
 
                 return Self::invoke_init(instance, store, memory);
             }
-            ContractFn::Query(request, storage) => {
+            ContractFn::Query(
+                request,
+                // storage
+            ) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_query(instance, store, memory, request, storage);
+                return Self::invoke_query(
+                    instance, store, memory, request,
+                    // storage
+                );
             }
-            ContractFn::Execute(request, storage) => {
+            ContractFn::Execute(
+                request,
+                // storage
+            ) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_execute(instance, store, memory, request, storage);
+                return Self::invoke_execute(
+                    instance, store, memory, request,
+                    // storage
+                );
             }
         };
     }
@@ -67,9 +79,9 @@ impl SakVM {
         mut store: Store<InstanceState>,
         memory: Memory,
         request: CtrRequest,
-        storage: Storage,
+        // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
-        let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32)> =
+        let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
             { instance.get_typed_func(&mut store, Constants::QUERY)? };
 
         let (request_bytes, request_len) = {
@@ -80,25 +92,31 @@ impl SakVM {
 
         let request_ptr = Wasmtime::copy_memory(&request_bytes, &instance, &mut store)?;
 
-        let storage_len = storage.len();
-        let storage_bytes = storage;
-        let storage_ptr = Wasmtime::copy_memory(&storage_bytes, &instance, &mut store)?;
+        // let storage_len = storage.len();
+        // let storage_bytes = storage;
+        // let storage_ptr = Wasmtime::copy_memory(&storage_bytes, &instance, &mut store)?;
 
         let (result_ptr, result_len) = match contract_fn.call(
             &mut store,
             (
-                storage_ptr as i32,
-                storage_len as i32,
+                // storage_ptr as i32,
+                // storage_len as i32,
                 request_ptr as i32,
                 request_len as i32,
             ),
         ) {
             Ok(r) => r,
             Err(err) => {
+                // return Err(format!(
+                //     "Error invoking query() of wasm, request_bytes: {:?}, \
+                // storage: {:?}, original err: {}",
+                //     &request_bytes, &storage_bytes, err,
+                // )
+                // .into());
                 return Err(format!(
                     "Error invoking query() of wasm, request_bytes: {:?}, \
-                storage: {:?}, original err: {}",
-                    &request_bytes, &storage_bytes, err,
+                    original err: {}",
+                    &request_bytes, err,
                 )
                 .into());
             }
@@ -119,9 +137,9 @@ impl SakVM {
         mut store: Store<InstanceState>,
         memory: Memory,
         request: CtrRequest,
-        storage: Storage,
+        // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
-        let contract_fn: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> =
+        let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
             { instance.get_typed_func(&mut store, Constants::EXECUTE)? };
 
         let (request_bytes, request_len) = {
@@ -133,36 +151,47 @@ impl SakVM {
 
         let request_ptr = Wasmtime::copy_memory(&request_bytes, &instance, &mut store)?;
 
-        let storage_len = storage.len();
-        let storage_bytes = storage.clone();
+        // let storage_len = storage.len();
+        // let storage_bytes = storage.clone();
 
-        let storage_ptr = Wasmtime::copy_memory(&storage_bytes, &instance, &mut store)?;
+        // let storage_ptr = Wasmtime::copy_memory(&storage_bytes, &instance, &mut store)?;
 
-        let (storage_ptr, storage_len, result_ptr, result_len) = match contract_fn.call(
+        let (
+            // storage_ptr, storage_len,
+            result_ptr,
+            result_len,
+        ) = match contract_fn.call(
             &mut store,
             (
-                storage_ptr as i32,
-                storage_len as i32,
+                // storage_ptr as i32,
+                // storage_len as i32,
                 request_ptr as i32,
                 request_len as i32,
             ),
         ) {
             Ok(r) => r,
             Err(err) => {
+                // return Err(format!(
+                //     "Error invoking execute() of wasm, request_bytes: {:?}, \
+                // storage: {:?}, original err: {}",
+                //     &request_bytes, &storage_bytes, err,
+                // )
+                // .into());
+
                 return Err(format!(
                     "Error invoking execute() of wasm, request_bytes: {:?}, \
-                storage: {:?}, original err: {}",
-                    &request_bytes, &storage_bytes, err,
+                    original err: {}",
+                    &request_bytes, err,
                 )
                 .into());
             }
         };
 
-        let storage: Vec<u8>;
-        unsafe {
-            storage =
-                Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?
-        }
+        let storage: Vec<u8> = vec![];
+        // unsafe {
+        //     storage =
+        //         Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?
+        // }
 
         let result: Vec<u8>;
         unsafe {

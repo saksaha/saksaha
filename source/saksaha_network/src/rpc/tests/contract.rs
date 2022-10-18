@@ -3,7 +3,7 @@ use crate::ledger::GenesisBlock;
 use crate::rpc::routes::v0::{QueryCtrRequest, QueryCtrResponse};
 use crate::tests::SaksahaTestUtils;
 use hyper::{Body, Client, Method, Request, Uri};
-use sak_contract_std::{CtrCallType, CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest, CtrRequestData};
 use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse};
 
@@ -42,13 +42,14 @@ async fn test_call_contract() {
 
     let body = {
         let ctr_addr = validator_ctr_addr;
-        let req = CtrRequest {
+        let req = CtrRequestData {
             req_type: "get_validator".to_string(),
             args: vec![],
             ctr_call_type: CtrCallType::Query,
         };
 
         let call_ctr_req = QueryCtrRequest { ctr_addr, req };
+
         let params = serde_json::to_string(&call_ctr_req)
             .unwrap()
             .as_bytes()

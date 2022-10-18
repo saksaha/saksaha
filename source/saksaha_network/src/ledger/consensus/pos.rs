@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sak_contract_std::{CtrCallType, CtrRequest};
+use sak_contract_std::{CtrCallType, CtrRequest, CtrRequestData};
 use sak_ledger::SakLedger;
 use sak_ledger::{Consensus, ConsensusError};
 use sak_machine::SakMachine;
@@ -20,13 +20,17 @@ impl Consensus for Pos {
         tx_candidates: Vec<TxCandidate>,
     ) -> Result<BlockCandidate, ConsensusError> {
         let request = CtrRequest {
+            ctr_addr: self.validator_ctr_addr.to_string(),
             req_type: "get_validator".to_string(),
             args: vec![],
             ctr_call_type: CtrCallType::Query,
         };
 
         let validator = match dist_ledger
-            .query_ctr(&self.validator_ctr_addr, request)
+            .query_ctr(
+                // &self.validator_ctr_addr,
+                request,
+            )
             .await
         {
             Ok(v) => v,
