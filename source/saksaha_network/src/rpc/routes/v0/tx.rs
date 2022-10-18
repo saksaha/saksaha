@@ -33,7 +33,7 @@ pub(in crate::rpc) async fn send_mint_tx(
     match sys_handle
         .machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .send_tx(tx_candidate)
         .await
     {
@@ -69,7 +69,7 @@ pub(in crate::rpc) async fn send_pour_tx(
     match sys_handle
         .machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .send_tx(tx_candidate)
         .await
     {
@@ -97,7 +97,13 @@ pub(in crate::rpc) async fn get_tx(
 
     let rb: GetTxRequest = require_params_parsed!(route_state, &params);
 
-    match sys_handle.machine.ledger.dist_ledger.get_tx(&rb.hash).await {
+    match sys_handle
+        .machine
+        .ledger
+        // .dist_ledger
+        .get_tx(&rb.hash)
+        .await
+    {
         Ok(tx) => {
             let get_tx_resp = GetTxResponse { tx };
 

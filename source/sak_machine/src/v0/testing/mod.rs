@@ -1,5 +1,5 @@
 mod consensus;
-mod dist_ledger;
+mod machine;
 
 pub use consensus::*;
-pub use dist_ledger::*;
+pub use machine::*;

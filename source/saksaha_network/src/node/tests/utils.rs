@@ -1,20 +1,24 @@
 use crate::ledger::Ledger;
-use crate::machine::Machine;
 use crate::node::LocalNode;
 use crate::p2p::P2PHost;
 use crate::p2p::P2PHostArgs;
 use colored::Colorize;
+use sak_ledger::SakLedger;
+use sak_ledger::SakLedgerArgs;
 use sak_logger::debug;
+use sak_machine::SakMachine;
 use sak_p2p_addr::AddrStatus;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 
 pub(crate) struct TestContext {
     pub p2p_host: P2PHost,
     pub local_node: Arc<LocalNode>,
-    pub machine: Arc<Machine>,
+    pub machine: Arc<SakMachine>,
     pub peer_table: Arc<PeerTable>,
     pub identity: Arc<Identity>,
 }
@@ -22,11 +26,11 @@ pub(crate) struct TestContext {
 pub(crate) struct DualNodeTestContext {
     pub p2p_host_1: P2PHost,
     pub local_node_1: Arc<LocalNode>,
-    pub machine_1: Arc<Machine>,
+    pub machine_1: Arc<SakMachine>,
     //
     pub p2p_host_2: P2PHost,
     pub local_node_2: Arc<LocalNode>,
-    pub machine_2: Arc<Machine>,
+    pub machine_2: Arc<SakMachine>,
 }
 
 pub(crate) async fn make_test_context(
@@ -118,12 +122,19 @@ pub(crate) async fn make_test_context(
         .await
         .expect("P2P Host should be initialized");
 
-    let ledger = Ledger::init(&public_key_str, None, None, None, identity.clone())
-        .await
-        .unwrap();
+    let vm: ContractProcessor = {
+        let v = SakVM::init().unwrap();
+        Box::new(v)
+    };
+
+    let ledger = {
+        Ledger::init(&public_key_str, None, None, None, identity.clone(), vm)
+            .await
+            .unwrap()
+    };
 
     let machine = {
-        let m = Machine { ledger };
+        let m = SakMachine { ledger };
 
         Arc::new(m)
     };

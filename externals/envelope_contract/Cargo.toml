@@ -17,6 +17,8 @@ type_extension = { path = "../../source/type_extension" }
 sak_logger = { path = "../../source/sak_logger" }
 sak_test_utils = { path = "../../source/sak_test_utils" }
 sak_vm = { path = "../../source/sak_vm" }
+sak_vm_interface = { path = "../../source/sak_vm_interface/" }
 tokio = { version = "1.12.0", features = ["full"] }
 sak_mrs = { path = "../../source/sak_mrs" }
 sak_store_accessor = { path = "../../source/sak_store_accessor" }
+sak_credential = { path = "../../source/sak_credential" }

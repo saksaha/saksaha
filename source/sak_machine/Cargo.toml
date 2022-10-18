@@ -9,12 +9,14 @@ colored = "2"
 sak_kv_db = { path = "../sak_kv_db" }
 sak_logger = { path = "../sak_logger" }
 sak_contract_std = { path = "../sak_contract_std" }
+sak_ledger = { path = "../sak_ledger" }
 sak_ledger_cfg = { path = "../sak_ledger_cfg" }
 sak_ledger_params = { path = "../sak_ledger_params" }
 sak_dir = { path = "../sak_dir" }
 sak_mrs = { path = "../sak_mrs" }
 sak_store_accessor = { path = "../sak_store_accessor" }
 sak_vm = { path = "../sak_vm" }
+sak_vm_interface = { path = "../sak_vm_interface" }
 sak_p2p_id = { path = "../sak_p2p_id" }
 sak_crypto = { path = "../sak_crypto" }
 type_extension = { path = "../type_extension" }
@@ -34,6 +36,5 @@ sak_credential = { path = "../sak_credential" }
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
 
-
 [lib]
-doctest = false # until stable beta is released
+doctest = false

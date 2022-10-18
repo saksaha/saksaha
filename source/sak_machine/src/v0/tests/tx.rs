@@ -4,11 +4,11 @@ use sak_types::{BlockCandidate, Tx, TxCandidate};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_put_and_get_transaction() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let bc = sak_types::mock_block_2();
 
-    let block_hash = dist_ledger
+    let block_hash = machine
         .write_block(Some(bc))
         .await
         .expect("block should be written")
@@ -16,14 +16,16 @@ async fn test_put_and_get_transaction() {
 
     println!("[+] block hash: {:?}", block_hash);
 
-    let tx_hashes = dist_ledger
+    let tx_hashes = machine
+        .ledger
         .ledger_db
         .get_tx_hashes(&block_hash)
         .expect("block should be written")
         .unwrap();
 
     for (idx, tx_hash) in tx_hashes.iter().enumerate() {
-        let tx_val_retrieved = dist_ledger
+        let tx_val_retrieved = machine
+            .ledger
             .get_tx(tx_hash)
             .await
             .expect("Tx should exist")
@@ -37,14 +39,15 @@ async fn test_put_and_get_transaction() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_put_a_single_pour_tx() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let mut write_batch = WriteBatch::default();
 
     {
         let dummy_pour_tx = sak_types::mock_pour_tc_2to2_1().upgrade(2);
 
-        let _dummy_tx_hash = dist_ledger
+        let _dummy_tx_hash = machine
+            .ledger
             .ledger_db
             .batch_put_tx(&mut write_batch, &dummy_pour_tx)
             .expect("pour_tx should be written");
@@ -55,7 +58,7 @@ async fn test_dist_ledger_put_a_single_pour_tx() {
 async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
     // DistLedgerTestUtils::init_test(vec!["saksaha_test"]);
 
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let mint_tc = sak_types::mock_mint_tc_1();
 
@@ -70,12 +73,10 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
         created_at: "created_at".to_string(),
     };
 
-    dist_ledger
-        .write_block(Some(block_candidate))
-        .await
-        .unwrap();
+    machine.write_block(Some(block_candidate)).await.unwrap();
 
-    let cms = dist_ledger
+    let cms = machine
+        .ledger
         .ledger_db
         .get_tx(&mock_tx_hash)
         .await
@@ -87,7 +88,8 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
     let cm_1_idx = {
         println!("cms :{:?}", cms);
 
-        let cm_1_idx = dist_ledger
+        let cm_1_idx = machine
+            .ledger
             .ledger_db
             .get_cm_idx_by_cm(&cms[0])
             .unwrap()
@@ -104,7 +106,7 @@ async fn test_dist_ledger_tx_mint_put_and_get_cm_idx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let pour_tc = sak_types::mock_pour_tc_2to2_1();
 
@@ -117,12 +119,10 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         created_at: format!("{}", 0),
     };
 
-    dist_ledger
-        .write_block(Some(block_candidate))
-        .await
-        .unwrap();
+    machine.write_block(Some(block_candidate)).await.unwrap();
 
-    let cms = dist_ledger
+    let cms = machine
+        .ledger
         .ledger_db
         .get_tx(&mock_tx_hash)
         .await
@@ -132,7 +132,8 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
         .to_owned();
 
     let cm_1_idx = {
-        let cm_1_idx = dist_ledger
+        let cm_1_idx = machine
+            .ledger
             .ledger_db
             .get_cm_idx_by_cm(&cms[0])
             .unwrap()
@@ -142,7 +143,8 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
     };
 
     let cm_2_idx = {
-        let cm_2_idx = dist_ledger
+        let cm_2_idx = machine
+            .ledger
             .ledger_db
             .get_cm_idx_by_cm(&cms[1])
             .expect("cm_2_idx should be obtained")
@@ -159,7 +161,7 @@ async fn test_dist_ledger_tx_pour_put_and_get_cm_idx() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_verify_proof_success() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let bc_1 = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
@@ -169,7 +171,7 @@ async fn test_dist_ledger_verify_proof_success() {
     };
 
     {
-        let block_hash = dist_ledger
+        let block_hash = machine
             .write_block(Some(bc_1))
             .await
             .expect("block should be written");
@@ -180,11 +182,11 @@ async fn test_dist_ledger_verify_proof_success() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_verify_proof_fail() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let bc_1 = sak_types::mock_block_invalid_pour();
 
-    let block_hash = dist_ledger
+    let block_hash = machine
         .write_block(Some(bc_1))
         .await
         .expect("block should be written");
@@ -196,7 +198,7 @@ async fn test_dist_ledger_verify_proof_fail() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_double_spending_success() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let block = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
@@ -206,7 +208,7 @@ async fn test_dist_ledger_double_spending_success() {
     };
 
     {
-        let block_hash = dist_ledger
+        let block_hash = machine
             .write_block(Some(block))
             .await
             .expect("block should be written");
@@ -217,14 +219,14 @@ async fn test_dist_ledger_double_spending_success() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_double_spending_fail() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let bc_1 = sak_types::mock_block_pour_single();
 
     let bc_2 = sak_types::mock_block_pour_single();
 
     {
-        let block_hash = dist_ledger
+        let block_hash = machine
             .write_block(Some(bc_1))
             .await
             .expect("block should be written");
@@ -233,7 +235,7 @@ async fn test_dist_ledger_double_spending_fail() {
     }
 
     {
-        let block_hash = dist_ledger
+        let block_hash = machine
             .write_block(Some(bc_2))
             .await
             .expect("block should be written");
@@ -244,7 +246,7 @@ async fn test_dist_ledger_double_spending_fail() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_dist_ledger_verify_merkle_rt_fail() {
-    let dist_ledger = testing::mock_dist_ledger_1().await;
+    let machine = testing::mock_machine_1().await;
 
     let bc = BlockCandidate {
         validator_sig: String::from("Ox6a03c8sbfaf3cb06"),
@@ -253,7 +255,7 @@ async fn test_dist_ledger_verify_merkle_rt_fail() {
         created_at: format!("{}", 1),
     };
 
-    let result = match dist_ledger.write_block(Some(bc)).await {
+    let result = match machine.write_block(Some(bc)).await {
         Ok(v) => v,
         Err(err) => panic!("Failed to write dummy block, err: {}", err),
     };

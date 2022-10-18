@@ -1,7 +1,7 @@
 use super::utils::{make_test_context, TestContext};
 use crate::tests::SaksahaTestUtils;
 use sak_credential::CredentialProfile;
-use sak_machine::DistLedgerEvent;
+use sak_ledger::DistLedgerEvent;
 use std::{collections::HashMap, time::Duration};
 
 #[tokio::test(flavor = "multi_thread")]
@@ -100,7 +100,11 @@ async fn test_concurrent_sync() {
     let mock_tx5 = sak_types::mock_mint_tc_random();
     let mock_tx6 = sak_types::mock_mint_tc_random();
 
-    let mut ledger_event_rx_1 = machine_1.ledger.dist_ledger.ledger_event_tx.subscribe();
+    let mut ledger_event_rx_1 = machine_1
+        .ledger
+        // .sak_ledger
+        .ledger_event_tx
+        .subscribe();
 
     let mut map = HashMap::from([
         (mock_tx1.get_tx_hash().to_string(), false),
@@ -143,7 +147,7 @@ async fn test_concurrent_sync() {
     tokio::spawn(async move {
         machine_1_clone
             .ledger
-            .dist_ledger
+            // .sak_ledger
             .send_tx(mock_tx1.clone())
             .await
             .expect("Node should be able to send a transaction");
@@ -153,7 +157,7 @@ async fn test_concurrent_sync() {
     tokio::spawn(async move {
         machine_1_clone
             .ledger
-            .dist_ledger
+            // .sak_ledger
             .send_tx(mock_tx2)
             .await
             .expect("Node should be able to send a transaction");
@@ -163,7 +167,7 @@ async fn test_concurrent_sync() {
     tokio::spawn(async move {
         machine_1_clone
             .ledger
-            .dist_ledger
+            // .sak_ledger
             .send_tx(mock_tx3)
             .await
             .expect("Node should be able to send a transaction");
@@ -177,7 +181,7 @@ async fn test_concurrent_sync() {
     tokio::spawn(async move {
         machine_2_clone
             .ledger
-            .dist_ledger
+            // .sak_ledger
             .send_tx(mock_tx4)
             .await
             .expect("Node should be able to send a transaction");
@@ -187,7 +191,6 @@ async fn test_concurrent_sync() {
     tokio::spawn(async move {
         machine_2_clone
             .ledger
-            .dist_ledger
             .send_tx(mock_tx5)
             .await
             .expect("node should be able to send a transaction");
@@ -197,7 +200,7 @@ async fn test_concurrent_sync() {
     tokio::spawn(async move {
         machine_2_clone
             .ledger
-            .dist_ledger
+            // .dist_ledger
             .send_tx(mock_tx6)
             .await
             .expect("node should be able to send a transaction");

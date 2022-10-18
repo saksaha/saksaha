@@ -31,7 +31,7 @@ pub(in crate::rpc) async fn query_ctr(
     match sys_handle
         .machine
         .ledger
-        .dist_ledger
+        // .dist_ledger
         .query_ctr(&rb.ctr_addr, rb.req)
         .await
     {

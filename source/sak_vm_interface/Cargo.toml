@@ -1,0 +1,21 @@
+[package]
+name = "sak_vm_interface"
+version = "0.1.0"
+edition = "2018"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sak_contract_std = { path = "../sak_contract_std" }
+sak_logger = { path = "../sak_logger" }
+# sak_mrs = { path = "../sak_mrs" }
+sak_dir = { path = "../sak_dir" }
+# sak_store_accessor = { path = "../sak_store_accessor" }
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.59"
+serde_bytes = "0.11.6"
+
+[dev-dependencies]
+sak_test_utils = { path = "../sak_test_utils" }
+
+[lib]
+doctest = false # until stable beta is released
