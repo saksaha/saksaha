@@ -34,7 +34,7 @@ impl Miner {
         );
 
         loop {
-            println!("1111");
+            // println!("1111");
 
             let time_since = SystemTime::now();
 

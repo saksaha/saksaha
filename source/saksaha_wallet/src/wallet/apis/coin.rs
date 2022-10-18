@@ -216,7 +216,6 @@ impl Wallet {
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
-        //
         let cm_idx = self.prepare_cm_idx(coin).await?;
 
         let auth_path = self.prepare_auth_path(cm_idx).await?;
@@ -228,13 +227,9 @@ impl Wallet {
         println!("coin: {:?}", coin);
         let old_sn_1 = self.compute_sn(coin);
 
-        //
-
         let dummy_coin = CoinRecord::new_dummy();
 
         let dummy_auth_path = self.prepare_dummy_auth_path();
-
-        println!("22201");
 
         let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
@@ -243,12 +238,6 @@ impl Wallet {
         let dummy_old_sn_1 = DUMMY_SN;
 
         let (mut new_coin_1, mut new_coin_2) = self.prepare_2_new_coin_records(coin.v)?;
-
-        // let pi = self.prepare_proof_1_to_2(
-        //     old_coin,
-        //     new_coin_1.extract_new_coin(),
-        //     new_coin_2.extract_new_coin(),
-        // )?;
 
         let pi = self.prepare_proof_2_to_2(
             old_coin,

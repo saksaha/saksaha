@@ -3,7 +3,6 @@ use crate::CoinProof;
 use sak_crypto::groth16::Proof;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTreeSim;
-
 use sak_crypto::{Bls12, OsRng, Scalar, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_proof_circuit::{CoinProofCircuit2to2, NewCoin, OldCoin};
@@ -412,10 +411,10 @@ async fn test_pi_stringify() {
     let proof = CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new)
         .expect("proof should be created");
 
+    println!("11, proof: {:?}", proof);
+
     let mut pi_ser = Vec::new();
     proof.write(&mut pi_ser).unwrap();
-
-    // String::from_utf8(pi_ser)
 
     let s: String = serde_json::from_slice(&pi_ser).unwrap();
 
