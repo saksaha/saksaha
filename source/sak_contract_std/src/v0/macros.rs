@@ -49,54 +49,7 @@ macro_rules! contract_bootstrap {
 
             fn HOST__get_latest_len(p1: i32, p2: i32) -> i32;
         }
-    };
-}
 
-#[macro_export]
-macro_rules! return_err_2 {
-    ($obj: expr) => {
-        match $obj {
-            Ok(r) => r,
-            Err(err) => {
-                let mut err = sak_contract_std::make_error_vec(err.into(), "");
-
-                let err_ptr = err.as_mut_ptr();
-                let err_len = err.len();
-
-                std::mem::forget(err);
-
-                return (err_ptr, err_len as i32);
-            }
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! return_err_4 {
-    ($obj: expr, $msg: expr) => {
-        match $obj {
-            Ok(r) => r,
-            Err(err) => {
-                let mut err = sak_contract_std::make_error_vec(err.into(), $msg);
-
-                let err_ptr = err.as_mut_ptr();
-                let err_len = err.len();
-
-                std::mem::forget(err);
-
-                let mut empty_vec = Vec::new();
-                let empty_vec_ptr = empty_vec.as_mut_ptr();
-                let empty_vec_len = empty_vec.len();
-
-                return (err_ptr, err_len as i32, empty_vec_ptr, empty_vec_len as i32);
-            }
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! define_init {
-    () => {
         #[no_mangle]
         pub unsafe extern "C" fn init() -> (*mut u8, i32) {
             let storage: Result<sak_contract_std::Storage, sak_contract_std::ContractError> =
@@ -111,12 +64,7 @@ macro_rules! define_init {
 
             (storage_ptr, storage_len as i32)
         }
-    };
-}
 
-#[macro_export]
-macro_rules! define_query {
-    () => {
         #[no_mangle]
         pub unsafe extern "C" fn query(
             // storage_ptr: *mut u8,
@@ -161,12 +109,7 @@ macro_rules! define_query {
                 return (result_ptr, result_len as i32);
             }
         }
-    };
-}
 
-#[macro_export]
-macro_rules! define_execute {
-    () => {
         #[no_mangle]
         pub unsafe extern "C" fn execute(
             storage_ptr: *mut u8,
@@ -212,6 +155,48 @@ macro_rules! define_execute {
                     result_ptr,
                     result_len as i32,
                 )
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! return_err_2 {
+    ($obj: expr) => {
+        match $obj {
+            Ok(r) => r,
+            Err(err) => {
+                let mut err = sak_contract_std::make_error_vec(err.into(), "");
+
+                let err_ptr = err.as_mut_ptr();
+                let err_len = err.len();
+
+                std::mem::forget(err);
+
+                return (err_ptr, err_len as i32);
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! return_err_4 {
+    ($obj: expr, $msg: expr) => {
+        match $obj {
+            Ok(r) => r,
+            Err(err) => {
+                let mut err = sak_contract_std::make_error_vec(err.into(), $msg);
+
+                let err_ptr = err.as_mut_ptr();
+                let err_len = err.len();
+
+                std::mem::forget(err);
+
+                let mut empty_vec = Vec::new();
+                let empty_vec_ptr = empty_vec.as_mut_ptr();
+                let empty_vec_len = empty_vec.len();
+
+                return (err_ptr, err_len as i32, empty_vec_ptr, empty_vec_len as i32);
             }
         }
     };
