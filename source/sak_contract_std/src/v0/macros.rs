@@ -5,7 +5,7 @@ macro_rules! contract_bootstrap {
         extern "C" {
             fn HOST__log(param1: i32, param2: i32) -> i32;
 
-            fn HOST__get_mrs_data(param1: *mut u8, param2: u32) -> i32;
+            fn HOST__get_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
 
             fn HOST__get_latest_return_len(p1: i32, p2: i32) -> i32;
         }
@@ -156,9 +156,17 @@ macro_rules! define_contract_ctx {
                 let ptr_key = CTR__alloc(key_len);
                 ptr_key.copy_from(key.as_ptr(), key_len);
 
-                // TODO return value length pointer!
-                let ptr = HOST__get_mrs_data(ptr_key, key_len as u32) as usize;
-                HOST__log(ptr as i32, 1);
+                let ptr_ret_len = CTR__alloc(4);
+
+                let ptr = HOST__get_mrs_data(ptr_key, key_len as u32, ptr_ret_len as *mut u32);
+                HOST__log(ptr as i32, 11);
+
+                let data_len: [u8; 4] = std::slice::from_raw_parts(ptr_ret_len as *mut u8, 4)
+                    .try_into()
+                    .unwrap();
+
+                let d = u32::from_be_bytes(data_len);
+                HOST__log(d as i32, 135);
 
                 let len = HOST__get_latest_return_len(0, 0);
                 HOST__log(len, 2);

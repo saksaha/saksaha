@@ -22,9 +22,9 @@ pub(crate) fn make_linker(
         "host",
         symbols::HOST__LOG,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-            let state = caller.data_mut();
-            println!("log(): state: {:?}", state);
-            println!("log(): params: {}, {}", param, param2);
+            // let state = caller.data_mut();
+            // println!("log(): state: {:?}", state);
+            println!("log(): params11: {}, {}", param, param2);
 
             param * 2
         },
@@ -33,7 +33,7 @@ pub(crate) fn make_linker(
     linker.func_wrap(
         "host",
         symbols::HOST__GET_MRS_DATA,
-        move |mut caller: Caller<InstanceState>, ptr_arg: u32, len_arg: u32| {
+        move |mut caller: Caller<InstanceState>, ptr_arg: u32, len_arg: u32, ptr_ret_len: u32| {
             let state = caller.data_mut();
             println!(
                 "get_mrs_data(): state: {:?}, params: {}, {}",
@@ -55,8 +55,6 @@ pub(crate) fn make_linker(
 
             println!("get_mrs_data(): arg: {}", arg);
 
-            // let v = mrs.get("a")
-
             let dummy_data = Data { d: 123 };
             let data_bytes = match serde_json::to_vec(&dummy_data) {
                 Ok(b) => b,
@@ -66,7 +64,16 @@ pub(crate) fn make_linker(
                     vec![]
                 }
             };
+
             let data_len = data_bytes.len();
+            let data_len_2 = 3000 as u32;
+            let d = data_len_2.to_be_bytes();
+            let p = d.as_ptr();
+
+            unsafe {
+                let raw = memory.data_ptr(&caller).offset(ptr_ret_len as isize);
+                raw.copy_from(p, 4);
+            }
 
             println!(
                 "get_mrs_data(): data: {:?}, len: {}, getting memory allocation",
