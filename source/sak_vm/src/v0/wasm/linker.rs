@@ -1,8 +1,7 @@
-use crate::{
-    v0::{constants, state::InstanceState},
-    VMError,
-};
+use crate::VMError;
+use sak_contract_std::symbols;
 use sak_logger::{error, info};
+use sak_vm_interface::InstanceState;
 // use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -39,7 +38,7 @@ pub(crate) fn make_linker(
             let state = caller.data_mut();
             println!("state: {:?}", state);
 
-            match caller.get_export(constants::MEMORY) {
+            match caller.get_export(symbols::MEMORY) {
                 Some(exp) => {
                     let memory = exp.into_memory().unwrap();
                     let m = memory.data(&mut caller);
@@ -77,7 +76,7 @@ pub(crate) fn make_linker(
             );
 
             let alloc = caller
-                .get_export(constants::ALLOC_FN)
+                .get_export(symbols::ALLOC_FN)
                 .unwrap()
                 .into_func()
                 .unwrap();

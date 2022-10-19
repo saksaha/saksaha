@@ -1,4 +1,5 @@
 use crate::{log, paths::Paths, utils::Kommand, CIError};
+use sak_contract_std::symbols;
 use serde::{Deserialize, Serialize};
 use std::{
     path::PathBuf,
@@ -159,7 +160,14 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
 }
 
 fn post_process_wasm(wasm_path: PathBuf) -> Result<PathBuf, CIError> {
-    let ret = wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, None)?;
+    let multi_return_symbols = vec![
+        format!("{} i32 i32", symbols::INIT_FN),
+        format!("{} i32 i32", symbols::QUERY_FN),
+        format!("{} i32 i32 i32 i32", symbols::EXECUTE_FN),
+    ];
+
+    let ret =
+        wasm_postprocess::make_wasm_have_multiple_returns(wasm_path, None, multi_return_symbols)?;
 
     Ok(ret)
 }

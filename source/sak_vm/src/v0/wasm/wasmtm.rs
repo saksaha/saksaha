@@ -1,9 +1,8 @@
 use super::linker::make_linker;
-use crate::{
-    v0::{constants, state::InstanceState},
-    VMError,
-};
+use crate::VMError;
+use sak_contract_std::symbols;
 use sak_logger::{error, info};
+use sak_vm_interface::InstanceState;
 // use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -79,7 +78,7 @@ impl Wasmtime {
         };
 
         let _init: TypedFunc<(), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, constants::INIT) {
+            match instance.get_typed_func(&mut store, symbols::INIT_FN) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;
@@ -88,7 +87,7 @@ impl Wasmtime {
         };
 
         let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, constants::QUERY) {
+            match instance.get_typed_func(&mut store, symbols::QUERY_FN) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;
@@ -97,7 +96,7 @@ impl Wasmtime {
         };
 
         let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> = {
-            match instance.get_typed_func(&mut store, constants::EXECUTE) {
+            match instance.get_typed_func(&mut store, symbols::EXECUTE_FN) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;
