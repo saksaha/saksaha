@@ -1,6 +1,6 @@
 use super::{constants, state::InstanceState, wasm::Wasmtime};
 use crate::VMError;
-use sak_contract_std::{ContractFn, CtrRequest, Storage};
+use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
 use sak_logger::{error, info};
 // use sak_store_accessor::StoreAccessor;
 use sak_vm_interface::{ContractProcess, InvokeReceipt, VMInterfaceError};

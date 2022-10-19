@@ -29,7 +29,7 @@ pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, Contract
 
     unsafe {
         let param = "string";
-        let ptr_param = alloc(param.len());
+        let ptr_param = CTR__alloc(param.len());
         ptr_param.copy_from(param.as_ptr(), param.len());
 
         let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);

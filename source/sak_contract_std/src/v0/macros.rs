@@ -1,10 +1,19 @@
 #[macro_export]
 macro_rules! contract_bootstrap {
     () => {
+        #[link(wasm_import_module = "host")]
+        extern "C" {
+            fn hello(param1: i32, param2: i32) -> i32;
+
+            fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+
+            fn HOST__get_latest_len(p1: i32, p2: i32) -> i32;
+        }
+
         /// Allocate memory into the module's linear memory
         /// and return the offset to the start of the block.
         #[no_mangle]
-        pub extern "C" fn alloc(len: usize) -> *mut u8 {
+        pub extern "C" fn CTR__alloc(len: usize) -> *mut u8 {
             // create a new mutable buffer with capacity `len`
             let mut buf = Vec::with_capacity(len);
             // take a mutable pointer to the buffer
@@ -20,38 +29,14 @@ macro_rules! contract_bootstrap {
         }
 
         #[no_mangle]
-        pub unsafe extern "C" fn dealloc(ptr: *mut u8, size: usize) {
+        pub unsafe extern "C" fn CTR__dealloc(ptr: *mut u8, size: usize) {
             let data = Vec::from_raw_parts(ptr, size, size);
 
             std::mem::drop(data);
         }
 
-        pub struct ContractCtx;
-
-        impl ContractCtx {
-            unsafe fn get_mrs_data(&self, ptr: *mut u8, b: i32) -> usize {
-                HOST__get_mrs_data(ptr, b) as usize
-            }
-
-            unsafe fn put_mrs_data(&self, arg: usize) -> usize {
-                // ptr, len
-
-                // HOST__put_mrs_data(ptr, len) as usize
-                0
-            }
-        }
-
-        #[link(wasm_import_module = "host")]
-        extern "C" {
-            fn hello(param1: i32, param2: i32) -> i32;
-
-            fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
-
-            fn HOST__get_latest_len(p1: i32, p2: i32) -> i32;
-        }
-
         #[no_mangle]
-        pub unsafe extern "C" fn init() -> (*mut u8, i32) {
+        pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
             let storage: Result<sak_contract_std::Storage, sak_contract_std::ContractError> =
                 init2();
 
@@ -66,7 +51,7 @@ macro_rules! contract_bootstrap {
         }
 
         #[no_mangle]
-        pub unsafe extern "C" fn query(
+        pub unsafe extern "C" fn CTR__query(
             // storage_ptr: *mut u8,
             // storage_len: usize,
             request_ptr: *mut u8,
@@ -111,7 +96,7 @@ macro_rules! contract_bootstrap {
         }
 
         #[no_mangle]
-        pub unsafe extern "C" fn execute(
+        pub unsafe extern "C" fn CTR__execute(
             storage_ptr: *mut u8,
             storage_len: usize,
             request_ptr: *mut u8,
@@ -155,6 +140,21 @@ macro_rules! contract_bootstrap {
                     result_ptr,
                     result_len as i32,
                 )
+            }
+        }
+
+        pub struct ContractCtx;
+
+        impl ContractCtx {
+            unsafe fn get_mrs_data(&self, ptr: *mut u8, b: i32) -> usize {
+                HOST__get_mrs_data(ptr, b) as usize
+            }
+
+            unsafe fn put_mrs_data(&self, arg: usize) -> usize {
+                // ptr, len
+
+                // HOST__put_mrs_data(ptr, len) as usize
+                0
             }
         }
     };

@@ -7,7 +7,6 @@ mod wasm;
 #[cfg(test)]
 mod tests;
 
-// pub use ctr_fn::*;
 pub use receipt::*;
 pub use vm::*;
 
