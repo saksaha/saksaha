@@ -13,11 +13,10 @@ sak_crypto = { path = "../sak_crypto" }
 sak_logger = { path = "../sak_logger" }
 sak_ledger_cfg = { path = "../sak_ledger_cfg" }
 sak_proof_circuit = { path = "../sak_proof_circuit" }
+sak_proof_types = { path = "../sak_proof_types" }
 type_extension = { path = "../type_extension" }
-blake2s_simd = "1.0.0"
 serde_json = "1.0.59"
 serde = { version = "1.0.130", features = ["derive"] }
-bls12_381 = "0.6.0"
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }

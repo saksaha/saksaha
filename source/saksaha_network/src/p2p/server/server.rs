@@ -41,7 +41,7 @@ impl Server {
 
         info!(
             "Bound tcp socket for P2P host, addr: {}",
-            local_addr.to_string().yellow(),
+            local_addr.to_string(),
         );
 
         let s = Server {

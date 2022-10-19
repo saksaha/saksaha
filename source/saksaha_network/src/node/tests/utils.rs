@@ -46,7 +46,7 @@ pub(crate) async fn make_test_context(
 
         debug!(
             "Bound udp socket for P2P discovery, addr: {}",
-            socket_addr.to_string().yellow(),
+            socket_addr.to_string(),
         );
 
         (socket, socket_addr.port())
@@ -56,7 +56,7 @@ pub(crate) async fn make_test_context(
         Ok((socket, socket_addr)) => {
             debug!(
                 "Bound tcp socket for P2P host, addr: {}",
-                socket_addr.to_string().yellow(),
+                socket_addr.to_string(),
             );
 
             (socket, socket_addr.port())

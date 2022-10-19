@@ -15,6 +15,7 @@ sak_ledger_cfg = { path = "../../source/sak_ledger_cfg" }
 sak_types = { path = "../../source/sak_types" }
 sak_kv_db = { path = "../../source/sak_kv_db" }
 sak_proof = { path = "../../source/sak_proof" }
+sak_proof_types = { path = "../../source/sak_proof_types" }
 sak_credential = { path = "../../source/sak_credential" }
 saksaha = { path = "../../source/saksaha_rs" }
 saksaha_wallet = { path = "../../source/saksaha_wallet" }

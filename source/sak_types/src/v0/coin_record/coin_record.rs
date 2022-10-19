@@ -8,7 +8,7 @@ use sak_crypto::decode_hex;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
-use sak_proof::NewCoin;
+use sak_proof_types::NewCoin;
 use type_extension::U8Array;
 
 pub type CoinIdx = u128;

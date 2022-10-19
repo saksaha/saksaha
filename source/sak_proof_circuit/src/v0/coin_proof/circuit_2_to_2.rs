@@ -1,10 +1,11 @@
-use crate::{CircuitError, NewCoin, OldCoin};
-use bellman::gadgets::boolean::AllocatedBit;
-use bellman::groth16::{self, Parameters};
-use bellman::{Circuit, ConstraintSystem, SynthesisError};
+use crate::CircuitError;
+// use bellman::gadgets::boolean::AllocatedBit;
+// use bellman::groth16::{self, Parameters};
+// use bellman::{Circuit, ConstraintSystem, SynthesisError};
 use sak_crypto::hasher::MiMC;
-use sak_crypto::{Bls12, OsRng, Scalar};
+use sak_crypto::{AllocatedBit, Bls12, Circuit, ConstraintSystem, OsRng, Scalar, SynthesisError};
 use sak_ledger_cfg::{CM_TREE_DEPTH, GAS};
+use sak_proof_types::{NewCoin, OldCoin};
 use type_extension::U8Array;
 
 pub struct CoinProofCircuit2to2 {

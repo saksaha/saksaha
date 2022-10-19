@@ -9,11 +9,10 @@ use sak_crypto::Scalar;
 use sak_crypto::ScalarExt;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_cfg::GAS;
-use sak_ledger_params::DUMMY_SN;
+use sak_ledger_testing::DUMMY_SN;
 use sak_logger::debug;
 use sak_proof::CoinProof;
-use sak_proof::NewCoin;
-use sak_proof::OldCoin;
+use sak_proof_types::{NewCoin, OldCoin};
 use sak_types::mock_coin_custom;
 use sak_types::AccountBalance;
 use sak_types::{CoinRecord, CoinStatus};
@@ -167,23 +166,23 @@ impl Wallet {
         Ok((new_coin_1, new_coin_2))
     }
 
-    pub(crate) fn prepare_proof_1_to_2(
-        &self,
-        old_coin: OldCoin,
-        new_coin_1: NewCoin,
-        new_coin_2: NewCoin,
-    ) -> Result<Vec<u8>, WalletError> {
-        println!("[+] making proof...");
+    // pub(crate) fn prepare_proof_1_to_2(
+    //     &self,
+    //     old_coin: OldCoin,
+    //     new_coin_1: NewCoin,
+    //     new_coin_2: NewCoin,
+    // ) -> Result<Vec<u8>, WalletError> {
+    //     println!("[+] making proof...");
 
-        let pi = CoinProof::generate_proof_1_to_2(old_coin, new_coin_1, new_coin_2)?;
+    //     let pi = CoinProof::generate_proof_1_to_2(old_coin, new_coin_1, new_coin_2)?;
 
-        let mut pi_ser = Vec::new();
-        pi.write(&mut pi_ser).unwrap();
+    //     let mut pi_ser = Vec::new();
+    //     pi.write(&mut pi_ser).unwrap();
 
-        println!("[!] pi serialized: {}", encode_hex(&pi_ser));
+    //     println!("[!] pi serialized: {}", encode_hex(&pi_ser));
 
-        Ok(pi_ser)
-    }
+    //     Ok(pi_ser)
+    // }
 
     pub(crate) fn prepare_proof_2_to_2(
         &self,
@@ -216,7 +215,6 @@ impl Wallet {
             .get_next_available_coin()
             .ok_or("No usable coins")?;
 
-        //
         let cm_idx = self.prepare_cm_idx(coin).await?;
 
         let auth_path = self.prepare_auth_path(cm_idx).await?;
@@ -228,27 +226,17 @@ impl Wallet {
         println!("coin: {:?}", coin);
         let old_sn_1 = self.compute_sn(coin);
 
-        //
-
         let dummy_coin = CoinRecord::new_dummy();
 
         let dummy_auth_path = self.prepare_dummy_auth_path();
 
-        println!("22201");
-
         let dummy_old_coin = self.convert_to_old_coin(&dummy_coin, dummy_auth_path)?;
 
-        let dummy_merkle_rt = sak_ledger_params::mock_rt_1().unwrap();
+        let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
 
         let dummy_old_sn_1 = DUMMY_SN;
 
         let (mut new_coin_1, mut new_coin_2) = self.prepare_2_new_coin_records(coin.v)?;
-
-        // let pi = self.prepare_proof_1_to_2(
-        //     old_coin,
-        //     new_coin_1.extract_new_coin(),
-        //     new_coin_2.extract_new_coin(),
-        // )?;
 
         let pi = self.prepare_proof_2_to_2(
             old_coin,
