@@ -38,7 +38,7 @@ macro_rules! contract_bootstrap {
         #[no_mangle]
         pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
             let storage: Result<sak_contract_std::Storage, sak_contract_std::ContractError> =
-                init2();
+                init();
 
             let mut storage = sak_contract_std::return_err_2!(storage);
 
@@ -75,7 +75,7 @@ macro_rules! contract_bootstrap {
             let ctx = ContractCtx {};
 
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                query2(
+                query(
                     ctx, request,
                     // storage
                 );
@@ -120,7 +120,7 @@ macro_rules! contract_bootstrap {
                 sak_contract_std::return_err_4!(request, "serde request parsing fail");
 
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                execute2(request, &mut storage);
+                update(request, &mut storage);
 
             {
                 let mut result: sak_contract_std::InvokeResult =

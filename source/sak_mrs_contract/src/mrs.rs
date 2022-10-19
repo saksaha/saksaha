@@ -7,7 +7,7 @@ const SLOT_CAPACITY: usize = 64;
 
 contract_bootstrap!();
 
-pub fn init2() -> Result<Storage, ContractError> {
+pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = MutableRecordStorage {
         slots: vec![Slot::default()],
     };
@@ -17,7 +17,7 @@ pub fn init2() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     // let storage = vec![];
 
     match request.req_type.as_ref() {
@@ -28,7 +28,7 @@ pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, Contract
     }
 }
 
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         RESERVE => reserve_slot(storage, request.args),
         _ => Err(("Wrong request type has been found in execution").into()),

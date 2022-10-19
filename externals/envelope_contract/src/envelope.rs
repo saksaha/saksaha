@@ -13,7 +13,7 @@ pub struct OpenChReq {}
 
 contract_bootstrap!();
 
-pub fn init2() -> Result<Storage, ContractError> {
+pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
         open_ch_reqs: HashMap::new(),
         chats: HashMap::new(),
@@ -24,7 +24,7 @@ pub fn init2() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let storage = vec![];
 
     unsafe {
@@ -54,7 +54,7 @@ pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, Contract
     }
 }
 
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         OPEN_CH => {
             return handle_open_channel(storage, request.args);

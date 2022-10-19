@@ -15,7 +15,7 @@ pub struct ValidatorStorage {
 
 contract_bootstrap!();
 
-pub fn init2() -> Result<Vec<u8>, ContractError> {
+pub fn init() -> Result<Vec<u8>, ContractError> {
     let storage = ValidatorStorage {
         validators: vec![
             // TODO public_key of 'dev_local_1' profile
@@ -32,7 +32,7 @@ pub fn init2() -> Result<Vec<u8>, ContractError> {
     Ok(v)
 }
 
-pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let storage = vec![];
     match request.req_type.as_ref() {
         "get_validator" => {
@@ -57,7 +57,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
     Ok(ret)
 }
 
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
+pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "add_validator" => {
             return handle_add_validator(storage, request.args);
