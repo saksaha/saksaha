@@ -1,4 +1,4 @@
-use super::{constants::Constants, state::InstanceState, wasmtm::Wasmtime};
+use super::{constants, state::InstanceState, wasm::Wasmtime};
 use crate::VMError;
 use sak_contract_std::{ContractFn, CtrRequest, Storage};
 use sak_logger::{error, info};
@@ -59,7 +59,7 @@ impl SakVM {
         memory: Memory,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(), (i32, i32)> =
-            { instance.get_typed_func(&mut store, Constants::INIT)? };
+            { instance.get_typed_func(&mut store, constants::INIT)? };
 
         let (storage_ptr, storage_len) = contract_fn.call(&mut store, ())?;
 
@@ -82,7 +82,7 @@ impl SakVM {
         // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
-            { instance.get_typed_func(&mut store, Constants::QUERY)? };
+            { instance.get_typed_func(&mut store, constants::QUERY)? };
 
         let (request_bytes, request_len) = {
             let str = serde_json::to_value(request)?.to_string();
@@ -140,7 +140,7 @@ impl SakVM {
         // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
-            { instance.get_typed_func(&mut store, Constants::EXECUTE)? };
+            { instance.get_typed_func(&mut store, constants::EXECUTE)? };
 
         let (request_bytes, request_len) = {
             let vec = serde_json::to_vec(&request)?;
@@ -218,7 +218,7 @@ impl SakVM {
         };
 
         let memory = instance
-            .get_memory(&mut store, Constants::MEMORY)
+            .get_memory(&mut store, constants::MEMORY)
             .expect("expected memory not found");
 
         Ok((instance, store, memory))

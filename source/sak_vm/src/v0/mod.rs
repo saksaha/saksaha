@@ -1,9 +1,8 @@
 mod constants;
-// mod ctr_fn;
 mod receipt;
 mod state;
 mod vm;
-mod wasmtm;
+mod wasm;
 
 #[cfg(test)]
 mod tests;

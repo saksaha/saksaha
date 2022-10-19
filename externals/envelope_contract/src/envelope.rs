@@ -14,15 +14,6 @@ pub struct OpenChReq {}
 
 contract_bootstrap!();
 
-#[link(wasm_import_module = "host")]
-extern "C" {
-    fn hello(param1: i32, param2: i32) -> i32;
-
-    fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
-
-    fn get_latest_len(p1: i32, p2: i32) -> i32;
-}
-
 define_init!();
 pub fn init2() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
@@ -39,8 +30,10 @@ define_query!();
 pub fn query2(
     ctx: ContractCtx,
     request: CtrRequest,
-    storage: Storage,
+    // storage: Storage,
 ) -> Result<Vec<u8>, ContractError> {
+    let storage = vec![];
+
     unsafe {
         let param = "string";
         let ptr_param = alloc(param.len());
@@ -49,7 +42,7 @@ pub fn query2(
         let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
         hello(ptr as i32, 1);
 
-        let len = get_latest_len(0, 0);
+        let len = HOST__get_latest_len(0, 0);
         hello(len, 2);
 
         // let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);

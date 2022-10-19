@@ -1,6 +1,6 @@
 use super::wasmtm::Wasmtime;
 use crate::{
-    v0::{constants::Constants, state::InstanceState},
+    v0::{constants, state::InstanceState},
     VMError,
 };
 use wasmtime::{Instance, Memory, Store, TypedFunc};
@@ -39,7 +39,7 @@ impl Wasmtime {
         // If the module does not export it, just panic,
         // since we are not going to be able to copy array data.
         let memory = instance
-            .get_memory(&mut *store, Constants::MEMORY)
+            .get_memory(&mut *store, constants::MEMORY)
             .expect("expected memory not found");
 
         // The module is not using any bindgen libraries, so it should export
@@ -51,7 +51,7 @@ impl Wasmtime {
         // used to copy the bytes into the module's memory.
         // Then, return the offset.
         let alloc: TypedFunc<i32, i32> = instance
-            .get_typed_func(&mut *store, Constants::ALLOC_FN)
+            .get_typed_func(&mut *store, constants::ALLOC_FN)
             .expect("expected alloc function not found");
 
         let guest_ptr_offset = alloc.call(&mut *store, bytes.len() as i32)? as isize;

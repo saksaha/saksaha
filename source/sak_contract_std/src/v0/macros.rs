@@ -40,6 +40,15 @@ macro_rules! contract_bootstrap {
                 0
             }
         }
+
+        #[link(wasm_import_module = "host")]
+        extern "C" {
+            fn hello(param1: i32, param2: i32) -> i32;
+
+            fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+
+            fn HOST__get_latest_len(p1: i32, p2: i32) -> i32;
+        }
     };
 }
 
@@ -110,16 +119,16 @@ macro_rules! define_query {
     () => {
         #[no_mangle]
         pub unsafe extern "C" fn query(
-            storage_ptr: *mut u8,
-            storage_len: usize,
+            // storage_ptr: *mut u8,
+            // storage_len: usize,
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32) {
-            let storage: Storage = Vec::from_raw_parts(
-                storage_ptr, //
-                storage_len,
-                storage_len,
-            );
+            // let storage: Storage = Vec::from_raw_parts(
+            //     storage_ptr, //
+            //     storage_len,
+            //     storage_len,
+            // );
 
             let request = Vec::from_raw_parts(
                 request_ptr, //
@@ -133,8 +142,12 @@ macro_rules! define_query {
             let ctx = ContractCtx {};
 
             let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                query2(ctx, request, storage);
-            // query2(request, storage);
+                query2(
+                    ctx, request,
+                    // storage
+                );
+
+            // let result: Result<_, sak_contract_std::ContractError> = Ok(vec![]);
 
             {
                 let mut result: sak_contract_std::InvokeResult =

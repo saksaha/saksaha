@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ValidatorStorage {
-    // data: BTreeMap<Vec<u8>, Vec<u8>>,
     validators: Vec<String>,
 }
 

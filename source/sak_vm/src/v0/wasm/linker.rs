@@ -1,5 +1,5 @@
 use crate::{
-    v0::{constants::Constants, state::InstanceState},
+    v0::{constants, state::InstanceState},
     VMError,
 };
 use sak_logger::{error, info};
@@ -39,7 +39,7 @@ pub(crate) fn make_linker(
             let state = caller.data_mut();
             println!("state: {:?}", state);
 
-            match caller.get_export(Constants::MEMORY) {
+            match caller.get_export(constants::MEMORY) {
                 Some(exp) => {
                     let memory = exp.into_memory().unwrap();
                     let m = memory.data(&mut caller);
@@ -77,7 +77,7 @@ pub(crate) fn make_linker(
             );
 
             let alloc = caller
-                .get_export(Constants::ALLOC_FN)
+                .get_export(constants::ALLOC_FN)
                 .unwrap()
                 .into_func()
                 .unwrap();
@@ -95,7 +95,7 @@ pub(crate) fn make_linker(
 
     linker.func_wrap(
         "host",
-        "get_latest_len",
+        "HOST__get_latest_len",
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
             let mut state = caller.data_mut();
             println!("state: {:?}", state);
