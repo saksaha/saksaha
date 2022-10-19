@@ -20,7 +20,7 @@ pub(crate) fn make_linker(
 
     linker.func_wrap(
         "host",
-        "hello",
+        symbols::HOST__LOG,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
             let state = caller.data_mut();
             println!("state: {:?}", state);
@@ -33,7 +33,7 @@ pub(crate) fn make_linker(
 
     linker.func_wrap(
         "host",
-        "HOST__get_mrs_data",
+        symbols::HOST__GET_MRS_DATA,
         move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
             let state = caller.data_mut();
             println!("state: {:?}", state);
@@ -76,7 +76,7 @@ pub(crate) fn make_linker(
             );
 
             let alloc = caller
-                .get_export(symbols::ALLOC_FN)
+                .get_export(symbols::CTR__ALLOC)
                 .unwrap()
                 .into_func()
                 .unwrap();
@@ -94,7 +94,7 @@ pub(crate) fn make_linker(
 
     linker.func_wrap(
         "host",
-        "HOST__get_latest_len",
+        symbols::HOST__GET_LATEST_RETURN_LEN,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
             let mut state = caller.data_mut();
             println!("state: {:?}", state);

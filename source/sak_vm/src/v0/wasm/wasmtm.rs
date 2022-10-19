@@ -78,7 +78,7 @@ impl Wasmtime {
         };
 
         let _init: TypedFunc<(), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, symbols::INIT_FN) {
+            match instance.get_typed_func(&mut store, symbols::CTR__INIT) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;
@@ -87,7 +87,7 @@ impl Wasmtime {
         };
 
         let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, symbols::QUERY_FN) {
+            match instance.get_typed_func(&mut store, symbols::CTR__QUERY) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;
@@ -96,7 +96,7 @@ impl Wasmtime {
         };
 
         let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> = {
-            match instance.get_typed_func(&mut store, symbols::EXECUTE_FN) {
+            match instance.get_typed_func(&mut store, symbols::CTR__UPDATE) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;

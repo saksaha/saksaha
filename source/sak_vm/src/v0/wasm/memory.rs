@@ -50,7 +50,7 @@ impl Wasmtime {
         // used to copy the bytes into the module's memory.
         // Then, return the offset.
         let alloc: TypedFunc<i32, i32> = instance
-            .get_typed_func(&mut *store, symbols::ALLOC_FN)
+            .get_typed_func(&mut *store, symbols::CTR__ALLOC)
             .expect("expected alloc function not found");
 
         let guest_ptr_offset = alloc.call(&mut *store, bytes.len() as i32)? as isize;

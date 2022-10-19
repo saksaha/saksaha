@@ -33,10 +33,10 @@ pub fn query2(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, Contract
         ptr_param.copy_from(param.as_ptr(), param.len());
 
         let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
-        hello(ptr as i32, 1);
+        HOST__log(ptr as i32, 1);
 
-        let len = HOST__get_latest_len(0, 0);
-        hello(len, 2);
+        let len = HOST__get_latest_return_len(0, 0);
+        HOST__log(len, 2);
 
         // let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
     }

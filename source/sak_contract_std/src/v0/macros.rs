@@ -3,11 +3,11 @@ macro_rules! contract_bootstrap {
     () => {
         #[link(wasm_import_module = "host")]
         extern "C" {
-            fn hello(param1: i32, param2: i32) -> i32;
+            fn HOST__log(param1: i32, param2: i32) -> i32;
 
             fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
 
-            fn HOST__get_latest_len(p1: i32, p2: i32) -> i32;
+            fn HOST__get_latest_return_len(p1: i32, p2: i32) -> i32;
         }
 
         /// Allocate memory into the module's linear memory
@@ -96,7 +96,7 @@ macro_rules! contract_bootstrap {
         }
 
         #[no_mangle]
-        pub unsafe extern "C" fn CTR__execute(
+        pub unsafe extern "C" fn CTR__update(
             storage_ptr: *mut u8,
             storage_len: usize,
             request_ptr: *mut u8,

@@ -161,9 +161,9 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
 
 fn post_process_wasm(wasm_path: PathBuf) -> Result<PathBuf, CIError> {
     let multi_return_symbols = vec![
-        format!("{} i32 i32", symbols::INIT_FN),
-        format!("{} i32 i32", symbols::QUERY_FN),
-        format!("{} i32 i32 i32 i32", symbols::EXECUTE_FN),
+        format!("{} i32 i32", symbols::CTR__INIT),
+        format!("{} i32 i32", symbols::CTR__QUERY),
+        format!("{} i32 i32 i32 i32", symbols::CTR__UPDATE),
     ];
 
     let ret =

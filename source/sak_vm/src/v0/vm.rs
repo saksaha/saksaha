@@ -59,7 +59,7 @@ impl SakVM {
         memory: Memory,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(), (i32, i32)> =
-            { instance.get_typed_func(&mut store, symbols::INIT_FN)? };
+            { instance.get_typed_func(&mut store, symbols::CTR__INIT)? };
 
         let (storage_ptr, storage_len) = contract_fn.call(&mut store, ())?;
 
@@ -82,7 +82,7 @@ impl SakVM {
         // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
-            { instance.get_typed_func(&mut store, symbols::QUERY_FN)? };
+            { instance.get_typed_func(&mut store, symbols::CTR__QUERY)? };
 
         let (request_bytes, request_len) = {
             let str = serde_json::to_value(request)?.to_string();
@@ -140,7 +140,7 @@ impl SakVM {
         // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
-            { instance.get_typed_func(&mut store, symbols::EXECUTE_FN)? };
+            { instance.get_typed_func(&mut store, symbols::CTR__UPDATE)? };
 
         let (request_bytes, request_len) = {
             let vec = serde_json::to_vec(&request)?;
