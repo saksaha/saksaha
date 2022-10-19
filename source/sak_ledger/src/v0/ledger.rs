@@ -78,7 +78,7 @@ impl SakLedger {
         };
 
         if let Some(bc) = genesis_block {
-            // ledger.insert_genesis_block(bc).await?;
+            ledger.insert_genesis_block(bc).await?;
         }
 
         let latest_height = match ledger.ledger_db.get_latest_block_height()? {
@@ -88,12 +88,10 @@ impl SakLedger {
 
         info!(
             "Initialized Blockchain, latest added height (none if genesis \
-                block has not been inserted): {}",
-            latest_height.green(),
+            block has not been inserted): {}",
+            latest_height,
         );
 
         Ok(ledger)
     }
-
-    pub async fn run(&self) {}
 }

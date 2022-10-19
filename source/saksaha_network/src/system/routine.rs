@@ -99,7 +99,7 @@ impl Routine {
 
             info!(
                 "Bound udp socket for P2P discovery, addr: {}",
-                socket_addr.to_string().yellow(),
+                socket_addr.to_string(),
             );
 
             (socket, socket_addr.port())
@@ -109,7 +109,7 @@ impl Routine {
             Ok((socket, socket_addr)) => {
                 info!(
                     "Bound tcp socket for RPC, addr: {}",
-                    socket_addr.to_string().yellow(),
+                    socket_addr.to_string(),
                 );
 
                 (socket, socket_addr)
@@ -126,7 +126,7 @@ impl Routine {
             Ok((socket, socket_addr)) => {
                 info!(
                     "Bound tcp socket for P2P host, addr: {}",
-                    socket_addr.to_string().yellow(),
+                    socket_addr.to_string(),
                 );
 
                 (socket, socket_addr.port())

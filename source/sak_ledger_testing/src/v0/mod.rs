@@ -1,4 +1,4 @@
-use crate::LedgerParamsError;
+use crate::LedgerTestingError;
 use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 
@@ -12,7 +12,7 @@ pub const DUMMY_SN: [u8; 32] = [
     161, 60, 250, 110, 102, 175, 33, 193, 105, 88, 32, 70,
 ];
 
-pub fn mock_rt_1() -> Result<[u8; 32], LedgerParamsError> {
+pub fn mock_rt_1() -> Result<[u8; 32], LedgerTestingError> {
     let dummy_cm = ScalarExt::parse_arr(&DUMMY_CM)?;
 
     let mk_tree_init = MerkleTreeSim::init(CM_TREE_DEPTH, vec![dummy_cm])?;
@@ -21,3 +21,7 @@ pub fn mock_rt_1() -> Result<[u8; 32], LedgerParamsError> {
 
     Ok(dummy_merkle_rt)
 }
+
+// pub fn new_coin_1() -> Result<NewCoin, LedgerTestingError> {
+//     NewCoin
+// }

@@ -334,7 +334,7 @@ async fn make_disc_args(test_disc_args: &TestDiscArgs) -> DiscoveryArgs {
 
         info!(
             "Bound udp socket for P2P discovery, addr: {}",
-            socket_addr.to_string().yellow(),
+            socket_addr.to_string(),
         );
 
         (socket, socket_addr.port())

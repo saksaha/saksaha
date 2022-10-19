@@ -3,7 +3,8 @@ use sak_crypto::ScalarExt;
 use sak_crypto::{MerkleTreeSim, Scalar};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
-use sak_proof::{CoinProof, NewCoin, OldCoin};
+use sak_proof::CoinProof;
+use sak_proof_types::{NewCoin, OldCoin};
 
 use type_extension::U8Array;
 
@@ -183,22 +184,22 @@ fn make_test_context() -> (OldCoin, NewCoin, NewCoin, Scalar) {
     )
 }
 
-#[tokio::test(flavor = "multi_thread")]
-pub async fn test_make_a_proof_1_to_2_and_verify_it() {
-    SakLogger::init_test_console().unwrap();
+// #[tokio::test(flavor = "multi_thread")]
+// pub async fn test_make_a_proof_1_to_2_and_verify_it() {
+//     SakLogger::init_test_console().unwrap();
 
-    let (coin_1_old, coin_1_new, coin_2_new, _merkle_rt) = make_test_context();
+//     let (coin_1_old, coin_1_new, coin_2_new, _merkle_rt) = make_test_context();
 
-    let proof = CoinProof::generate_proof_1_to_2(
-        //
-        coin_1_old, //
-        coin_1_new, //
-        coin_2_new,
-    )
-    .unwrap();
+//     let proof = CoinProof::generate_proof_1_to_2(
+//         //
+//         coin_1_old, //
+//         coin_1_new, //
+//         coin_2_new,
+//     )
+//     .unwrap();
 
-    println!("proof: {:#?}", proof);
-}
+//     println!("proof: {:#?}", proof);
+// }
 
 #[tokio::test(flavor = "multi_thread")]
 pub async fn test_get_auth_path() {

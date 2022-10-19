@@ -4,7 +4,7 @@ use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
-use sak_ledger_params::DUMMY_SN;
+use sak_ledger_testing::DUMMY_SN;
 use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
 use sak_types::{
@@ -210,7 +210,7 @@ impl SakLedger {
     }
 
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
-        let dummy_merkle_rt = sak_ledger_params::mock_rt_1().unwrap();
+        let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
 
         if merkle_rt == &dummy_merkle_rt {
             return true;
