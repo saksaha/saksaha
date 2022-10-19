@@ -10,8 +10,7 @@ use sak_crypto::{MerkleTreeSim, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_testing::DUMMY_SN;
 use sak_proof::CoinProof;
-use sak_proof::NewCoin;
-use sak_proof::OldCoin;
+use sak_proof_types::{NewCoin, OldCoin};
 use type_extension::U8Array;
 
 pub fn mock_pour_tc_custom(

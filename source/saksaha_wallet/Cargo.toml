@@ -31,6 +31,7 @@ sak_contract_std = { path = "../sak_contract_std" }
 sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_kv_db = { path = "../sak_kv_db" }
 sak_proof = { path = "../sak_proof" }
+sak_proof_types = { path = "../sak_proof_types" }
 sak_utils_net = { path = "../sak_utils_net" }
 
 [dev-dependencies]

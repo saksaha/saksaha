@@ -3,7 +3,8 @@ use sak_crypto::ScalarExt;
 use sak_crypto::{MerkleTreeSim, Scalar};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
-use sak_proof::{CoinProof, NewCoin, OldCoin};
+use sak_proof::CoinProof;
+use sak_proof_types::{NewCoin, OldCoin};
 
 use type_extension::U8Array;
 
