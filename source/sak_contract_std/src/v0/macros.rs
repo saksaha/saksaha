@@ -5,7 +5,7 @@ macro_rules! contract_bootstrap {
         extern "C" {
             fn HOST__log(param1: i32, param2: i32) -> i32;
 
-            fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
+            fn HOST__get_mrs_data(param1: *mut u8, param2: u32) -> i32;
 
             fn HOST__get_latest_return_len(p1: i32, p2: i32) -> i32;
         }
@@ -80,8 +80,6 @@ macro_rules! contract_bootstrap {
                     // storage
                 );
 
-            // let result: Result<_, sak_contract_std::ContractError> = Ok(vec![]);
-
             {
                 let mut result: sak_contract_std::InvokeResult =
                     sak_contract_std::return_err_2!(result);
@@ -143,11 +141,34 @@ macro_rules! contract_bootstrap {
             }
         }
 
-        pub struct ContractCtx;
+        $crate::define_contract_ctx!();
+    };
+}
+
+#[macro_export]
+macro_rules! define_contract_ctx {
+    () => {
+        pub struct ContractCtx {}
 
         impl ContractCtx {
-            unsafe fn get_mrs_data(&self, ptr: *mut u8, b: i32) -> usize {
-                HOST__get_mrs_data(ptr, b) as usize
+            unsafe fn get_mrs_data(
+                &self,
+                // ptr: *mut u8, b: i32
+                key: &String,
+            ) -> Vec<u8> {
+                // let param = "string";
+                let key_len = key.len();
+                let ptr_key = CTR__alloc(key_len);
+                ptr_key.copy_from(key.as_ptr(), key_len);
+
+                let ptr = HOST__get_mrs_data(ptr_key, key_len as u32) as usize;
+                HOST__log(ptr as i32, 1);
+
+                let len = HOST__get_latest_return_len(0, 0);
+                HOST__log(len, 2);
+
+                let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
+                data
             }
 
             unsafe fn put_mrs_data(&self, arg: usize) -> usize {

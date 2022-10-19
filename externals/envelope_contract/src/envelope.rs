@@ -25,20 +25,16 @@ pub fn init() -> Result<Storage, ContractError> {
 }
 
 pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
-    let storage = vec![];
+    let storage = vec![]; // soon will be removed
 
     unsafe {
-        let param = "string";
-        let ptr_param = CTR__alloc(param.len());
-        ptr_param.copy_from(param.as_ptr(), param.len());
+        let param = "key".to_string();
 
-        let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
-        HOST__log(ptr as i32, 1);
+        let data1 = ctx.get_mrs_data(&param); // this works
 
-        let len = HOST__get_latest_return_len(0, 0);
-        HOST__log(len, 2);
+        let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
-        // let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
+        return Ok(data2);
     }
 
     match request.req_type.as_ref() {

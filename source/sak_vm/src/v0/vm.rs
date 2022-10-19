@@ -15,11 +15,11 @@ impl ContractProcess for SakVM {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
-        match ctr_fn {
+        let res = match ctr_fn {
             ContractFn::Init => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_init(instance, store, memory);
+                Self::invoke_init(instance, store, memory)
             }
             ContractFn::Query(
                 request,
@@ -27,10 +27,10 @@ impl ContractProcess for SakVM {
             ) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_query(
+                Self::invoke_query(
                     instance, store, memory, request,
                     // storage
-                );
+                )
             }
             ContractFn::Execute(
                 request,
@@ -38,12 +38,16 @@ impl ContractProcess for SakVM {
             ) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_execute(
+                Self::invoke_execute(
                     instance, store, memory, request,
                     // storage
-                );
+                )
             }
         };
+
+        println!("res: {:?}", res.as_ref().unwrap().result);
+
+        res
     }
 }
 

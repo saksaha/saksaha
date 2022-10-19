@@ -1,4 +1,4 @@
-use crate::VMError;
+use crate::{v0::wasm::Wasmtime, VMError};
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
 use sak_vm_interface::InstanceState;
@@ -23,9 +23,8 @@ pub(crate) fn make_linker(
         symbols::HOST__LOG,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
             let state = caller.data_mut();
-            println!("state: {:?}", state);
-            println!("hello(): param1: {}", param);
-            println!("hello(): param2: {}", param2);
+            println!("log(): state: {:?}", state);
+            println!("log(): params: {}, {}", param, param2);
 
             param * 2
         },
@@ -34,34 +33,36 @@ pub(crate) fn make_linker(
     linker.func_wrap(
         "host",
         symbols::HOST__GET_MRS_DATA,
-        move |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
+        move |mut caller: Caller<InstanceState>, ptr_arg: u32, len_arg: u32| {
             let state = caller.data_mut();
-            println!("state: {:?}", state);
+            println!(
+                "get_mrs_data(): state: {:?}, params: {}, {}",
+                state, ptr_arg, len_arg
+            );
 
-            match caller.get_export(symbols::MEMORY) {
-                Some(exp) => {
-                    let memory = exp.into_memory().unwrap();
-                    let m = memory.data(&mut caller);
+            let maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
+            let memory = maybe_memory.into_memory().unwrap();
 
-                    println!("aaaaaaaaaa, {:?}", m);
+            // let result: Vec<u8>;
+            // unsafe {
+            //     result =
+            //         Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
+            // }
+            // let mut result = vec![];
+            let maybe_arg = memory
+                .data(&caller)
+                .get(ptr_arg as usize..)
+                .and_then(|arr| arr.get(..len_arg as usize));
 
-                    let a = m
-                        .get(param as u32 as usize..)
-                        .and_then(|arr| arr.get(..param2 as u32 as usize))
-                        .unwrap();
+            let arg = {
+                let maybe_arg = maybe_arg.ok_or("arg should be given").unwrap();
+                String::from_utf8(maybe_arg.to_vec()).expect("arg should be parsable string")
+            };
 
-                    let ap = std::str::from_utf8(&a).unwrap();
+            println!("get_mrs_data(): arg: {}", arg);
 
-                    println!("aaaaaaaaaa22, {:?}", ap);
-                }
-                None => {}
-            }
-
-            // println!("555 {:?}", store_accessor.get_mrs_data());
-
-            let data = Data { d: 123 };
-
-            let data_bytes = match serde_json::to_vec(&data) {
+            let dummy_data = Data { d: 123 };
+            let data_bytes = match serde_json::to_vec(&dummy_data) {
                 Ok(b) => b,
                 Err(err) => {
                     error!("Error serializing mrs data, err: {}", err);
@@ -69,10 +70,12 @@ pub(crate) fn make_linker(
                     vec![]
                 }
             };
+            let data_len = data_bytes.len();
 
             println!(
-                "get_mrs_data(): data: {:?}, getting memory allocation",
+                "get_mrs_data(): data: {:?}, len: {}, getting memory allocation",
                 &data_bytes,
+                &data_bytes.len(),
             );
 
             let alloc = caller
@@ -84,11 +87,15 @@ pub(crate) fn make_linker(
 
             let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
 
-            println!("get_mrs_data(): param: {:?}", param);
-            println!("get_mrs_data(): param2: {}", param2);
-            println!("get_mrs_data(): ptr_offset: {:?}", ptr_offset);
+            unsafe {
+                let raw = memory.data_ptr(&caller).offset(ptr_offset);
+                raw.copy_from(data_bytes.as_ptr(), data_len);
+            }
 
-            513
+            let store = caller.data_mut();
+            store.len = data_len;
+
+            ptr_offset as i32
         },
     )?;
 
@@ -97,8 +104,10 @@ pub(crate) fn make_linker(
         symbols::HOST__GET_LATEST_RETURN_LEN,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
             let mut state = caller.data_mut();
-            println!("state: {:?}", state);
-            println!("get_latest_len(): returning get latest len");
+            println!(
+                "get_latest_return_len(): state: {:?}, params: {}, {}",
+                state, param, param2
+            );
 
             let ret = state.len as i32;
 
