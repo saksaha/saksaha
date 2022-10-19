@@ -151,16 +151,12 @@ macro_rules! define_contract_ctx {
         pub struct ContractCtx {}
 
         impl ContractCtx {
-            unsafe fn get_mrs_data(
-                &self,
-                // ptr: *mut u8, b: i32
-                key: &String,
-            ) -> Vec<u8> {
-                // let param = "string";
+            unsafe fn get_mrs_data(&self, key: &String) -> Vec<u8> {
                 let key_len = key.len();
                 let ptr_key = CTR__alloc(key_len);
                 ptr_key.copy_from(key.as_ptr(), key_len);
 
+                // TODO return value length pointer!
                 let ptr = HOST__get_mrs_data(ptr_key, key_len as u32) as usize;
                 HOST__log(ptr as i32, 1);
 
