@@ -3,8 +3,7 @@ use crate::{
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_std::{
-    contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
-    InvokeResult, RequestArgs, Storage,
+    contract_bootstrap, ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -14,17 +13,7 @@ pub struct OpenChReq {}
 
 contract_bootstrap!();
 
-#[link(wasm_import_module = "host")]
-extern "C" {
-    fn hello(param1: i32, param2: i32) -> i32;
-
-    fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
-
-    fn get_latest_len(p1: i32, p2: i32) -> i32;
-}
-
-define_init!();
-pub fn init2() -> Result<Storage, ContractError> {
+pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
         open_ch_reqs: HashMap::new(),
         chats: HashMap::new(),
@@ -35,24 +24,17 @@ pub fn init2() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-define_query!();
-pub fn query2(
-    ctx: ContractCtx,
-    request: CtrRequest,
-    storage: Storage,
-) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+    let storage = vec![]; // soon will be removed
+
     unsafe {
-        let param = "string";
-        let ptr_param = alloc(param.len());
-        ptr_param.copy_from(param.as_ptr(), param.len());
+        let param = "key".to_string();
 
-        let ptr = ctx.get_mrs_data(ptr_param, param.len() as i32);
-        hello(ptr as i32, 1);
+        let data1 = ctx.get_mrs_data(&param); // this works
 
-        let len = get_latest_len(0, 0);
-        hello(len, 2);
+        let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
-        // let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
+        return Ok(data2);
     }
 
     match request.req_type.as_ref() {
@@ -68,8 +50,7 @@ pub fn query2(
     }
 }
 
-define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
     match request.req_type.as_ref() {
         OPEN_CH => {
             return handle_open_channel(storage, request.args);

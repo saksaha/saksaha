@@ -1,8 +1,5 @@
 use crate::AddValidatorParams;
-use sak_contract_std::{
-    contract_bootstrap, define_execute, define_init, define_query, ContractError, CtrRequest,
-    RequestArgs, Storage,
-};
+use sak_contract_std::{contract_bootstrap, ContractError, CtrRequest, RequestArgs, Storage};
 // use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -16,19 +13,9 @@ pub struct ValidatorStorage {
     pub validators: Vec<String>,
 }
 
-#[link(wasm_import_module = "host")]
-extern "C" {
-    fn hello(param1: i32, param2: i32) -> i32;
-
-    fn HOST__get_mrs_data(param1: *mut u8, param2: i32) -> i32;
-
-    fn get_latest_len(p1: i32, p2: i32) -> i32;
-}
-
 contract_bootstrap!();
 
-define_init!();
-pub fn init2() -> Result<Vec<u8>, ContractError> {
+pub fn init() -> Result<Vec<u8>, ContractError> {
     let storage = ValidatorStorage {
         validators: vec![
             // TODO public_key of 'dev_local_1' profile
@@ -45,12 +32,8 @@ pub fn init2() -> Result<Vec<u8>, ContractError> {
     Ok(v)
 }
 
-define_query!();
-pub fn query2(
-    ctx: ContractCtx,
-    request: CtrRequest,
-    storage: Storage,
-) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+    let storage = vec![];
     match request.req_type.as_ref() {
         "get_validator" => {
             return handle_get_validator(storage);
@@ -74,8 +57,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
     Ok(ret)
 }
 
-define_execute!();
-pub fn execute2(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
+pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
     match request.req_type.as_ref() {
         "add_validator" => {
             return handle_add_validator(storage, request.args);

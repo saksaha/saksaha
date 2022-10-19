@@ -278,8 +278,6 @@ impl Wallet {
                 .await?;
         }
 
-        println!("333");
-
         new_coin_1.update_tx_hash(tx_hash.clone());
         new_coin_2.update_tx_hash(tx_hash.clone());
 
