@@ -30,6 +30,11 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
     unsafe {
         let param = "key".to_string();
 
+        // ctx.mrs => {}
+        // ctx.mrs.chats.put("key", "val");
+        // ctx.mrs.chats.get("key");
+        // chats.get("key");
+
         let data1 = ctx.get_mrs_data(&param); // this works
 
         let data2 = ctx.get_mrs_data(&param); // consecutive call works, too

@@ -43,12 +43,6 @@ pub(crate) fn make_linker(
             let maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
             let memory = maybe_memory.into_memory().unwrap();
 
-            // let result: Vec<u8>;
-            // unsafe {
-            //     result =
-            //         Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
-            // }
-            // let mut result = vec![];
             let maybe_arg = memory
                 .data(&caller)
                 .get(ptr_arg as usize..)
@@ -60,6 +54,8 @@ pub(crate) fn make_linker(
             };
 
             println!("get_mrs_data(): arg: {}", arg);
+
+            // let v = mrs.get("a")
 
             let dummy_data = Data { d: 123 };
             let data_bytes = match serde_json::to_vec(&dummy_data) {
