@@ -10,8 +10,6 @@ fn main() -> ExitCode {
         if std::env::var("RUST_LOG").is_err() {
             std::env::set_var("RUST_LOG", RUST_LOG_ENV);
         }
-
-        // sak_logger::init(false);
     }
 
     let app = Command::new("Sak Wasm post processor")
@@ -29,6 +27,13 @@ fn main() -> ExitCode {
                 .long("file")
                 .required(true)
                 .takes_value(true),
+        )
+        .arg(
+            Arg::new("multi-return-symbols")
+                .long("multi-return-symbols")
+                .multiple_values(true)
+                .takes_value(true)
+                .required(true),
         );
 
     let matches = app.get_matches();
@@ -47,11 +52,29 @@ fn main() -> ExitCode {
         PathBuf::from(p)
     };
 
-    postprocess_wasm_file(wasm_file, output_path);
+    let return_symbols = {
+        let values = matches
+            .values_of("multi-return-symbols")
+            .expect("multi-return-symbols should be provided");
+
+        values.map(|v| v.to_string()).collect()
+    };
+
+    postprocess_wasm_file(wasm_file, output_path, return_symbols);
 
     return ExitCode::SUCCESS;
 }
 
-fn postprocess_wasm_file(src_path: PathBuf, output_path: Option<PathBuf>) {
-    wasm_postprocess::make_wasm_have_multiple_returns(src_path, output_path);
+fn postprocess_wasm_file(
+    src_path: PathBuf,
+    output_path: Option<PathBuf>,
+    multi_return_symbols: Vec<String>,
+) {
+    if let Err(err) = wasm_postprocess::make_wasm_have_multiple_returns(
+        src_path,
+        output_path,
+        multi_return_symbols,
+    ) {
+        println!("Error post procerssing wasm file, err: {}", err);
+    }
 }

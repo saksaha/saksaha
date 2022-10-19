@@ -1,9 +1,9 @@
-use super::{constants::Constants, state::InstanceState, wasmtm::Wasmtime};
+use super::wasm::Wasmtime;
 use crate::VMError;
-use sak_contract_std::{ContractFn, CtrRequest, Storage};
+use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
 use sak_logger::{error, info};
 // use sak_store_accessor::StoreAccessor;
-use sak_vm_interface::{ContractProcess, InvokeReceipt, VMInterfaceError};
+use sak_vm_interface::{ContractProcess, InstanceState, InvokeReceipt, VMInterfaceError};
 use std::sync::Arc;
 use wasmtime::{Instance, Memory, Store, TypedFunc};
 
@@ -15,11 +15,11 @@ impl ContractProcess for SakVM {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
-        match ctr_fn {
+        let res = match ctr_fn {
             ContractFn::Init => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_init(instance, store, memory);
+                Self::invoke_init(instance, store, memory)
             }
             ContractFn::Query(
                 request,
@@ -27,10 +27,10 @@ impl ContractProcess for SakVM {
             ) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_query(
+                Self::invoke_query(
                     instance, store, memory, request,
                     // storage
-                );
+                )
             }
             ContractFn::Execute(
                 request,
@@ -38,12 +38,16 @@ impl ContractProcess for SakVM {
             ) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm)?;
 
-                return Self::invoke_execute(
+                Self::invoke_execute(
                     instance, store, memory, request,
                     // storage
-                );
+                )
             }
         };
+
+        println!("res: {:?}", res.as_ref().unwrap().result);
+
+        res
     }
 }
 
@@ -59,7 +63,7 @@ impl SakVM {
         memory: Memory,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(), (i32, i32)> =
-            { instance.get_typed_func(&mut store, Constants::INIT)? };
+            { instance.get_typed_func(&mut store, symbols::CTR__INIT)? };
 
         let (storage_ptr, storage_len) = contract_fn.call(&mut store, ())?;
 
@@ -82,7 +86,7 @@ impl SakVM {
         // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
-            { instance.get_typed_func(&mut store, Constants::QUERY)? };
+            { instance.get_typed_func(&mut store, symbols::CTR__QUERY)? };
 
         let (request_bytes, request_len) = {
             let str = serde_json::to_value(request)?.to_string();
@@ -140,7 +144,7 @@ impl SakVM {
         // storage: Storage,
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: TypedFunc<(i32, i32), (i32, i32)> =
-            { instance.get_typed_func(&mut store, Constants::EXECUTE)? };
+            { instance.get_typed_func(&mut store, symbols::CTR__UPDATE)? };
 
         let (request_bytes, request_len) = {
             let vec = serde_json::to_vec(&request)?;
@@ -218,7 +222,7 @@ impl SakVM {
         };
 
         let memory = instance
-            .get_memory(&mut store, Constants::MEMORY)
+            .get_memory(&mut store, symbols::MEMORY)
             .expect("expected memory not found");
 
         Ok((instance, store, memory))
