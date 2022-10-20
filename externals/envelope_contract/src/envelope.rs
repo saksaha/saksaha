@@ -2,7 +2,7 @@ use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
-use sak_contract_derive::Storage as Stor;
+use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
     contract_bootstrap, ContractError, CtrRequest, InvokeResult, List, RequestArgs, Storage,
 };
@@ -14,9 +14,9 @@ pub struct OpenChReq {}
 
 contract_bootstrap!();
 
-#[derive(Debug, Stor)]
-struct SomeStorage {
-    pub f3: List,
+#[derive(Debug, MRSStore)]
+pub struct SomeMRSStorage {
+    pub chats: List,
 }
 
 pub fn init() -> Result<Storage, ContractError> {
@@ -30,13 +30,16 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(
+    ctx: ContractCtx<SomeMRSStorage>,
+    request: CtrRequest,
+) -> Result<Vec<u8>, ContractError> {
     let storage = vec![]; // soon will be removed
 
     unsafe {
         let param = "key".to_string();
 
-        let s = SomeStorage::new_as_contract_param();
+        // let s = SomeMRSStorage::new_as_contract_param();
 
         let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
@@ -57,7 +60,7 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
 }
 
 pub fn update(
-    ctx: ContractCtx,
+    ctx: ContractCtx<SomeMRSStorage>,
     request: CtrRequest,
     // storage: &mut Storage
 ) -> Result<InvokeResult, ContractError> {

@@ -1,6 +1,6 @@
 use crate::AddValidatorParams;
+use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{contract_bootstrap, ContractError, CtrRequest, RequestArgs, Storage};
-// use sak_store_accessor::StoreAccessor;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -14,6 +14,9 @@ pub struct ValidatorStorage {
 }
 
 contract_bootstrap!();
+
+#[derive(MRSStore, Debug)]
+pub struct St {}
 
 pub fn init() -> Result<Vec<u8>, ContractError> {
     let storage = ValidatorStorage {
@@ -32,7 +35,7 @@ pub fn init() -> Result<Vec<u8>, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx<St>, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let storage = vec![];
     match request.req_type.as_ref() {
         "get_validator" => {
@@ -57,7 +60,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
     Ok(ret)
 }
 
-pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn update(ctx: ContractCtx<St>, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let mut storage = vec![];
     match request.req_type.as_ref() {
         "add_validator" => {

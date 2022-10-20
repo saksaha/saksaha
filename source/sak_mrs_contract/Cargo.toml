@@ -9,6 +9,7 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 sak_contract_std = { path = "../sak_contract_std" }
+sak_contract_derive = { path = "../sak_contract_derive" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 type_extension = { path = "../type_extension" }
