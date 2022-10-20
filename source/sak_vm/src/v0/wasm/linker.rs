@@ -2,10 +2,13 @@ use crate::{v0::wasm::Wasmtime, VMError};
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
 use sak_vm_interface::InstanceState;
+use std::mem::size_of;
 // use sak_store_accessor::StoreAccessor;
+use sak_vm_interface::wasmtime::{
+    Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 #[derive(Serialize, Deserialize)]
 pub struct Data {
@@ -22,9 +25,7 @@ pub(crate) fn make_linker(
         "host",
         symbols::HOST__LOG,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-            // let state = caller.data_mut();
-            // println!("log(): state: {:?}", state);
-            println!("log(): params11: {}, {}", param, param2);
+            println!("log(): params: {}, {}", param, param2);
 
             param * 2
         },
@@ -65,14 +66,13 @@ pub(crate) fn make_linker(
                 }
             };
 
-            let data_len = data_bytes.len();
-            let data_len_2 = 3000 as u32;
-            let d = data_len_2.to_be_bytes();
-            let p = d.as_ptr();
+            let data_len = data_bytes.len() as u32;
+            let data_len_bytes = data_len.to_be_bytes();
+            let data_len_ptr = data_len_bytes.as_ptr();
 
             unsafe {
                 let raw = memory.data_ptr(&caller).offset(ptr_ret_len as isize);
-                raw.copy_from(p, 4);
+                raw.copy_from(data_len_ptr, size_of::<u32>());
             }
 
             println!(
@@ -92,11 +92,8 @@ pub(crate) fn make_linker(
 
             unsafe {
                 let raw = memory.data_ptr(&caller).offset(ptr_offset);
-                raw.copy_from(data_bytes.as_ptr(), data_len);
+                raw.copy_from(data_bytes.as_ptr(), data_len as usize);
             }
-
-            let store = caller.data_mut();
-            store.len = data_len;
 
             ptr_offset as i32
         },

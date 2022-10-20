@@ -4,9 +4,11 @@ use sak_contract_std::symbols;
 use sak_logger::{error, info};
 use sak_vm_interface::InstanceState;
 // use sak_store_accessor::StoreAccessor;
+use sak_vm_interface::wasmtime::{
+    Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 pub(crate) struct Wasmtime {}
 
@@ -86,8 +88,8 @@ impl Wasmtime {
             }
         };
 
-        let _query: TypedFunc<(i32, i32, i32, i32), (i32, i32)> = {
-            match instance.get_typed_func(&mut store, symbols::CTR__QUERY) {
+        let _execute: TypedFunc<(i32, i32), (i32, i32, i32)> = {
+            match instance.get_typed_func(&mut store, symbols::CTR__EXECUTE) {
                 Ok(o) => o,
                 Err(err) => {
                     return false;
@@ -95,7 +97,7 @@ impl Wasmtime {
             }
         };
 
-        let _execute: TypedFunc<(i32, i32, i32, i32), (i32, i32, i32, i32)> = {
+        let _update: TypedFunc<(i32, i32), (i32, i32, i32, i32)> = {
             match instance.get_typed_func(&mut store, symbols::CTR__UPDATE) {
                 Ok(o) => o,
                 Err(err) => {

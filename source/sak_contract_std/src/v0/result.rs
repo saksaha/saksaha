@@ -1,6 +1,6 @@
-pub type InvokeResult = Vec<u8>;
+use crate::ContractError;
 
-pub type ContractError = Box<dyn std::error::Error + Send + Sync>;
+pub type InvokeResult = Vec<u8>;
 
 pub const ERROR_PLACEHOLDER: [u8; 6] = [1, 2, 3, 4, 5, 6];
 

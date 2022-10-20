@@ -37,10 +37,9 @@ macro_rules! contract_bootstrap {
 
         #[no_mangle]
         pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
-            let storage: Result<sak_contract_std::Storage, sak_contract_std::ContractError> =
-                init();
+            let storage: Result<$crate::Storage, $crate::ContractError> = init();
 
-            let mut storage = sak_contract_std::return_err_2!(storage);
+            let mut storage = $crate::return_err_2!(storage);
 
             let storage_ptr = storage.as_mut_ptr();
             let storage_len = storage.len();
@@ -51,82 +50,57 @@ macro_rules! contract_bootstrap {
         }
 
         #[no_mangle]
-        pub unsafe extern "C" fn CTR__query(
-            // storage_ptr: *mut u8,
-            // storage_len: usize,
+        pub unsafe extern "C" fn CTR__execute(
             request_ptr: *mut u8,
             request_len: usize,
-        ) -> (*mut u8, i32) {
-            // let storage: Storage = Vec::from_raw_parts(
-            //     storage_ptr, //
-            //     storage_len,
-            //     storage_len,
-            // );
-
-            let request = Vec::from_raw_parts(
-                request_ptr, //
-                request_len,
-                request_len,
-            );
-
-            let request = serde_json::from_slice(&request);
-            let request: sak_contract_std::CtrRequest = sak_contract_std::return_err_2!(request);
+        ) -> (*mut u8, i32, *mut u8, i32) {
+            let request = $crate::parse_request!(request_ptr, request_len);
 
             let ctx = ContractCtx {};
 
-            let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                query(
-                    ctx, request,
-                    // storage
-                );
+            let result: Result<$crate::InvokeResult, $crate::ContractError> = query(ctx, request);
 
             {
-                let mut result: sak_contract_std::InvokeResult =
-                    sak_contract_std::return_err_2!(result);
+                let mut result: $crate::InvokeResult =
+                    $crate::return_err_4!(result, "something failed");
 
                 let result_ptr = result.as_mut_ptr();
                 let result_len = result.len();
 
                 std::mem::forget(result);
 
-                return (result_ptr, result_len as i32);
+                let mut empty_vec = Vec::new();
+                let empty_vec_ptr = empty_vec.as_mut_ptr();
+                let empty_vec_len = empty_vec.len();
+
+                return (
+                    result_ptr,
+                    result_len as i32,
+                    empty_vec_ptr,
+                    empty_vec_len as i32,
+                );
             }
         }
 
         #[no_mangle]
         pub unsafe extern "C" fn CTR__update(
-            storage_ptr: *mut u8,
-            storage_len: usize,
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32, *mut u8, i32) {
-            let mut storage: sak_contract_std::Storage = Vec::from_raw_parts(
-                storage_ptr, //
-                storage_len,
-                storage_len,
-            );
+            let request = $crate::parse_request!(request_ptr, request_len);
 
-            let request = Vec::from_raw_parts(
-                request_ptr, //
-                request_len,
-                request_len,
-            );
+            let ctx = ContractCtx {};
 
-            let request = serde_json::from_slice(&request);
-
-            let request: sak_contract_std::CtrRequest =
-                sak_contract_std::return_err_4!(request, "serde request parsing fail");
-
-            let result: Result<sak_contract_std::InvokeResult, sak_contract_std::ContractError> =
-                update(request, &mut storage);
+            let result: Result<$crate::InvokeResult, $crate::ContractError> = update(ctx, request);
 
             {
-                let mut result: sak_contract_std::InvokeResult =
-                    sak_contract_std::return_err_4!(result, "serde result parsing fail");
+                let mut result: $crate::InvokeResult =
+                    $crate::return_err_4!(result, "serde result parsing fail");
 
                 let result_ptr = result.as_mut_ptr();
                 let result_len = result.len();
 
+                let mut storage = vec![];
                 let storage_ptr = storage.as_mut_ptr();
                 let storage_len = storage.len();
 
@@ -153,36 +127,42 @@ macro_rules! define_contract_ctx {
         impl ContractCtx {
             unsafe fn get_mrs_data(&self, key: &String) -> Vec<u8> {
                 let key_len = key.len();
-                let ptr_key = CTR__alloc(key_len);
-                ptr_key.copy_from(key.as_ptr(), key_len);
+                let key_ptr = CTR__alloc(key_len);
+                key_ptr.copy_from(key.as_ptr(), key_len);
 
-                let ptr_ret_len = CTR__alloc(4);
+                let ret_len_ptr = CTR__alloc($crate::RET_LEN_SIZE);
+                let ret_ptr = HOST__get_mrs_data(key_ptr, key_len as u32, ret_len_ptr as *mut u32);
+                let ret_len = {
+                    let bytes: [u8; $crate::RET_LEN_SIZE] =
+                        std::slice::from_raw_parts(ret_len_ptr as *mut u8, $crate::RET_LEN_SIZE)
+                            .try_into()
+                            .unwrap();
+                    u32::from_be_bytes(bytes)
+                };
 
-                let ptr = HOST__get_mrs_data(ptr_key, key_len as u32, ptr_ret_len as *mut u32);
-                HOST__log(ptr as i32, 11);
+                HOST__log(ret_len as i32, 135);
 
-                let data_len: [u8; 4] = std::slice::from_raw_parts(ptr_ret_len as *mut u8, 4)
-                    .try_into()
-                    .unwrap();
-
-                let d = u32::from_be_bytes(data_len);
-                HOST__log(d as i32, 135);
-
-                let len = HOST__get_latest_return_len(0, 0);
-                HOST__log(len, 2);
-
-                let data = Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize);
+                let data =
+                    Vec::from_raw_parts(ret_ptr as *mut u8, ret_len as usize, ret_len as usize);
                 data
             }
 
             unsafe fn put_mrs_data(&self, arg: usize) -> usize {
-                // ptr, len
-
-                // HOST__put_mrs_data(ptr, len) as usize
                 0
             }
         }
     };
+}
+
+#[macro_export]
+macro_rules! parse_request {
+    ($ptr: expr, $len: expr) => {{
+        let request_vec = Vec::from_raw_parts($ptr, $len, $len);
+        let maybe_req = serde_json::from_slice(&request_vec);
+        let req: sak_contract_std::CtrRequest =
+            $crate::return_err_4!(maybe_req, "something failed");
+        req
+    }};
 }
 
 #[macro_export]

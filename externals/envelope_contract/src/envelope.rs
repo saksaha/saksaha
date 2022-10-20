@@ -30,8 +30,6 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
     unsafe {
         let param = "key".to_string();
 
-        // let data1 = ctx.get_mrs_data(&param); // this works
-
         let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
         return Ok(data2);
@@ -50,13 +48,18 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
     }
 }
 
-pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn update(
+    ctx: ContractCtx,
+    request: CtrRequest,
+    // storage: &mut Storage
+) -> Result<InvokeResult, ContractError> {
+    let mut storage = vec![];
     match request.req_type.as_ref() {
         OPEN_CH => {
-            return handle_open_channel(storage, request.args);
+            return handle_open_channel(&mut storage, request.args);
         }
         SEND_MSG => {
-            return handle_send_msg(storage, request.args);
+            return handle_send_msg(&mut storage, request.args);
         }
         _ => {
             return Err(format!("Wrong request type has been found in execution").into());

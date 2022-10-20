@@ -10,7 +10,7 @@ pub const CTR__DEALLOC: &str = "CTR__dealloc";
 pub const CTR__INIT: &str = "CTR__init";
 
 #[allow(non_upper_case_globals)]
-pub const CTR__QUERY: &str = "CTR__query";
+pub const CTR__EXECUTE: &str = "CTR__execute";
 
 #[allow(non_upper_case_globals)]
 pub const CTR__UPDATE: &str = "CTR__update";
