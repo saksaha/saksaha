@@ -28,9 +28,10 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
     }
 }
 
-pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<InvokeResult, ContractError> {
+pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<InvokeResult, ContractError> {
+    let mut storage = vec![];
     match request.req_type.as_ref() {
-        RESERVE => reserve_slot(storage, request.args),
+        RESERVE => reserve_slot(&mut storage, request.args),
         _ => Err(("Wrong request type has been found in execution").into()),
     }
 }
