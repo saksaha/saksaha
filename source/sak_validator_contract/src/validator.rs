@@ -57,10 +57,11 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
     Ok(ret)
 }
 
-pub fn update(request: CtrRequest, storage: &mut Storage) -> Result<Vec<u8>, ContractError> {
+pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+    let mut storage = vec![];
     match request.req_type.as_ref() {
         "add_validator" => {
-            return handle_add_validator(storage, request.args);
+            return handle_add_validator(&mut storage, request.args);
         }
         _ => {
             return Err(format!("Wrong request type has been found").into());

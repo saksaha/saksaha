@@ -2,10 +2,13 @@ use crate::{v0::wasm::Wasmtime, VMError};
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
 use sak_vm_interface::InstanceState;
+use std::mem::size_of;
 // use sak_store_accessor::StoreAccessor;
+use sak_vm_interface::wasmtime::{
+    Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use wasmtime::{Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc};
 
 #[derive(Serialize, Deserialize)]
 pub struct Data {
@@ -22,8 +25,6 @@ pub(crate) fn make_linker(
         "host",
         symbols::HOST__LOG,
         |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-            let state = caller.data_mut();
-            println!("log(): state: {:?}", state);
             println!("log(): params: {}, {}", param, param2);
 
             param * 2
@@ -33,7 +34,7 @@ pub(crate) fn make_linker(
     linker.func_wrap(
         "host",
         symbols::HOST__GET_MRS_DATA,
-        move |mut caller: Caller<InstanceState>, ptr_arg: u32, len_arg: u32| {
+        move |mut caller: Caller<InstanceState>, ptr_arg: u32, len_arg: u32, ptr_ret_len: u32| {
             let state = caller.data_mut();
             println!(
                 "get_mrs_data(): state: {:?}, params: {}, {}",
@@ -43,12 +44,6 @@ pub(crate) fn make_linker(
             let maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
             let memory = maybe_memory.into_memory().unwrap();
 
-            // let result: Vec<u8>;
-            // unsafe {
-            //     result =
-            //         Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
-            // }
-            // let mut result = vec![];
             let maybe_arg = memory
                 .data(&caller)
                 .get(ptr_arg as usize..)
@@ -70,7 +65,15 @@ pub(crate) fn make_linker(
                     vec![]
                 }
             };
-            let data_len = data_bytes.len();
+
+            let data_len = data_bytes.len() as u32;
+            let data_len_bytes = data_len.to_be_bytes();
+            let data_len_ptr = data_len_bytes.as_ptr();
+
+            unsafe {
+                let raw = memory.data_ptr(&caller).offset(ptr_ret_len as isize);
+                raw.copy_from(data_len_ptr, size_of::<u32>());
+            }
 
             println!(
                 "get_mrs_data(): data: {:?}, len: {}, getting memory allocation",
@@ -89,11 +92,8 @@ pub(crate) fn make_linker(
 
             unsafe {
                 let raw = memory.data_ptr(&caller).offset(ptr_offset);
-                raw.copy_from(data_bytes.as_ptr(), data_len);
+                raw.copy_from(data_bytes.as_ptr(), data_len as usize);
             }
-
-            let store = caller.data_mut();
-            store.len = data_len;
 
             ptr_offset as i32
         },

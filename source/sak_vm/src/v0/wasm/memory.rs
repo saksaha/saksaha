@@ -1,8 +1,8 @@
 use super::wasmtm::Wasmtime;
 use crate::VMError;
 use sak_contract_std::symbols;
+use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
 use sak_vm_interface::InstanceState;
-use wasmtime::{Instance, Memory, Store, TypedFunc};
 
 impl Wasmtime {
     pub(crate) unsafe fn read_memory(
