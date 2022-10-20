@@ -109,11 +109,12 @@ pub(crate) fn make_linker(
                 state, param, param2
             );
 
-            let ret = state.len as i32;
+            // let ret = state.len as i32;
 
-            state.len = 0;
+            // state.len = 0;
 
-            ret
+            0
+            // ret
         },
     )?;
 
