@@ -1,9 +1,14 @@
 [package]
-name = "sak_contract_std"
+name = "sak_contract_derive"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# for testing purpose
+[[bin]]
+name = "test"
+path = "src/bin/test/main.rs"
 
 [dependencies]
 sak_logger = { path = "../sak_logger" }
@@ -14,5 +19,9 @@ colored = "2"
 syn = "1.0"
 quote = "1.0"
 
+[dev-dependencies]
+sak_test_utils = { path = "../../source/sak_test_utils" }
+
 [lib]
-doctest = false # until stable beta is released
+proc-macro = true
+doctest = false   # until stable beta is released
