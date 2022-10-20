@@ -26,6 +26,7 @@ members = [
   "source/sak_utils_net",
   "source/sak_contract_std",
   "source/sak_contract_derive",
+  "source/sak_contract_test",
   "source/sak_machine",
   "source/sak_ledger",
   "source/sak_ledger_cfg",
