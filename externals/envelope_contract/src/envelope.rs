@@ -30,10 +30,7 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query(
-    ctx: ContractCtx<SomeMRSStorage>,
-    request: CtrRequest,
-) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let storage = vec![]; // soon will be removed
 
     unsafe {
@@ -60,7 +57,7 @@ pub fn query(
 }
 
 pub fn update(
-    ctx: ContractCtx<SomeMRSStorage>,
+    ctx: ContractCtx,
     request: CtrRequest,
     // storage: &mut Storage
 ) -> Result<InvokeResult, ContractError> {
@@ -239,6 +236,7 @@ fn handle_open_channel(
 }
 
 fn handle_send_msg(storage: &mut Storage, args: RequestArgs) -> Result<Vec<u8>, ContractError> {
+    // let a: _MRS;
     let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(&storage) {
         Ok(e) => e,
         Err(err) => return Err(format!("Failed to restore evl_storage, err: {:?}", err).into()),

@@ -21,7 +21,7 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx<St>, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     // let storage = vec![];
 
     match request.req_type.as_ref() {
@@ -32,7 +32,7 @@ pub fn query(ctx: ContractCtx<St>, request: CtrRequest) -> Result<Vec<u8>, Contr
     }
 }
 
-pub fn update(ctx: ContractCtx<St>, request: CtrRequest) -> Result<InvokeResult, ContractError> {
+pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<InvokeResult, ContractError> {
     let mut storage = vec![];
     match request.req_type.as_ref() {
         RESERVE => reserve_slot(&mut storage, request.args),

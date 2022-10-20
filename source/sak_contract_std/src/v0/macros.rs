@@ -56,6 +56,8 @@ macro_rules! contract_bootstrap {
         ) -> (*mut u8, i32, *mut u8, i32) {
             let request = $crate::parse_request!(request_ptr, request_len);
 
+            let a: _MRS;
+
             let mrs = __make_mrs_storage_param();
 
             let ctx = ContractCtx { mrs };
@@ -126,15 +128,11 @@ macro_rules! contract_bootstrap {
 #[macro_export]
 macro_rules! define_contract_ctx {
     () => {
-        pub struct ContractCtx<M> {
-            mrs: M,
+        pub struct ContractCtx {
+            mrs: _MRS,
         }
 
-        pub struct MRSAccessor {}
-
-        pub struct CtrStateAccessor {}
-
-        impl<M> ContractCtx<M> {
+        impl ContractCtx {
             unsafe fn get_mrs_data(&self, key: &String) -> Vec<u8> {
                 // let key_len = key.len();
                 // let key_ptr = CTR__alloc(key_len);

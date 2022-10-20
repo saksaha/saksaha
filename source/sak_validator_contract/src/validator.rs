@@ -35,7 +35,7 @@ pub fn init() -> Result<Vec<u8>, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx<St>, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let storage = vec![];
     match request.req_type.as_ref() {
         "get_validator" => {
@@ -60,7 +60,7 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
     Ok(ret)
 }
 
-pub fn update(ctx: ContractCtx<St>, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let mut storage = vec![];
     match request.req_type.as_ref() {
         "add_validator" => {

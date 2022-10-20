@@ -17,9 +17,9 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
     let field_type = fields.iter().map(|field| &field.ty);
     let struct_name = &input.ident;
 
-    // println!("333333333333333333333333333 {}", struct_name);
-
     TokenStream::from(quote! {
+        type _MRS = #struct_name;
+
         fn __make_mrs_storage_param() -> #struct_name {
             #struct_name::new_as_contract_param()
         }
@@ -56,8 +56,6 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
     let field_name = fields.iter().map(|field| &field.ident);
     let field_type = fields.iter().map(|field| &field.ty);
     let struct_name = &input.ident;
-
-    // println!("333333333333333333333333333 {}", struct_name);
 
     TokenStream::from(quote! {
         fn __make_mrs_storage_param() -> #struct_name {
