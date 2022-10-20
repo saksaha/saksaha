@@ -2,8 +2,9 @@ use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
+use sak_contract_derive::Storage as Stor;
 use sak_contract_std::{
-    contract_bootstrap, ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
+    contract_bootstrap, ContractError, CtrRequest, InvokeResult, List, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -12,6 +13,11 @@ pub const STORAGE_CAP: usize = 100;
 pub struct OpenChReq {}
 
 contract_bootstrap!();
+
+#[derive(Debug, Stor)]
+struct SomeStorage {
+    pub f3: List,
+}
 
 pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
@@ -29,6 +35,8 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
 
     unsafe {
         let param = "key".to_string();
+
+        let s = SomeStorage::new_as_contract_param();
 
         let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 

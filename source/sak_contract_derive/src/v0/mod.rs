@@ -20,6 +20,7 @@ pub(crate) fn _derive_storage_param(input: TokenStream) -> TokenStream {
     println!("333333333333333333333333333 {}", struct_name);
 
     TokenStream::from(quote! {
+        #[link(wasm_import_module = "host")]
         impl #struct_name {
             fn new_as_contract_param() -> #struct_name {
                 let a = #struct_name {#(
@@ -27,6 +28,10 @@ pub(crate) fn _derive_storage_param(input: TokenStream) -> TokenStream {
                 )*};
 
                 println!("a: {:?}", a);
+
+                unsafe {
+                    HOST__log(1, 2);
+                }
 
                 return a;
             }
