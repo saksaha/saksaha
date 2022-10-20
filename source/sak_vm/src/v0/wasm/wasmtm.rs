@@ -19,7 +19,7 @@ impl Wasmtime {
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
-        let instance_state = InstanceState { len: 0 };
+        let instance_state = InstanceState {};
         let mut store = Store::new(&engine, instance_state);
 
         let module = match Module::new(&engine, &wasm) {
