@@ -1,7 +1,6 @@
 mod utils;
 
 use crate::v0::utils::ContractTestUtils;
-use sak_contract_derive::Storage;
 use sak_contract_std::List;
 
 #[test]

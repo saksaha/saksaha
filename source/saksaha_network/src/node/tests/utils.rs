@@ -1,4 +1,5 @@
 use crate::ledger::Ledger;
+use crate::mrs::MRS;
 use crate::node::LocalNode;
 use crate::p2p::P2PHost;
 use crate::p2p::P2PHostArgs;
@@ -122,8 +123,13 @@ pub(crate) async fn make_test_context(
         .await
         .expect("P2P Host should be initialized");
 
+    let mrs = {
+        let m = MRS::init(&public_key_str).await.unwrap();
+        Arc::new(m)
+    };
+
     let vm: ContractProcessor = {
-        let v = SakVM::init().unwrap();
+        let v = SakVM::init(mrs).unwrap();
         Box::new(v)
     };
 
@@ -134,7 +140,7 @@ pub(crate) async fn make_test_context(
     };
 
     let machine = {
-        let m = SakMachine { ledger };
+        let m = SakMachine { ledger, mrs };
 
         Arc::new(m)
     };

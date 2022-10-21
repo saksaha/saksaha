@@ -1,7 +1,7 @@
-use crate::StoreAccessor;
+// use crate::StoreAccessor;
 
-impl StoreAccessor {
-    pub fn get_ledger_data(&self) {}
+// impl StoreAccessor {
+//     pub fn get_ledger_data(&self) {}
 
-    pub fn put_ledger_data(&self) {}
-}
+//     pub fn put_ledger_data(&self) {}
+// }
