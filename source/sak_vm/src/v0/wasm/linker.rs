@@ -54,6 +54,8 @@ pub(crate) fn make_linker(
                 String::from_utf8(maybe_arg.to_vec()).expect("arg should be parsable string")
             };
 
+            // MRS init
+
             println!("get_mrs_data(): arg: {}", arg);
 
             let dummy_data = Data { d: 123 };

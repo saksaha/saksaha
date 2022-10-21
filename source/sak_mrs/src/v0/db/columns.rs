@@ -1,1 +1,3 @@
-pub(crate) mod Columns {}
+pub(crate) mod Columns {
+    pub const CHATS: &str = "CHATS";
+}
