@@ -1,4 +1,7 @@
-use super::columns::{self, Columns};
+use super::columns::{
+    self,
+    Columns::{self, DATA},
+};
 use crate::MRSError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
 use sak_logger::info;
@@ -34,7 +37,7 @@ impl MRSDB {
     }
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
-        vec![]
+        vec![ColumnFamilyDescriptor::new(DATA, Options::default())]
     }
 
     pub(crate) fn make_cf_handle<'a>(
