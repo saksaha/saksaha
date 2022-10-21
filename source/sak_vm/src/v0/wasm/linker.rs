@@ -65,7 +65,16 @@ pub(crate) fn make_linker(
 
             println!("get_mrs_data(): arg: {}", arg);
 
+            // arg == {field}_{key}
+
+            let key: String = format!("{}_{}", "ctr_address", arg);
+
+            println!("test key: {:?}", key);
+
+            //----------------------------------------------
             let dummy_data = Data { d: 123 };
+            //----------------------------------------------
+
             let data_bytes = match serde_json::to_vec(&dummy_data) {
                 Ok(b) => b,
                 Err(err) => {
@@ -86,7 +95,7 @@ pub(crate) fn make_linker(
 
             println!(
                 "get_mrs_data(): data: {:?}, len: {}, getting memory allocation",
-                &data_bytes,
+                &String::from_utf8(data_bytes.clone()),
                 &data_bytes.len(),
             );
 

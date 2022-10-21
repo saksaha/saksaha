@@ -1,6 +1,15 @@
 #[macro_export]
 macro_rules! contract_bootstrap {
     () => {
+        $crate::define_host_ffi!();
+        $crate::define_ctr_fns!();
+        $crate::define_contract_ctx!();
+    };
+}
+
+#[macro_export]
+macro_rules! define_host_ffi {
+    () => {
         #[link(wasm_import_module = "host")]
         extern "C" {
             fn HOST__log(param1: i32, param2: i32) -> i32;
@@ -9,7 +18,12 @@ macro_rules! contract_bootstrap {
 
             fn HOST__get_latest_return_len(p1: i32, p2: i32) -> i32;
         }
+    };
+}
 
+#[macro_export]
+macro_rules! define_ctr_default_fns {
+    () => {
         /// Allocate memory into the module's linear memory
         /// and return the offset to the start of the block.
         #[no_mangle]
@@ -34,7 +48,12 @@ macro_rules! contract_bootstrap {
 
             std::mem::drop(data);
         }
+    };
+}
 
+#[macro_export]
+macro_rules! define_ctr_fns {
+    () => {
         #[no_mangle]
         pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
             let storage: Result<$crate::Storage, $crate::ContractError> = init();
@@ -118,8 +137,6 @@ macro_rules! contract_bootstrap {
                 )
             }
         }
-
-        $crate::define_contract_ctx!();
     };
 }
 
