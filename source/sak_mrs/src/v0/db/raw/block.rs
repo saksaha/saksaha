@@ -1,5 +1,5 @@
 use crate::{
-    v0::db::{columns::Columns::CHATS, MRSDB},
+    v0::db::{columns::Columns::DATA, MRSDB},
     MRSError,
 };
 use sak_crypto::Proof;
@@ -10,7 +10,7 @@ use std::convert::TryInto;
 
 impl MRSDB {
     pub fn get_dummy(&self, key: &String) -> Result<Option<String>, MRSError> {
-        let cf = self.make_cf_handle(&self.db, CHATS)?;
+        let cf = self.make_cf_handle(&self.db, DATA)?;
 
         match self.db.get_cf(&cf, key)? {
             Some(v) => {
@@ -31,7 +31,7 @@ impl MRSDB {
         key: &String,
         value: &String,
     ) -> Result<(), MRSError> {
-        let cf = self.make_cf_handle(&self.db, CHATS)?;
+        let cf = self.make_cf_handle(&self.db, DATA)?;
 
         batch.put_cf(&cf, key, value);
 
