@@ -36,7 +36,7 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
     unsafe {
         let param = "key".to_string();
 
-        // let s = SomeMRSStorage::new_as_contract_param();
+        let a = ctx.mrs.chats.get(&"power".to_string());
 
         let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
