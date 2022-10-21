@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use crate::{symbols::CTR__ALLOC, RET_LEN_SIZE};
+use crate::RET_LEN_SIZE;
 
 crate::define_host_ffi!();
 crate::define_ctr_default_fns!();
