@@ -44,6 +44,16 @@ fn reserve_slot(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult
     let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
     let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
 
+    let next_slot_number = mrs.slots.len() + 1;
+
+    let new_slot = Slot::new(
+        reserve_slot_params.public_key,
+        String::from("Current Time"),
+        next_slot_number,
+    );
+
+    mrs.slots.push(new_slot);
+
     *storage = serde_json::to_vec(&mrs)?;
 
     Ok(vec![])

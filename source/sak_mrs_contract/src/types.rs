@@ -20,6 +20,7 @@ pub struct MutableRecordStorage {
 pub struct Slot {
     pub pk: PublicKey,
     pub timestamp: String,
+    pub slot_number: usize,
 }
 
 impl Slot {
@@ -27,6 +28,15 @@ impl Slot {
         Slot {
             pk: String::default(),
             timestamp: String::default(),
+            slot_number: usize::default(),
+        }
+    }
+
+    pub fn new(pk: PublicKey, timestamp: String, slot_number: usize) -> Slot {
+        Slot {
+            pk,
+            timestamp,
+            slot_number,
         }
     }
 }

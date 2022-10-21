@@ -95,3 +95,12 @@ pub struct EnvelopeStorage {
     pub open_ch_reqs: HashMap<PublicKey, Vec<Channel>>,
     pub chats: HashMap<ChannelId, Vec<EncryptedChatMessage>>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MutableRecordStorage {
+    pub data_chunk: HashMap<String, Vec<u8>>,
+    pub sig: Vec<u8>,
+    pub slot_id: usize,
+    pub ts: usize,
+    pub old_ts: usize,
+}
