@@ -16,6 +16,8 @@ macro_rules! define_host_ffi {
 
             fn HOST__get_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
 
+            fn HOST__put_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
+
             fn HOST__get_latest_return_len(p1: i32, p2: i32) -> i32;
         }
     };
