@@ -4,16 +4,26 @@ use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_logger::info;
-use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use tokio::sync::broadcast;
 
 pub struct SakMRS {
     db: MRSDB,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PutMrsDataArgs {
-    slot_id: Vec<u64>,
+    // slot_id: Vec<u64>,
+    pub data_chunk: HashMap<String, Vec<u8>>,
+    pub sig: Vec<u8>,
+    pub slot_id: usize,
+    pub ts: usize,
+    pub old_ts: usize,
 }
 
 impl SakMRS {
