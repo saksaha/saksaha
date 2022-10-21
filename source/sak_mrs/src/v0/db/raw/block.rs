@@ -23,4 +23,18 @@ impl MRSDB {
             }
         };
     }
+
+    pub(crate) fn batch_put_dummy(
+        &self,
+        // db: &DB,
+        batch: &mut WriteBatch,
+        key: &String,
+        value: &String,
+    ) -> Result<(), MRSError> {
+        let cf = self.make_cf_handle(&self.db, CHATS)?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
 }

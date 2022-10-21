@@ -55,21 +55,20 @@ pub(crate) fn make_linker(
                 String::from_utf8(maybe_arg.to_vec()).expect("arg should be parsable string")
             };
 
-            // MRS init
-
-            let mrs = mrs.clone();
-            let a = mrs
-                .get_mrs_data(&"key".to_string())
-                .unwrap_or(Some("Fail".to_string()));
-            println!("real mrs data!!: {:?}", a);
-
-            println!("get_mrs_data(): arg: {}", arg);
-
             // arg == {field}_{key}
 
             let key: String = format!("{}_{}", "ctr_address", arg);
 
             println!("test key: {:?}", key);
+
+            // MRS init
+
+            let mrs = mrs.clone();
+            let b = mrs.put_mrs_data(&key, &"dummy".to_string());
+            let a = mrs.get_mrs_data(&key).unwrap_or(Some("Fail".to_string()));
+            println!("real mrs data!!: {:?}", a);
+
+            println!("get_mrs_data(): arg: {}", arg);
 
             //----------------------------------------------
             let dummy_data = Data { d: 123 };

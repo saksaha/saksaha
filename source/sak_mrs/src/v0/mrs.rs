@@ -3,15 +3,13 @@ use crate::MRSError;
 use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
+use sak_kv_db::WriteBatch;
 use sak_logger::info;
 use sak_store_interface::MRSInterface;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, convert::TryInto};
 use tokio::sync::broadcast;
 
 pub struct SakMRS {
@@ -68,5 +66,14 @@ impl SakMRS {
 impl MRSInterface for SakMRS {
     fn get_mrs_data(&self, key: &String) -> Result<Option<String>, MRSError> {
         self.db.get_dummy(key)
+    }
+    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
+        let mut batch = WriteBatch::default();
+
+        self.db.batch_put_dummy(&mut batch, key, value);
+
+        self.db.db.write(batch)?;
+
+        Ok(())
     }
 }

@@ -27,4 +27,5 @@ pub type MRSAccessorError = Box<dyn std::error::Error + Send + Sync>;
 
 pub trait MRSInterface {
     fn get_mrs_data(&self, key: &String) -> Result<Option<String>, MRSAccessorError>;
+    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSAccessorError>;
 }

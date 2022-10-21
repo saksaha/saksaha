@@ -149,12 +149,12 @@ macro_rules! define_contract_ctx {
 
         impl ContractCtx {
             unsafe fn get_mrs_data(&self, key: &String) -> Vec<u8> {
-                let key_len = key.len();
-                let key_ptr = CTR__alloc(key_len);
-                key_ptr.copy_from(key.as_ptr(), key_len);
+                // let key_len = key.len();
+                // let key_ptr = CTR__alloc(key_len);
+                // key_ptr.copy_from(key.as_ptr(), key_len);
 
-                let ret_len_ptr = CTR__alloc($crate::RET_LEN_SIZE);
-                let ret_ptr = HOST__get_mrs_data(key_ptr, key_len as u32, ret_len_ptr as *mut u32);
+                // let ret_len_ptr = CTR__alloc($crate::RET_LEN_SIZE);
+                // let ret_ptr = HOST__get_mrs_data(key_ptr, key_len as u32, ret_len_ptr as *mut u32);
                 // let ret_len = {
                 //     let bytes: [u8; $crate::RET_LEN_SIZE] =
                 //         std::slice::from_raw_parts(ret_len_ptr as *mut u8, $crate::RET_LEN_SIZE)
