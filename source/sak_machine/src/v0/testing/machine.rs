@@ -25,11 +25,11 @@ pub async fn mock_machine(block: BlockCandidate) -> SakMachine {
         config_dir.join("mrs")
     };
 
-    let mrs: MRSAccessor = {
+    let mrs: Arc<MRSAccessor> = {
         let mrs_args = SakMRSArgs { mrs_db_path };
 
         let m = SakMRS::init(mrs_args).await.unwrap();
-        Arc::new(m)
+        Arc::new(Box::new(m))
     };
 
     let vm: ContractProcessor = {
@@ -80,11 +80,11 @@ pub async fn mock_machine_1() -> SakMachine {
 
     let mrs_db_path = { test_dir.join("mrs") };
 
-    let mrs: MRSAccessor = {
+    let mrs: Arc<MRSAccessor> = {
         let mrs_args = SakMRSArgs { mrs_db_path };
 
         let m = SakMRS::init(mrs_args).await.unwrap();
-        Arc::new(m)
+        Arc::new(Box::new(m))
     };
 
     let vm: ContractProcessor = {

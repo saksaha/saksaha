@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 pub type MRSAccessor = Box<dyn MRSInterface + Send + Sync>;
+pub type MRSAccessorError = Box<dyn std::error::Error + Send + Sync>;
 
 // pub struct StoreAccessor {
 //     ledger: SakLedger,
@@ -25,5 +26,5 @@ pub type MRSAccessor = Box<dyn MRSInterface + Send + Sync>;
 // }
 
 pub trait MRSInterface {
-    fn get_mrs_data(&self) -> usize;
+    fn get_mrs_data(&self, key: &String) -> Result<Option<String>, MRSAccessorError>;
 }

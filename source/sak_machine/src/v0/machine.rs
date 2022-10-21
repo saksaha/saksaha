@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::MachineError;
 use sak_ledger::SakLedger;
 use sak_mrs::SakMRS;

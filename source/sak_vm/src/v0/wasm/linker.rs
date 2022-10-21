@@ -58,8 +58,10 @@ pub(crate) fn make_linker(
             // MRS init
 
             let mrs = mrs.clone();
-            let a = mrs.get_mrs_data();
-            // println!("real mrs data!!: {}", a);
+            let a = mrs
+                .get_mrs_data(&"key".to_string())
+                .unwrap_or(Some("Fail".to_string()));
+            println!("real mrs data!!: {:?}", a);
 
             println!("get_mrs_data(): arg: {}", arg);
 

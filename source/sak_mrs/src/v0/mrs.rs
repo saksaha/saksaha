@@ -52,14 +52,10 @@ impl SakMRS {
 
         Ok(())
     }
-
-    pub fn get_dummy(&self, key: &String) -> Result<Option<String>, MRSError> {
-        self.get_dummy(key)
-    }
 }
 
 impl MRSInterface for SakMRS {
-    fn get_mrs_data(&self) -> usize {
-        0
+    fn get_mrs_data(&self, key: &String) -> Result<Option<String>, MRSError> {
+        self.db.get_dummy(key)
     }
 }

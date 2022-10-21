@@ -29,10 +29,10 @@ pub(super) struct Routine {
 
 const LOGO: &str = r#"
 ___________________________________________________________
-      __     __     _    _     __     __     _     _   __  
-    /    )   / |    /  ,'    /    )   / |    /    /    / | 
+      __     __     _    _     __     __     _     _   __
+    /    )   / |    /  ,'    /    )   / |    /    /    / |
 ----\-------/__|---/_.'------\-------/__|---/___ /----/__|-
-     \     /   |  /  \        \     /   |  /    /    /   | 
+     \     /   |  /  \        \     /   |  /    /    /   |
 _(____/___/____|_/____\___(____/___/____|_/____/____/____|_
 "#;
 
@@ -173,10 +173,10 @@ impl Routine {
             P2PHost::init(p2p_host_args).await?
         };
 
-        let mrs: MRSAccessor = {
+        let mrs: Arc<MRSAccessor> = {
             let m = MRS::init(&config.p2p.public_key_str).await?;
 
-            Arc::new(m)
+            Arc::new(Box::new(m))
         };
 
         let vm: ContractProcessor = {
