@@ -1,13 +1,13 @@
 use crate::{v0::wasm::Wasmtime, VMError};
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
-use sak_vm_interface::InstanceState;
-use std::mem::size_of;
-// use sak_store_accessor::StoreAccessor;
+use sak_store_interface::MRSAccessor;
 use sak_vm_interface::wasmtime::{
     Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
 };
+use sak_vm_interface::InstanceState;
 use serde::{Deserialize, Serialize};
+use std::mem::size_of;
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize)]
@@ -17,9 +17,10 @@ pub struct Data {
 
 pub(crate) fn make_linker(
     engine: Engine,
-    // store_accessor: Arc<StoreAccessor>,
+    mrs: &Arc<MRSAccessor>,
 ) -> Result<Linker<InstanceState>, VMError> {
     let mut linker = Linker::new(&engine);
+    let mrs = mrs.clone();
 
     linker.func_wrap(
         "host",
@@ -55,6 +56,10 @@ pub(crate) fn make_linker(
             };
 
             // MRS init
+
+            let mrs = mrs.clone();
+            let a = mrs.get_mrs_data();
+            // println!("real mrs data!!: {}", a);
 
             println!("get_mrs_data(): arg: {}", arg);
 
