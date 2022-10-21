@@ -1,5 +1,5 @@
-mod accessor;
+mod interface;
 
-pub use accessor::*;
+pub use interface::*;
 
-pub(crate) type StoreInterfaceError = Box<dyn std::error::Error + Send + Sync>;
+pub type StoreInterfaceError = Box<dyn std::error::Error + Send + Sync>;

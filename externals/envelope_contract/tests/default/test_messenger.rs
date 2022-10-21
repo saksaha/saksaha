@@ -12,7 +12,7 @@ use envelope_contract::{
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, CtrRequestData, Storage};
 use sak_credential::CredentialProfile;
 use sak_mrs::SakMRS;
-use sak_store_accessor::StoreAccessor;
+// use sak_store_accessor::StoreAccessor;
 use sak_vm::SakVM;
 use sak_vm_interface::{ContractProcess, ContractProcessor};
 use std::{collections::HashMap, sync::Arc};

@@ -5,6 +5,7 @@ use sak_ledger::{Consensus, ConsensusError, SakLedger, SakLedgerArgs};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::SakLogger;
 use sak_machine::{SakMachine, SakMachineArgs};
+use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_proof::CoinProof;
 use sak_proof_types::{NewCoin, OldCoin};
 use sak_types::{BlockCandidate, TxCandidate};
@@ -58,9 +59,16 @@ pub(crate) async fn make_machine(block: BlockCandidate) -> SakMachine {
         config_dir.join("test").join("ledger")
     };
 
-    let mrs_path = {
+    let mrs_db_path = {
         let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
         config_dir.join("test").join("mrs")
+    };
+
+    let mrs = {
+        let mrs_args = SakMRSArgs { mrs_db_path };
+
+        let m = SakMRS::init(mrs_args).await.unwrap();
+        Box::new(m)
     };
 
     let vm: ContractProcessor = {
@@ -82,17 +90,9 @@ pub(crate) async fn make_machine(block: BlockCandidate) -> SakMachine {
         SakLedger::init(ledger_args).await.unwrap()
     };
 
-    let dist_ledger_args = SakMachineArgs {
-        // tx_sync_interval: None,
-        // genesis_block: Some(block),
-        // consensus: pos,
-        // block_sync_interval: None,
-        // ledger_path,
-        // mrs_path,
-        ledger,
-    };
+    let machine_args = SakMachineArgs { ledger, mrs };
 
-    let machine = SakMachine::init(dist_ledger_args)
+    let machine = SakMachine::init(machine_args)
         .await
         .expect("Blockchain should be initialized");
 

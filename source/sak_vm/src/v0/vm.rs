@@ -2,14 +2,16 @@ use super::wasm::Wasmtime;
 use crate::VMError;
 use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
 use sak_logger::{error, info};
-// use sak_store_accessor::StoreAccessor;
+use sak_store_interface::MRSAccessor;
 use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
 use sak_vm_interface::{
     ContractProcess, CtrExecuteFn, CtrInitFn, InstanceState, InvokeReceipt, VMInterfaceError,
 };
 use std::sync::Arc;
 
-pub struct SakVM {}
+pub struct SakVM {
+    mrs: Arc<MRSAccessor>,
+}
 
 impl ContractProcess for SakVM {
     fn invoke(
@@ -19,17 +21,17 @@ impl ContractProcess for SakVM {
     ) -> Result<InvokeReceipt, VMInterfaceError> {
         let res = match ctr_fn {
             ContractFn::Init => {
-                let (instance, store, memory) = Self::init_module(contract_wasm)?;
+                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
                 Self::invoke_init(instance, store, memory)
             }
             ContractFn::Query(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm)?;
+                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
                 Self::invoke_query(instance, store, memory, request)
             }
             ContractFn::Execute(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm)?;
+                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
                 Self::invoke_execute(instance, store, memory, request)
             }
@@ -42,8 +44,8 @@ impl ContractProcess for SakVM {
 }
 
 impl SakVM {
-    pub fn init() -> Result<Self, String> {
-        let vm = SakVM {};
+    pub fn init(mrs: Arc<MRSAccessor>) -> Result<Self, String> {
+        let vm = SakVM { mrs };
         Ok(vm)
     }
 
@@ -156,12 +158,9 @@ impl SakVM {
 
     fn init_module(
         contract_wasm: impl AsRef<[u8]>,
-        // store_accessor: Arc<StoreAccessor>,
+        mrs: &Arc<MRSAccessor>,
     ) -> Result<(Instance, Store<InstanceState>, Memory), VMError> {
-        let (instance, mut store) = match Wasmtime::make_instance(
-            contract_wasm,
-            // store_accessor
-        ) {
+        let (instance, mut store) = match Wasmtime::make_instance(contract_wasm, mrs) {
             Ok(r) => r,
             Err(err) => {
                 return Err(format!("Error creating an instance, err: {}", err).into());

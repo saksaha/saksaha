@@ -4,6 +4,7 @@ use super::SystemRunArgs;
 use crate::config::Config;
 use crate::fs::SaksahaFS;
 use crate::ledger::Ledger;
+use crate::mrs::MRS;
 use crate::node::LocalNode;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::rpc::RPCArgs;
@@ -17,6 +18,7 @@ use sak_machine::SakMachine;
 use sak_machine::SakMachineArgs;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
+use sak_store_interface::{MRSAccessor, MRSInterface};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
@@ -27,10 +29,10 @@ pub(super) struct Routine {
 
 const LOGO: &str = r#"
 ___________________________________________________________
-      __     __     _    _     __     __     _     _   __  
-    /    )   / |    /  ,'    /    )   / |    /    /    / | 
+      __     __     _    _     __     __     _     _   __
+    /    )   / |    /  ,'    /    )   / |    /    /    / |
 ----\-------/__|---/_.'------\-------/__|---/___ /----/__|-
-     \     /   |  /  \        \     /   |  /    /    /   | 
+     \     /   |  /  \        \     /   |  /    /    /   |
 _(____/___/____|_/____\___(____/___/____|_/____/____/____|_
 "#;
 
@@ -171,8 +173,14 @@ impl Routine {
             P2PHost::init(p2p_host_args).await?
         };
 
+        let mrs: Arc<MRSAccessor> = {
+            let m = MRS::init(&config.p2p.public_key_str).await?;
+
+            Arc::new(Box::new(m))
+        };
+
         let vm: ContractProcessor = {
-            let v = SakVM::init()?;
+            let v = SakVM::init(mrs.clone())?;
             Box::new(v)
         };
 
@@ -191,12 +199,7 @@ impl Routine {
         };
 
         let machine = {
-            let mrs_path = {
-                let config_dir = SaksahaFS::acc_dir(&config.p2p.public_key_str)?;
-                config_dir.join("mrs")
-            };
-
-            let machine_args = SakMachineArgs { ledger };
+            let machine_args = SakMachineArgs { ledger, mrs };
 
             let m = SakMachine::init(machine_args).await?;
 

@@ -1,6 +1,7 @@
 mod config;
 mod fs;
 mod ledger;
+mod mrs;
 mod node;
 mod p2p;
 mod rpc;

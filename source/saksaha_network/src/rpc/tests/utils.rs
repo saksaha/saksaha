@@ -1,4 +1,5 @@
 use crate::ledger::Ledger;
+use crate::mrs::MRS;
 use crate::p2p::{P2PHost, P2PHostArgs};
 use crate::rpc::{RPCArgs, RPC};
 use crate::system::SystemHandle;
@@ -59,11 +60,17 @@ pub(in crate::rpc) async fn make_test_context(
             .unwrap()
     };
 
-    let machine = {
-        let machine_args = SakMachineArgs { ledger };
-        // let m = Machine { ledger };
-        let m = SakMachine::init(machine_args).await.unwrap();
+    let mrs = {
+        let pk = String::from("test");
 
+        let m = MRS::init(&pk).await.unwrap();
+        Box::new(m)
+    };
+
+    let machine = {
+        let machine_args = SakMachineArgs { ledger, mrs };
+
+        let m = SakMachine::init(machine_args).await.unwrap();
         Arc::new(m)
     };
 

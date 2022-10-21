@@ -1,8 +1,8 @@
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
 use sak_credential::CredentialProfile;
 use sak_logger::SakLogger;
-use sak_mrs::SakMRS;
-use sak_store_accessor::StoreAccessor;
+use sak_mrs::{SakMRS, SakMRSArgs};
+// use sak_store_accessor::StoreAccessor;
 use sak_validator_contract::{AddValidatorParams, ValidatorStorage};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcess;
@@ -91,9 +91,13 @@ async fn test_call_ctr_validator_fn_init() {
 
     let ledger_path = { test_dir.join("ledger") };
 
-    let mrs_path = { test_dir.join("mrs") };
+    let mrs = {
+        let mrs_db_path = { test_dir.join("mrs") };
 
-    let mrs = SakMRS::init(mrs_path).await.unwrap();
+        let mrs_args = SakMRSArgs { mrs_db_path };
+
+        let m = SakMRS::init(mrs_args).await.unwrap();
+    };
 
     // let store_accessor = {
     //     let a = StoreAccessor::new(mrs);
