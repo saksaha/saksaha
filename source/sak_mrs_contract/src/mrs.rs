@@ -1,4 +1,5 @@
 use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
+use sak_contract_derive::MRSStore;
 use sak_contract_std::{
     contract_bootstrap, ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
 };
@@ -6,6 +7,9 @@ use sak_contract_std::{
 const SLOT_CAPACITY: usize = 64;
 
 contract_bootstrap!();
+
+#[derive(MRSStore, Debug)]
+pub struct St {}
 
 pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = MutableRecordStorage {
