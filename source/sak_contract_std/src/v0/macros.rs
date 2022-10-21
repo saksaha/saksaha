@@ -22,7 +22,7 @@ macro_rules! define_host_ffi {
 }
 
 #[macro_export]
-macro_rules! define_ctr_fns {
+macro_rules! define_ctr_default_fns {
     () => {
         /// Allocate memory into the module's linear memory
         /// and return the offset to the start of the block.
@@ -48,7 +48,12 @@ macro_rules! define_ctr_fns {
 
             std::mem::drop(data);
         }
+    };
+}
 
+#[macro_export]
+macro_rules! define_ctr_fns {
+    () => {
         #[no_mangle]
         pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
             let storage: Result<$crate::Storage, $crate::ContractError> = init();

@@ -1,6 +1,9 @@
-use crate::get_mrs_data_from_host;
+use std::convert::TryInto;
+
+use crate::{get_mrs_data_from_host, RET_LEN_SIZE};
 
 crate::define_host_ffi!();
+// crate::contract_bootstrap!();
 
 #[derive(Debug)]
 pub struct List {
@@ -15,12 +18,6 @@ impl List {
     pub fn receipt(&self) {}
 
     pub fn get(&self, key: &String) -> Vec<u8> {
-        unsafe {
-            // get_mrs_data_from_host(key);
-
-            HOST__log(3, 4);
-        }
-
         vec![0]
     }
 }
