@@ -1,4 +1,5 @@
 mod ctr_fn;
+mod data;
 mod macros;
 mod request;
 mod result;
@@ -7,6 +8,7 @@ mod storage;
 pub mod symbols;
 
 pub use ctr_fn::*;
+pub use data::*;
 pub use request::*;
 pub use result::*;
 pub use size::*;

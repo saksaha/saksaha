@@ -1,5 +1,5 @@
 [package]
-name = "sak_contract_std"
+name = "sak_contract_derive"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,12 +8,15 @@ edition = "2018"
 [dependencies]
 sak_logger = { path = "../sak_logger" }
 sak_store_interface = { path = "../sak_store_interface" }
-sak_contract_derive = { path = "../sak_contract_derive" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 colored = "2"
 syn = "1.0"
 quote = "1.0"
 
+[dev-dependencies]
+sak_test_utils = { path = "../../source/sak_test_utils" }
+
 [lib]
-doctest = false # until stable beta is released
+proc-macro = true
+doctest = false   # until stable beta is released

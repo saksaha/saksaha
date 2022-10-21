@@ -2,8 +2,9 @@ use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
+use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
-    contract_bootstrap, ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
+    contract_bootstrap, ContractError, CtrRequest, InvokeResult, List, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -12,6 +13,11 @@ pub const STORAGE_CAP: usize = 100;
 pub struct OpenChReq {}
 
 contract_bootstrap!();
+
+#[derive(Debug, MRSStore)]
+pub struct SomeMRSStorage {
+    pub chats: List,
+}
 
 pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
@@ -29,6 +35,8 @@ pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractE
 
     unsafe {
         let param = "key".to_string();
+
+        // let s = SomeMRSStorage::new_as_contract_param();
 
         let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
@@ -228,6 +236,7 @@ fn handle_open_channel(
 }
 
 fn handle_send_msg(storage: &mut Storage, args: RequestArgs) -> Result<Vec<u8>, ContractError> {
+    // let a: _MRS;
     let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(&storage) {
         Ok(e) => e,
         Err(err) => return Err(format!("Failed to restore evl_storage, err: {:?}", err).into()),
