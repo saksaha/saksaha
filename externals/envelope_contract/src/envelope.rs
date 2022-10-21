@@ -4,7 +4,7 @@ use crate::{
 };
 use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
-    contract_bootstrap, ContractError, CtrRequest, InvokeResult, List, RequestArgs, Storage,
+    contract_bootstrap, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -17,6 +17,7 @@ contract_bootstrap!();
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {
     pub chats: List,
+    pub channels: Dict,
 }
 
 pub fn init() -> Result<Storage, ContractError> {
@@ -31,29 +32,30 @@ pub fn init() -> Result<Storage, ContractError> {
 }
 
 pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
-    let storage = vec![]; // soon will be removed
+    // let storage = vec![]; // soon will be removed
 
     unsafe {
         let param = "key".to_string();
 
-        let a = ctx.mrs.chats.get(&"power".to_string());
+        // let a = ctx.mrs.chats.get(&"power".to_string());
+        let a = ctx.mrs.channels.get(&"!!!key!!!".to_string());
 
-        let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
+        // let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
-        return Ok(data2);
+        return Ok(a);
     }
 
-    match request.req_type.as_ref() {
-        GET_MSG => {
-            return get_msgs(storage, request.args);
-        }
-        GET_CH_LIST => {
-            return get_ch_list(storage, request.args);
-        }
-        _ => {
-            return Err(format!("Wrong request type has been found in query").into());
-        }
-    }
+    // match request.req_type.as_ref() {
+    //     GET_MSG => {
+    //         return get_msgs(storage, request.args);
+    //     }
+    //     GET_CH_LIST => {
+    //         return get_ch_list(storage, request.args);
+    //     }
+    //     _ => {
+    //         return Err(format!("Wrong request type has been found in query").into());
+    //     }
+    // }
 }
 
 pub fn update(
