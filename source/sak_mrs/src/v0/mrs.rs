@@ -45,4 +45,8 @@ impl SakMRS {
 
         Ok(())
     }
+
+    pub fn get_dummy(&self, key: &String) -> Result<Option<String>, MRSError> {
+        self.get_dummy(key)
+    }
 }
