@@ -1,9 +1,5 @@
-use std::convert::TryInto;
-
 use crate::{get_mrs_data_from_host, RET_LEN_SIZE};
-
-crate::define_host_ffi!();
-// crate::contract_bootstrap!();
+use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct List {

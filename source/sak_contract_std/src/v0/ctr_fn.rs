@@ -3,8 +3,6 @@ use std::sync::Arc;
 
 pub enum ContractFn {
     Init,
-    // Query(CtrRequest, Storage),
-    // Execute(CtrRequest, Storage),
-    Query(CtrRequest),
     Execute(CtrRequest),
+    Update(CtrRequest),
 }
