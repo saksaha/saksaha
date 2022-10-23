@@ -10,8 +10,6 @@ impl Dict {
         Dict { _name }
     }
 
-    pub fn receipt(&self) {}
-
     pub fn get(&self, key: &String) -> Vec<u8> {
         let key: String = format!("{}_{}", self._name, key);
 
@@ -19,4 +17,6 @@ impl Dict {
 
         data
     }
+
+    pub fn receipt(&self) {}
 }

@@ -16,8 +16,8 @@ saksaha_contract!(0.0.1);
 
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {
-    pub chats: List,
-    pub channels: Dict,
+    pub chats: sak_contract_std::List,
+    pub channels: sak_contract_std::Dict,
 }
 
 pub fn init() -> Result<Storage, ContractError> {
