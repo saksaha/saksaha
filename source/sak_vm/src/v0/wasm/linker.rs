@@ -193,24 +193,5 @@ pub(crate) fn make_linker(
         },
     )?;
 
-    linker.func_wrap(
-        "host",
-        symbols::HOST__GET_LATEST_RETURN_LEN,
-        |mut caller: Caller<InstanceState>, param: i32, param2: i32| {
-            let mut state = caller.data_mut();
-            println!(
-                "get_latest_return_len(): state: {:?}, params: {}, {}",
-                state, param, param2
-            );
-
-            // let ret = state.len as i32;
-
-            // state.len = 0;
-
-            0
-            // ret
-        },
-    )?;
-
     Ok(linker)
 }

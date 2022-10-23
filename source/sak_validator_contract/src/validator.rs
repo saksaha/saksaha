@@ -35,7 +35,7 @@ pub fn init() -> Result<Vec<u8>, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn execute(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     let storage = vec![];
     match request.req_type.as_ref() {
         "get_validator" => {

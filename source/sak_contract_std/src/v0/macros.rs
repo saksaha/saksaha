@@ -17,8 +17,6 @@ macro_rules! define_host_ffi {
             fn HOST__get_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
 
             fn HOST__put_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
-
-            fn HOST__get_latest_return_len(p1: i32, p2: i32) -> i32;
         }
     };
 }
@@ -77,32 +75,29 @@ macro_rules! define_ctr_fns {
         ) -> (*mut u8, i32, *mut u8, i32) {
             let request = $crate::parse_request!(request_ptr, request_len);
 
-            let mrs = __make_mrs_storage_param();
+            let mrs = make_mrs_storage_param();
 
             let ctx = ContractCtx { mrs };
 
-            let result: Result<$crate::InvokeResult, $crate::ContractError> = query(ctx, request);
+            let result: Result<$crate::InvokeResult, $crate::ContractError> = execute(ctx, request);
 
-            {
-                let mut result: $crate::InvokeResult =
-                    $crate::return_err_4!(result, "something failed");
+            let mut result: $crate::InvokeResult =
+                $crate::return_err_4!(result, "something failed");
+            let result_ptr = result.as_mut_ptr();
+            let result_len = result.len();
+            std::mem::forget(result);
 
-                let result_ptr = result.as_mut_ptr();
-                let result_len = result.len();
+            let mut empty_vec = Vec::new();
+            let empty_vec_ptr = empty_vec.as_mut_ptr();
+            let empty_vec_len = empty_vec.len();
+            std::mem::forget(empty_vec);
 
-                std::mem::forget(result);
-
-                let mut empty_vec = Vec::new();
-                let empty_vec_ptr = empty_vec.as_mut_ptr();
-                let empty_vec_len = empty_vec.len();
-
-                return (
-                    result_ptr,
-                    result_len as i32,
-                    empty_vec_ptr,
-                    empty_vec_len as i32,
-                );
-            }
+            return (
+                result_ptr,
+                result_len as i32,
+                empty_vec_ptr,
+                empty_vec_len as i32,
+            );
         }
 
         #[no_mangle]
@@ -112,32 +107,29 @@ macro_rules! define_ctr_fns {
         ) -> (*mut u8, i32, *mut u8, i32) {
             let request = $crate::parse_request!(request_ptr, request_len);
 
-            let mrs = __make_mrs_storage_param();
+            let mrs = make_mrs_storage_param();
 
             let ctx = ContractCtx { mrs };
 
             let result: Result<$crate::InvokeResult, $crate::ContractError> = update(ctx, request);
 
-            {
-                let mut result: $crate::InvokeResult =
-                    $crate::return_err_4!(result, "serde result parsing fail");
+            let mut result: $crate::InvokeResult =
+                $crate::return_err_4!(result, "serde result parsing fail");
+            let result_ptr = result.as_mut_ptr();
+            let result_len = result.len();
+            std::mem::forget(result);
 
-                let result_ptr = result.as_mut_ptr();
-                let result_len = result.len();
+            let mut storage = vec![];
+            let storage_ptr = storage.as_mut_ptr();
+            let storage_len = storage.len();
+            std::mem::forget(storage);
 
-                let mut storage = vec![];
-                let storage_ptr = storage.as_mut_ptr();
-                let storage_len = storage.len();
-
-                std::mem::forget(storage);
-
-                (
-                    storage_ptr,
-                    storage_len as i32,
-                    result_ptr,
-                    result_len as i32,
-                )
-            }
+            return (
+                storage_ptr,
+                storage_len as i32,
+                result_ptr,
+                result_len as i32,
+            );
         }
     };
 }
@@ -171,7 +163,6 @@ macro_rules! return_err_2 {
             Ok(r) => r,
             Err(err) => {
                 let mut err = sak_contract_std::make_error_vec(err.into(), "");
-
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
 
@@ -190,15 +181,14 @@ macro_rules! return_err_4 {
             Ok(r) => r,
             Err(err) => {
                 let mut err = sak_contract_std::make_error_vec(err.into(), $msg);
-
                 let err_ptr = err.as_mut_ptr();
                 let err_len = err.len();
-
                 std::mem::forget(err);
 
                 let mut empty_vec = Vec::new();
                 let empty_vec_ptr = empty_vec.as_mut_ptr();
                 let empty_vec_len = empty_vec.len();
+                std::mem::forget(empty_vec);
 
                 return (err_ptr, err_len as i32, empty_vec_ptr, empty_vec_len as i32);
             }

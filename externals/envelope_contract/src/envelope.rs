@@ -31,7 +31,7 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn execute(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     // let storage = vec![]; // soon will be removed
 
     unsafe {

@@ -1,5 +1,4 @@
-use crate::{CtrRequest, CtrRequestData, Storage};
-use std::sync::Arc;
+use crate::CtrRequest;
 
 pub enum ContractFn {
     Init,
