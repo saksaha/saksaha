@@ -1,6 +1,6 @@
 use crate::AddValidatorParams;
 use sak_contract_derive::{CtrStateStore, MRSStore};
-use sak_contract_std::{contract_bootstrap, ContractError, CtrRequest, RequestArgs, Storage};
+use sak_contract_std::{saksaha_contract, ContractError, CtrRequest, RequestArgs, Storage};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -13,7 +13,7 @@ pub struct ValidatorStorage {
     pub validators: Vec<String>,
 }
 
-contract_bootstrap!();
+saksaha_contract!(0.0.1);
 
 #[derive(MRSStore, Debug)]
 pub struct St {}

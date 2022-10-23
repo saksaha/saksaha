@@ -2,7 +2,7 @@ use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
 use sak_credential::CredentialProfile;
 use sak_logger::SakLogger;
 use sak_mrs::{SakMRS, SakMRSArgs};
-// use sak_store_accessor::StoreAccessor;
+use sak_store_interface::MRSAccessor;
 use sak_validator_contract::{AddValidatorParams, ValidatorStorage};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcess;
@@ -76,7 +76,20 @@ fn get_test_validator_state(validators: Vec<String>) -> Storage {
 async fn test_call_ctr_validator_fn_init() {
     SakLogger::init_test_console().unwrap();
 
-    let vm = SakVM::init().expect("VM should be initiated");
+    let mrs_db_path = {
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("test").join("mrs")
+    };
+
+    let mrs = {
+        let mrs_args = SakMRSArgs { mrs_db_path };
+
+        let m = SakMRS::init(mrs_args).await.unwrap();
+        let m = Box::new(m) as MRSAccessor;
+        Arc::new(m)
+    };
+
+    let vm = SakVM::init(mrs.clone()).expect("VM should be initiated");
 
     let credential = CredentialProfile::test_1();
 

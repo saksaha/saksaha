@@ -1,6 +1,7 @@
 #[macro_export]
-macro_rules! contract_bootstrap {
-    () => {
+macro_rules! saksaha_contract {
+    ($version: expr) => {
+        const SAK_CONTRACT_VERSION: &str = stringify!($version);
         $crate::define_host_ffi!();
         $crate::define_ctr_fns!();
         $crate::define_contract_ctx!();

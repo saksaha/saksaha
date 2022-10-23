@@ -4,7 +4,7 @@ use crate::{
 };
 use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
-    contract_bootstrap, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
+    saksaha_contract, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -12,7 +12,7 @@ pub const STORAGE_CAP: usize = 100;
 
 pub struct OpenChReq {}
 
-contract_bootstrap!();
+saksaha_contract!(0.0.1);
 
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {

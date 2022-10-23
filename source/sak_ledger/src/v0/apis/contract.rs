@@ -6,7 +6,7 @@ use sak_contract_std::CtrRequestData;
 use sak_types::CtrAddr;
 
 impl SakLedger {
-    pub async fn query_ctr(
+    pub async fn execute_ctr(
         &self,
         // ctr_addr: &CtrAddr,
         // data: CtrRequestData,
@@ -32,7 +32,7 @@ impl SakLedger {
         //     ctr_call_type: data.ctr_call_type,
         // };
 
-        let ctr_fn = ContractFn::Query(req);
+        let ctr_fn = ContractFn::Execute(req);
 
         let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
@@ -41,7 +41,7 @@ impl SakLedger {
         Ok(result)
     }
 
-    pub async fn execute_ctr(
+    pub async fn update_ctr(
         &self,
         // ctr_addr: &CtrAddr,
         // data: CtrRequestData,

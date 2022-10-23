@@ -25,12 +25,12 @@ impl ContractProcess for SakVM {
 
                 Self::invoke_init(instance, store, memory)
             }
-            ContractFn::Query(request) => {
+            ContractFn::Execute(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
                 Self::invoke_query(instance, store, memory, request)
             }
-            ContractFn::Execute(request) => {
+            ContractFn::Update(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
                 Self::invoke_execute(instance, store, memory, request)
