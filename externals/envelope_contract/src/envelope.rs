@@ -20,6 +20,18 @@ pub struct SomeMRSStorage {
     pub channels: sak_contract_std::Dict,
 }
 
+// pub struct S<T> {
+//     t: Vec<T>,
+// }
+
+// impl S {
+//     pub fn a() {
+//         S {
+//             t: Vec<usize>::new(),
+//         }
+//     }
+// }
+
 pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
         open_ch_reqs: HashMap::new(),
