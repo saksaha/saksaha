@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::tests::utils::EnvelopeTermTestUtils;
 use async_trait::async_trait;
 use sak_crypto::{encode_hex, hasher::MiMC, Bls12, MerkleTree, Proof, Scalar, ScalarExt};
@@ -14,6 +12,7 @@ use sak_store_interface::MRSAccessor;
 use sak_types::{BlockCandidate, TxCandidate};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
+use std::sync::Arc;
 use type_extension::U8Array;
 
 const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
