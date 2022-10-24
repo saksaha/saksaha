@@ -331,7 +331,8 @@ impl SakLedger {
             TxCtrOp::ContractDeploy => {
                 let receipt = self
                     .contract_processor
-                    .invoke(ctr_addr, &data, ContractFn::Init)?;
+                    .invoke(ctr_addr, &data, ContractFn::Init)
+                    .await?;
 
                 let storage = receipt
                     .updated_storage
@@ -364,7 +365,8 @@ impl SakLedger {
 
                                 let receipt = self
                                     .contract_processor
-                                    .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
+                                    .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+                                    .await?;
 
                                 receipt.updated_storage.ok_or("State needs to be updated")?
                             }

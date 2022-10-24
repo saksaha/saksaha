@@ -38,7 +38,8 @@ impl SakLedger {
 
         let receipt = self
             .contract_processor
-            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
+            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+            .await?;
 
         let result = receipt.result;
 
@@ -76,7 +77,8 @@ impl SakLedger {
 
         let receipt = self
             .contract_processor
-            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
+            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+            .await?;
 
         let state = receipt
             .updated_storage

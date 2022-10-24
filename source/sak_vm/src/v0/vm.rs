@@ -1,9 +1,10 @@
 use super::wasm::Wasmtime;
 use crate::VMError;
+use async_trait::async_trait;
 use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
 use sak_crypto::rand;
 use sak_logger::{error, info};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{MRSAccessor, Session};
 use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
 use sak_vm_interface::{
     ContractProcess, CtrExecuteFn, CtrInitFn, InstanceState, InvokeReceipt, VMInterfaceError,
@@ -15,8 +16,9 @@ pub struct SakVM {
     mrs: Arc<MRSAccessor>,
 }
 
+#[async_trait]
 impl ContractProcess for SakVM {
-    fn invoke(
+    async fn invoke(
         &self,
         ctr_addr: &String,
         contract_wasm: &[u8],
@@ -31,7 +33,8 @@ impl ContractProcess for SakVM {
             ContractFn::Execute(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                Self::invoke_execute(ctr_addr, instance, store, memory, request)
+                self.invoke_execute(ctr_addr, instance, store, memory, request)
+                    .await
             }
             ContractFn::Update(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
@@ -72,7 +75,8 @@ impl SakVM {
         Ok(receipt)
     }
 
-    fn invoke_execute(
+    async fn invoke_execute(
+        &self,
         ctr_addr: &String,
         instance: Instance,
         mut store: Store<InstanceState>,
@@ -121,8 +125,10 @@ impl SakVM {
 
         println!("power11: {:?}", receipt);
 
+        let session = Session { receipt };
+
         let session_id = format!("{}_{}", ctr_addr, rand());
-        // self.mrs.add_session
+        self.mrs.add_session(session_id, session).await;
 
         let receipt = InvokeReceipt::from_query(result_bytes)?;
 

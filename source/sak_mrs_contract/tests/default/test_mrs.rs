@@ -78,6 +78,7 @@ async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
 
     let receipt = vm
         .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+        .await
         .expect("mrs should be obtained");
 
     let updated_storage = receipt.updated_storage.unwrap();

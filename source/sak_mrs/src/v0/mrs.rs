@@ -1,19 +1,21 @@
 use crate::v0::db::MRSDB;
 use crate::MRSError;
+use async_trait::async_trait;
 use colored::Colorize;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_kv_db::WriteBatch;
 use sak_logger::info;
-use sak_store_interface::MRSInterface;
+use sak_store_interface::{MRSInterface, Session};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::{collections::HashMap, convert::TryInto};
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, Mutex};
 
 pub struct SakMRS {
     db: MRSDB,
+    session_store: Mutex<HashMap<String, Session>>,
 }
 
 pub struct SakMRSArgs {
@@ -40,7 +42,12 @@ impl SakMRS {
 
         // let merkle_tree = MerkleTree::new(32 as u32);
 
-        let mrs = SakMRS { db };
+        let session_store = {
+            let s = HashMap::new();
+            Mutex::new(s)
+        };
+
+        let mrs = SakMRS { db, session_store };
 
         info!("Initialized Mutable record storage (MRS)",);
 
@@ -63,17 +70,24 @@ impl SakMRS {
     }
 }
 
+#[async_trait]
 impl MRSInterface for SakMRS {
     fn get_mrs_data(&self, key: &String) -> Result<Option<String>, MRSError> {
         self.db.get_dummy(key)
     }
-    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
-        let mut batch = WriteBatch::default();
 
-        self.db.batch_put_dummy(&mut batch, key, value);
+    // fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
+    //     let mut batch = WriteBatch::default();
 
-        self.db.db.write(batch)?;
+    //     self.db.batch_put_dummy(&mut batch, key, value);
 
-        Ok(())
+    //     self.db.db.write(batch)?;
+
+    //     Ok(())
+    // }
+
+    async fn add_session(&self, session_id: String, session: sak_store_interface::Session) {
+        let mut session_store_lock = self.session_store.lock().await;
+        session_store_lock.insert(session_id, session);
     }
 }

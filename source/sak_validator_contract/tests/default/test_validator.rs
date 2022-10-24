@@ -118,6 +118,7 @@ async fn test_call_ctr_validator_fn_init() {
 
     let receipt = vm
         .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+        .await
         .expect("validator should be obtained");
 
     let updated_state = receipt
