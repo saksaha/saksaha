@@ -36,16 +36,16 @@ impl SakLedger {
 
         let ctr_fn = ContractFn::Execute(req);
 
-        // let receipt = self
-        //     .contract_processor
-        //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
-        //     .await?;
+        let receipt = self
+            .contract_processor
+            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+            .await?;
         // let a = receipt.await;
         // let r = a.unwrap();
 
-        // let result = receipt.result;
+        let result = receipt.result;
 
-        let result = vec![];
+        // let result = vec![];
 
         Ok(result)
     }
