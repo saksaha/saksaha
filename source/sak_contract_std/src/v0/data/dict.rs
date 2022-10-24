@@ -24,6 +24,8 @@ impl Dict {
     }
 
     pub fn push(&mut self, key: String, value: Vec<u8>) {
+        let key = format!("{}_{}", self._name, key);
+
         self.receipt.insert(key, value);
     }
 
