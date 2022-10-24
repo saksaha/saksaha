@@ -36,12 +36,16 @@ impl SakLedger {
 
         let ctr_fn = ContractFn::Execute(req);
 
-        let receipt = self.contract_processor.invoke(&ctr_addr, &ctr_wasm, ctr_fn);
-        let a = receipt.await;
+        // let receipt = self
+        //     .contract_processor
+        //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+        //     .await?;
+        // let a = receipt.await;
+        // let r = a.unwrap();
 
-        let r = a.unwrap();
+        // let result = receipt.result;
 
-        let result = r.result;
+        let result = vec![];
 
         Ok(result)
     }
@@ -75,14 +79,16 @@ impl SakLedger {
 
         let ctr_fn = ContractFn::Execute(req);
 
-        let receipt = self
-            .contract_processor
-            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
-            .await?;
+        // let receipt = self
+        //     .contract_processor
+        //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+        //     .await?;
 
-        let state = receipt
-            .updated_storage
-            .ok_or("State needs to be updated after execution")?;
+        // let state = receipt
+        //     .updated_storage
+        //     .ok_or("State needs to be updated after execution")?;
+
+        let state = vec![];
 
         Ok(state)
     }

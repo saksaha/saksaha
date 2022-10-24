@@ -329,6 +329,11 @@ impl SakLedger {
     ) -> Result<(), MachineError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
+                // let receipt = self
+                //     .contract_processor
+                //     .invoke(ctr_addr, &data, ContractFn::Init)
+                //     .await?;
+
                 let receipt = self
                     .contract_processor
                     .invoke(ctr_addr, &data, ContractFn::Init)
@@ -363,12 +368,13 @@ impl SakLedger {
                                 // let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
                                 let ctr_fn = ContractFn::Execute(req);
 
-                                let receipt = self
-                                    .contract_processor
-                                    .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
-                                    .await?;
+                                // let receipt = self
+                                //     .contract_processor
+                                //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
+                                //     .await?;
 
-                                receipt.updated_storage.ok_or("State needs to be updated")?
+                                // receipt.updated_storage.ok_or("State needs to be updated")?
+                                vec![]
                             }
                             None => {
                                 self.execute_ctr(
