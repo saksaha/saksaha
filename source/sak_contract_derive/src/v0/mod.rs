@@ -14,6 +14,7 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
     };
 
     let field_name = fields.iter().map(|field| &field.ident);
+    let field_name2 = fields.iter().map(|field| &field.ident);
     let field_type = fields.iter().map(|field| {
         let a = &field.ty;
         println!("aaaaaaaaaaaaa, {:?}", a);
@@ -42,6 +43,18 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
                 }
 
                 return a;
+            }
+
+            // mrs
+            fn receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+                let map = std::collections::HashMap::new();
+
+                // #(
+                //     let rec = &self.#field_name2.receipt();
+                //     map.insert(rec)
+                // )*
+
+                map
             }
         }
     })
