@@ -23,14 +23,16 @@ impl List {
         data
     }
 
-    pub fn push(&mut self, key: String, value: Vec<u8>) {
-        //TO-DO: get latest idx of the stored List
+    pub fn push(&mut self, value: Vec<u8>) {
+        //TO-DO: get latest idx of the stored List and update index
         let latest_idx = 0;
+
+        let key: String = format!("{}_{}", self._name, latest_idx);
 
         self.data.insert(key, value);
     }
 
-    pub fn receipt(&self) -> Result<Vec<u8>, ContractError> {
+    pub fn get_receipt(&self) -> Result<Vec<u8>, ContractError> {
         let ret = serde_json::to_vec(&self.data)?;
 
         Ok(ret)

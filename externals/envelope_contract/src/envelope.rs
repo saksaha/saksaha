@@ -43,18 +43,22 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn execute(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn execute(mut ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     // let storage = vec![]; // soon will be removed
 
     unsafe {
         let param = "key".to_string();
 
         let a = ctx.mrs.chats.get(&"power".to_string());
+
+        ctx.mrs.chats.push(vec![0]);
+        let receipt = ctx.mrs.chats.get_receipt()?;
+
         // let a = ctx.mrs.channels.get(&"!!!key!!!".to_string());
 
         // let data2 = ctx.get_mrs_data(&param); // consecutive call works, too
 
-        return Ok(a);
+        return Ok(receipt);
     }
 
     // match request.req_type.as_ref() {
