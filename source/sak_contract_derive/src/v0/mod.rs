@@ -45,14 +45,14 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
                 return a;
             }
 
-            // mrs
-            fn receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
-                let map = std::collections::HashMap::new();
+            pub fn receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+                println!("receipt!!!");
 
-                // #(
-                //     let rec = &self.#field_name2.receipt();
-                //     map.insert(rec)
-                // )*
+                let mut map = std::collections::HashMap::new();
+
+                #(
+                    map.extend(self.#field_name2.receipt());
+                )*
 
                 map
             }

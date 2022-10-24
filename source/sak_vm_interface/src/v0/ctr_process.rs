@@ -6,6 +6,7 @@ pub type ContractProcessor = Box<dyn ContractProcess + Send + Sync>;
 pub trait ContractProcess {
     fn invoke(
         &self,
+        ctr_addr: &String,
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError>;

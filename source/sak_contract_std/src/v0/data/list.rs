@@ -35,5 +35,7 @@ impl List {
         vec![0]
     }
 
-    pub fn receipt(&self) {}
+    pub fn receipt(&self) -> HashMap<String, Vec<u8>> {
+        HashMap::from([("str_2".to_string(), vec![234])])
+    }
 }

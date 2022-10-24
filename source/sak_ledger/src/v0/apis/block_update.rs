@@ -329,7 +329,10 @@ impl SakLedger {
     ) -> Result<(), MachineError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                let receipt = self.contract_processor.invoke(&data, ContractFn::Init)?;
+                let receipt = self
+                    .contract_processor
+                    .invoke(ctr_addr, &data, ContractFn::Init)?;
+
                 let storage = receipt
                     .updated_storage
                     .ok_or("Contract state needs to be initialized")?;
@@ -359,7 +362,9 @@ impl SakLedger {
                                 // let ctr_fn = ContractFn::Execute(req, previous_state.to_vec());
                                 let ctr_fn = ContractFn::Execute(req);
 
-                                let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
+                                let receipt = self
+                                    .contract_processor
+                                    .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
                                 receipt.updated_storage.ok_or("State needs to be updated")?
                             }

@@ -15,7 +15,6 @@ pub struct InvokeReceipt {
     pub fn_type: FnType,
     pub result: InvokeResult,
     pub updated_storage: Option<Vec<u8>>,
-    pub mrs_receipt: Option<HashMap<String, Vec<u8>>>,
 }
 
 impl InvokeReceipt {
@@ -25,7 +24,6 @@ impl InvokeReceipt {
             fn_type: FnType::Init,
             result: vec![],
             updated_storage: Some(vec![]),
-            mrs_receipt: None,
         };
 
         Ok(rpt)
@@ -39,7 +37,6 @@ impl InvokeReceipt {
             fn_type: FnType::Query,
             result: res,
             updated_storage: Some(vec![]),
-            mrs_receipt: None,
         };
 
         Ok(rpt)
@@ -56,7 +53,6 @@ impl InvokeReceipt {
             fn_type: FnType::Execute,
             result: res,
             updated_storage: Some(vec![]),
-            mrs_receipt: None,
         };
 
         Ok(rpt)

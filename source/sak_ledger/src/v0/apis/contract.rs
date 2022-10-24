@@ -32,9 +32,13 @@ impl SakLedger {
         //     ctr_call_type: data.ctr_call_type,
         // };
 
+        let ctr_addr = req.ctr_addr.to_string();
+
         let ctr_fn = ContractFn::Execute(req);
 
-        let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
+        let receipt = self
+            .contract_processor
+            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
         let result = receipt.result;
 
@@ -53,6 +57,8 @@ impl SakLedger {
             .await?
             .ok_or("ctr data (wasm) should exist")?;
 
+        let ctr_addr = req.ctr_addr.to_string();
+
         // let ctr_state = self
         //     .ledger_db
         //     .get_ctr_state(ctr_addr)?
@@ -68,7 +74,9 @@ impl SakLedger {
 
         let ctr_fn = ContractFn::Execute(req);
 
-        let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
+        let receipt = self
+            .contract_processor
+            .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
         let state = receipt
             .updated_storage

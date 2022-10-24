@@ -72,11 +72,12 @@ async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
         (request, storage)
     };
 
+    let ctr_addr = "some_addr".to_string();
     let ctr_wasm = MRS.to_vec();
     let ctr_fn = ContractFn::Execute(request);
 
     let receipt = vm
-        .invoke(&ctr_wasm, ctr_fn)
+        .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
         .expect("mrs should be obtained");
 
     let updated_storage = receipt.updated_storage.unwrap();

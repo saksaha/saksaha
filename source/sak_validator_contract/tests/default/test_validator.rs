@@ -112,16 +112,12 @@ async fn test_call_ctr_validator_fn_init() {
         let m = SakMRS::init(mrs_args).await.unwrap();
     };
 
-    // let store_accessor = {
-    //     let a = StoreAccessor::new(mrs);
-    //     Arc::new(a)
-    // };
-
     let ctr_wasm = VALIDATOR.to_vec();
     let ctr_fn = ContractFn::Init;
+    let ctr_addr = "some_addr".to_string();
 
     let receipt = vm
-        .invoke(&ctr_wasm, ctr_fn)
+        .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
         .expect("validator should be obtained");
 
     let updated_state = receipt
