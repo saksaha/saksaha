@@ -27,7 +27,7 @@ impl Consensus for Pos {
         };
 
         let validator = match dist_ledger
-            .query_ctr(
+            .execute_ctr(
                 // &self.validator_ctr_addr,
                 request,
             )

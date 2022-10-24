@@ -9,6 +9,7 @@ use sak_logger::info;
 use sak_machine::{SakMachine, SakMachineArgs};
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
+use sak_store_interface::MRSAccessor;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
@@ -47,8 +48,16 @@ pub(in crate::rpc) async fn make_test_context(
         Arc::new(id)
     };
 
+    let mrs = {
+        let pk = String::from("test");
+
+        let m = MRS::init(&pk).await.unwrap();
+        let m = Box::new(m) as MRSAccessor;
+        Arc::new(m)
+    };
+
     let vm: ContractProcessor = {
-        let v = SakVM::init().unwrap();
+        let v = SakVM::init(mrs.clone()).unwrap();
         Box::new(v)
     };
 
@@ -58,13 +67,6 @@ pub(in crate::rpc) async fn make_test_context(
         Ledger::init(&pk, None, None, None, identity.clone(), vm)
             .await
             .unwrap()
-    };
-
-    let mrs = {
-        let pk = String::from("test");
-
-        let m = MRS::init(&pk).await.unwrap();
-        Box::new(m)
     };
 
     let machine = {
@@ -175,8 +177,16 @@ pub(crate) async fn make_ledger(secret: &String, public_key_str: &String) -> Sak
         Arc::new(id)
     };
 
+    let mrs = {
+        let pk = String::from("test");
+
+        let m = MRS::init(&pk).await.unwrap();
+        let m = Box::new(m) as MRSAccessor;
+        Arc::new(m)
+    };
+
     let vm: ContractProcessor = {
-        let v = SakVM::init().unwrap();
+        let v = SakVM::init(mrs.clone()).unwrap();
         Box::new(v)
     };
 

@@ -12,6 +12,7 @@ use sak_p2p_addr::AddrStatus;
 use sak_p2p_addr::UnknownAddr;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
+use sak_store_interface::MRSAccessor;
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
@@ -125,11 +126,12 @@ pub(crate) async fn make_test_context(
 
     let mrs = {
         let m = MRS::init(&public_key_str).await.unwrap();
+        let m = Box::new(m) as MRSAccessor;
         Arc::new(m)
     };
 
     let vm: ContractProcessor = {
-        let v = SakVM::init(mrs).unwrap();
+        let v = SakVM::init(mrs.clone()).unwrap();
         Box::new(v)
     };
 

@@ -1,6 +1,6 @@
-use proc_macro::TokenStream;
-
 mod v0;
+
+use proc_macro::TokenStream;
 
 #[proc_macro_derive(MRSStore)]
 pub fn derive_mrs_store(input: TokenStream) -> TokenStream {

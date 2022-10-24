@@ -18,4 +18,8 @@ type_extension = { path = "../type_extension" }
 sak_test_utils = { path = "../sak_test_utils" }
 sak_crypto = { path = "../sak_crypto" }
 sak_vm = { path = "../sak_vm" }
+sak_vm_interface = { path = "../sak_vm_interface" }
+sak_mrs = { path = "../sak_mrs" }
+sak_store_interface = { path = "../sak_store_interface" }
+sak_dir = { path = "../sak_dir" }
 tokio = { version = "1.21.2", features = ["full"] }

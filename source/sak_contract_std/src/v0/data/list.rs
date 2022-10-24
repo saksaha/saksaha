@@ -1,21 +1,19 @@
-use std::convert::TryInto;
-
 use crate::{get_mrs_data_from_host, RET_LEN_SIZE};
-
-crate::define_host_ffi!();
-// crate::contract_bootstrap!();
+use std::{collections::HashMap, convert::TryInto};
 
 #[derive(Debug)]
 pub struct List {
     _name: String,
+    data: HashMap<String, String>,
 }
 
 impl List {
     pub fn new(_name: String) -> List {
-        List { _name }
+        List {
+            _name,
+            data: HashMap::new(),
+        }
     }
-
-    pub fn receipt(&self) {}
 
     pub fn get(&self, key: &String) -> Vec<u8> {
         let key: String = format!("{}_{}", self._name, key);
@@ -36,4 +34,6 @@ impl List {
 
         vec![0]
     }
+
+    pub fn receipt(&self) {}
 }
