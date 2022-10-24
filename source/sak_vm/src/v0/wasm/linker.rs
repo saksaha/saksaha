@@ -1,7 +1,7 @@
 use crate::{v0::wasm::Wasmtime, VMError};
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{MRSAccessor, PreflightResponse};
 use sak_vm_interface::wasmtime::{
     Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
 };
@@ -71,7 +71,10 @@ pub(crate) fn make_linker(
             println!("get_mrs_data(): arg: {}", arg);
 
             //----------------------------------------------
-            let dummy_data = Data { d: 123 };
+            let dummy_data = PreflightResponse {
+                request_id: 10000,
+                data: 123444,
+            };
             //----------------------------------------------
 
             let data_bytes = match serde_json::to_vec(&dummy_data) {
