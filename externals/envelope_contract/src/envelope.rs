@@ -4,7 +4,7 @@ use crate::{
 };
 use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
-    contract_bootstrap, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
+    saksaha_contract, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
 };
 use std::collections::HashMap;
 
@@ -12,13 +12,25 @@ pub const STORAGE_CAP: usize = 100;
 
 pub struct OpenChReq {}
 
-contract_bootstrap!();
+saksaha_contract!(0.0.1);
 
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {
-    pub chats: List,
-    pub channels: Dict,
+    pub chats: sak_contract_std::List,
+    pub channels: sak_contract_std::Dict,
 }
+
+// pub struct S<T> {
+//     t: Vec<T>,
+// }
+
+// impl S {
+//     pub fn a() {
+//         S {
+//             t: Vec<usize>::new(),
+//         }
+//     }
+// }
 
 pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
@@ -31,7 +43,7 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn query(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn execute(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     // let storage = vec![]; // soon will be removed
 
     unsafe {

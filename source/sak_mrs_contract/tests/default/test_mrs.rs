@@ -1,8 +1,12 @@
-use sak_contract_std::{CtrCallType, CtrRequest, Storage};
+use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
+use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_mrs_contract::request_type;
 use sak_mrs_contract::{MutableRecordStorage, ReserveSlotParams, Slot};
-use sak_vm::{ContractFn, SakVM};
+use sak_store_interface::MRSAccessor;
+use sak_vm::SakVM;
+use sak_vm_interface::ContractProcessor;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub(crate) const MRS: &[u8] = include_bytes!("../../../prebuild/sak_mrs_contract.postprocess.wasm");
 
@@ -23,7 +27,23 @@ fn get_test_mrs_state(slots: Vec<Slot>) -> Storage {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
-    let vm = SakVM::init().expect("VM should be initiated");
+    let mrs_db_path = {
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("test").join("mrs")
+    };
+
+    let mrs = {
+        let mrs_args = SakMRSArgs { mrs_db_path };
+
+        let m = SakMRS::init(mrs_args).await.unwrap();
+        let m = Box::new(m) as MRSAccessor;
+        Arc::new(m)
+    };
+
+    let vm: ContractProcessor = {
+        let v = SakVM::init(mrs.clone()).expect("VM should be initiated");
+        Box::new(v)
+    };
 
     let test_mrs_vec = vec![Slot {
         pk: get_mock_public_key(),
@@ -53,9 +73,11 @@ async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
     };
 
     let ctr_wasm = MRS.to_vec();
-    let ctr_fn = ContractFn::Execute(request, storage);
+    let ctr_fn = ContractFn::Execute(request);
 
-    let receipt = vm.invoke(ctr_wasm, ctr_fn).expect("mrs should be obtained");
+    let receipt = vm
+        .invoke(&ctr_wasm, ctr_fn)
+        .expect("mrs should be obtained");
 
     let updated_storage = receipt.updated_storage.unwrap();
 

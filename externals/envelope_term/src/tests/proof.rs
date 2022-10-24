@@ -8,9 +8,11 @@ use sak_machine::{SakMachine, SakMachineArgs};
 use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_proof::CoinProof;
 use sak_proof_types::{NewCoin, OldCoin};
+use sak_store_interface::MRSAccessor;
 use sak_types::{BlockCandidate, TxCandidate};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
+use std::sync::Arc;
 use type_extension::U8Array;
 
 const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
@@ -68,11 +70,12 @@ pub(crate) async fn make_machine(block: BlockCandidate) -> SakMachine {
         let mrs_args = SakMRSArgs { mrs_db_path };
 
         let m = SakMRS::init(mrs_args).await.unwrap();
-        Box::new(m)
+        let m = Box::new(m) as MRSAccessor;
+        Arc::new(m)
     };
 
     let vm: ContractProcessor = {
-        let v = SakVM::init().unwrap();
+        let v = SakVM::init(mrs.clone()).unwrap();
         Box::new(v)
     };
 
