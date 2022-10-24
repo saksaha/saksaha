@@ -122,11 +122,11 @@ pub(crate) fn make_linker(
     linker.func_wrap(
         "host",
         symbols::HOST__PUT_MRS_DATA,
-        move |mut caller: Caller<InstanceState>, ptr_arg: u32, len_arg: u32, ptr_ret_len: u32| {
+        move |mut caller: Caller<InstanceState>, arg_ptr: u32, arg_len: u32, ptr_ret_len: u32| {
             let state = caller.data_mut();
             println!(
                 "get_mrs_data(): state: {:?}, params: {}, {}",
-                state, ptr_arg, len_arg
+                state, arg_ptr, arg_len,
             );
 
             let maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
@@ -134,8 +134,8 @@ pub(crate) fn make_linker(
 
             let maybe_arg = memory
                 .data(&caller)
-                .get(ptr_arg as usize..)
-                .and_then(|arr| arr.get(..len_arg as usize));
+                .get(arg_ptr as usize..)
+                .and_then(|arr| arr.get(..arg_len as usize));
 
             let arg = {
                 let maybe_arg = maybe_arg.ok_or("arg should be given").unwrap();

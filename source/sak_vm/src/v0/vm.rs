@@ -28,12 +28,12 @@ impl ContractProcess for SakVM {
             ContractFn::Execute(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                Self::invoke_query(instance, store, memory, request)
+                Self::invoke_execute(instance, store, memory, request)
             }
             ContractFn::Update(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                Self::invoke_execute(instance, store, memory, request)
+                Self::invoke_update(instance, store, memory, request)
             }
         };
 
@@ -64,12 +64,12 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?;
         }
 
-        let receipt = InvokeReceipt::from_init(storage)?;
+        let receipt = InvokeReceipt::from_init()?;
 
         Ok(receipt)
     }
 
-    fn invoke_query(
+    fn invoke_execute(
         instance: Instance,
         mut store: Store<InstanceState>,
         memory: Memory,
@@ -99,17 +99,18 @@ impl SakVM {
                 }
             };
 
-        let result: Vec<u8>;
+        let result_bytes: Vec<u8>;
         unsafe {
-            result = Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
+            result_bytes =
+                Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
         }
 
-        let receipt = InvokeReceipt::from_query(result)?;
+        let receipt = InvokeReceipt::from_query(result_bytes)?;
 
         Ok(receipt)
     }
 
-    fn invoke_execute(
+    fn invoke_update(
         instance: Instance,
         mut store: Store<InstanceState>,
         memory: Memory,

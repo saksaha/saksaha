@@ -82,6 +82,8 @@ macro_rules! define_ctr_fns {
 
             let result: Result<$crate::InvokeResult, $crate::ContractError> = execute(ctx, request);
 
+            // ctx.mrs.receipt();
+
             let mut result: $crate::InvokeResult =
                 $crate::return_err_4!(result, "something failed");
             let result_ptr = result.as_mut_ptr();
