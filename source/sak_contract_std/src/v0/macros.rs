@@ -196,3 +196,10 @@ macro_rules! return_err_4 {
         }
     };
 }
+
+#[macro_export]
+macro_rules! temp {
+    ($t: expr) => {{
+        $t
+    }};
+}
