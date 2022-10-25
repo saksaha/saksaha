@@ -49,6 +49,11 @@ impl SakMRS {
 
         let mrs = SakMRS { db, session_store };
 
+        let mut batch = WriteBatch::default();
+        mrs.db
+            .batch_put_dummy(&mut batch, &"latest_idx".to_string(), &"0".to_string())?;
+        mrs.db.db.write(batch)?;
+
         info!("Initialized Mutable record storage (MRS)",);
 
         Ok(mrs)
@@ -76,18 +81,18 @@ impl MRSInterface for SakMRS {
         self.db.get_dummy(key)
     }
 
-    // fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
-    //     let mut batch = WriteBatch::default();
-
-    //     self.db.batch_put_dummy(&mut batch, key, value);
-
-    //     self.db.db.write(batch)?;
-
-    //     Ok(())
-    // }
-
     async fn add_session(&self, session_id: String, session: sak_store_interface::Session) {
         let mut session_store_lock = self.session_store.lock().await;
         session_store_lock.insert(session_id, session);
+    }
+
+    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
+        let mut batch = WriteBatch::default();
+
+        self.db.batch_put_dummy(&mut batch, key, value)?;
+
+        self.db.db.write(batch)?;
+
+        Ok(())
     }
 }

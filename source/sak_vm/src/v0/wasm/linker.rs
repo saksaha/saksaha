@@ -122,33 +122,50 @@ pub(crate) fn make_linker(
     linker.func_wrap(
         "host",
         symbols::HOST__PUT_MRS_DATA,
-        move |mut caller: Caller<InstanceState>, arg_ptr: u32, arg_len: u32, ptr_ret_len: u32| {
+        move |mut caller: Caller<InstanceState>,
+              arg_ptr: u32,
+              arg_len: u32,
+              arg2_ptr: u32,
+              arg2_len: u32,
+              ptr_ret_len: u32| {
             let state = caller.data_mut();
             println!(
-                "get_mrs_data(): state: {:?}, params: {}, {}",
-                state, arg_ptr, arg_len,
+                "put_mrs_data(): state: {:?}, params: {}, {}, {}, {}",
+                state, arg_ptr, arg_len, arg2_ptr, arg2_len,
             );
 
-            let maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
-            let memory = maybe_memory.into_memory().unwrap();
-
-            let maybe_arg = memory
+            let k_maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
+            let k_memory = k_maybe_memory.into_memory().unwrap();
+            let k_maybe_arg = k_memory
                 .data(&caller)
                 .get(arg_ptr as usize..)
                 .and_then(|arr| arr.get(..arg_len as usize));
-
-            let arg = {
-                let maybe_arg = maybe_arg.ok_or("arg should be given").unwrap();
-                String::from_utf8(maybe_arg.to_vec()).expect("arg should be parsable string")
+            let key_arg = {
+                let k_maybe_arg = k_maybe_arg.ok_or("arg should be given").unwrap();
+                String::from_utf8(k_maybe_arg.to_vec()).expect("arg should be parsable string")
             };
+            let ctr_address = "ctr_address";
+            let key: String = format!("{}_{}", ctr_address, key_arg);
 
-            println!("get_mrs_data(): arg: {}", arg);
+            //
+
+            let v_maybe_memory = caller.get_export(symbols::MEMORY).unwrap();
+            let v_memory = v_maybe_memory.into_memory().unwrap();
+            let v_maybe_arg = v_memory
+                .data(&caller)
+                .get(arg2_ptr as usize..)
+                .and_then(|arr| arr.get(..arg2_len as usize));
+            let value = {
+                let v_maybe_arg = v_maybe_arg.ok_or("arg should be given").unwrap();
+                String::from_utf8(v_maybe_arg.to_vec()).expect("arg should be parsable string")
+            };
 
             // arg == {field}_{key}
 
-            let key: String = format!("{}_{}", "ctr_address", arg);
+            println!("put_mrs_data(), key: {:?}", key);
+            println!("put_mrs_data(), value: {:?}", value);
 
-            println!("test key: {:?}", key);
+            let a = mrs.put_mrs_data(&key).unwrap_or(Some("Fail".to_string()));
 
             //----------------------------------------------
             let dummy_data = Data { d: 123 };

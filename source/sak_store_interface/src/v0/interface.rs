@@ -10,7 +10,7 @@ pub type StoreInterfaceError = Box<dyn std::error::Error + Send + Sync>;
 pub trait MRSInterface {
     fn get_mrs_data(&self, key: &String) -> Result<Option<String>, StoreInterfaceError>;
 
-    // fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), StoreInterfaceError>;
+    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), StoreInterfaceError>;
 
     async fn add_session(&self, session_id: String, session: Session);
 }

@@ -41,7 +41,13 @@ pub fn put_mrs_data_to_host(key: &String, value: &String) -> Vec<u8> {
         value_ptr.copy_from(value.as_ptr(), value_len);
 
         let ret_len_ptr = CTR__alloc(RET_LEN_SIZE);
-        let ret_ptr = HOST__put_mrs_data(key_ptr, key_len as u32, ret_len_ptr as *mut u32);
+        let ret_ptr = HOST__put_mrs_data(
+            key_ptr,
+            key_len as u32,
+            value_ptr,
+            value_len as u32,
+            ret_len_ptr as *mut u32,
+        );
         let ret_len = {
             let bytes: [u8; RET_LEN_SIZE] =
                 std::slice::from_raw_parts(ret_len_ptr as *mut u8, RET_LEN_SIZE)
