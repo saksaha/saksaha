@@ -1,7 +1,7 @@
 use crate::cfs;
 use crate::MachineError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
-use sak_logger::info;
+use sak_types::{Cm, TxType};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -10,6 +10,24 @@ const APP_NAME: &'static str = "saksaha";
 
 pub struct LedgerDB {
     pub(crate) db: DB,
+}
+
+pub struct MintTxEntity {
+    pub tx_type: TxType,
+    pub cms: Vec<Cm>,
+    pub cm_idxes: Vec<u128>,
+    pub cm_count: u128,
+    pub created_at: String,
+    pub data: Vec<u8>,
+    pub author_sig: String,
+    pub ctr_addr: String,
+    pub v: [u8; 32],
+    pub k: [u8; 32],
+    pub s: [u8; 32],
+}
+
+impl MintTxEntity {
+    pub fn put() {}
 }
 
 impl LedgerDB {
