@@ -25,6 +25,9 @@ impl List {
 
     pub fn push(&mut self, value: Vec<u8>) {
         //TO-DO: get latest idx of the stored List and update index
+        let latest_idx_key = String::from("latest_idx");
+        let latest_idx = get_mrs_data_from_host(&latest_idx_key);
+
         let latest_idx = 0;
 
         let key: String = format!("{}_{}", self._name, latest_idx);

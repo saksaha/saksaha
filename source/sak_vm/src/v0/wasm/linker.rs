@@ -63,6 +63,14 @@ pub(crate) fn make_linker(
 
             // MRS init
 
+            let latest_idx_key = String::from("latest_idx");
+            let idx_str = mrs
+                .get_mrs_data(&latest_idx_key)
+                .unwrap_or(Some("0".to_string()))
+                .unwrap();
+            let latest_idx = (idx_str.parse::<i32>().unwrap() + 1).to_string();
+            mrs.put_mrs_data(&latest_idx_key, &latest_idx).unwrap();
+
             let mrs = mrs.clone();
             let b = mrs.put_mrs_data(&key, &"dummy".to_string());
             let a = mrs.get_mrs_data(&key).unwrap_or(Some("Fail".to_string()));
