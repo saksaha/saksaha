@@ -165,7 +165,9 @@ pub(crate) fn make_linker(
             println!("put_mrs_data(), key: {:?}", key);
             println!("put_mrs_data(), value: {:?}", value);
 
-            let a = mrs.put_mrs_data(&key).unwrap_or(Some("Fail".to_string()));
+            let a = mrs
+                .put_mrs_data(&key, &value)
+                .unwrap_or(Some("Fail".to_string()));
 
             //----------------------------------------------
             let dummy_data = Data { d: 123 };
