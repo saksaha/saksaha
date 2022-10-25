@@ -1,5 +1,5 @@
 use crate::{cfs, keys, LedgerDB};
-use crate::{MachineError, MerkleNodeLoc};
+use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::ScalarExt;
 use sak_kv_db::DB;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options, WriteBatch};
@@ -13,7 +13,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         key: &String,
-    ) -> Result<[u8; 32], MachineError> {
+    ) -> Result<[u8; 32], LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -72,7 +72,7 @@ impl LedgerDB {
     pub fn get_latest_block_height(
         &self,
         // db: &DB,
-    ) -> Result<Option<u128>, MachineError> {
+    ) -> Result<Option<u128>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
 
         let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);

@@ -1,4 +1,4 @@
-use crate::{CtrStateUpdate, MachineError, MerkleUpdate, SakLedger};
+use crate::{CtrStateUpdate, LedgerError, MerkleUpdate, SakLedger};
 use colored::Colorize;
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
@@ -16,7 +16,7 @@ impl SakLedger {
     pub async fn insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
-    ) -> Result<Option<String>, MachineError> {
+    ) -> Result<Option<String>, LedgerError> {
         let persisted_gen_block_hash = if let Some(b) = match self.get_block_by_height(&0).await {
             Ok(b) => b,
             Err(err) => return Err(err.into()),
@@ -45,7 +45,7 @@ impl SakLedger {
     pub async fn write_block(
         &self,
         bc: Option<BlockCandidate>,
-    ) -> Result<Option<String>, MachineError> {
+    ) -> Result<Option<String>, LedgerError> {
         let mut bc = match bc {
             Some(bc) => bc,
             None => match self.make_block_candidate().await? {
@@ -169,7 +169,7 @@ impl SakLedger {
     pub async fn write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
-    ) -> Result<Vec<String>, MachineError> {
+    ) -> Result<Vec<String>, LedgerError> {
         let mut block_hashes = vec![];
 
         blocks.sort_by(|a, b| a.0.block_height.cmp(&b.0.block_height));
@@ -205,7 +205,7 @@ impl SakLedger {
         Ok(block_hashes)
     }
 
-    pub fn delete_tx(&self, key: &String) -> Result<(), MachineError> {
+    pub fn delete_tx(&self, key: &String) -> Result<(), LedgerError> {
         self.ledger_db.delete_tx(key)
     }
 
@@ -223,7 +223,7 @@ impl SakLedger {
         }
     }
 
-    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, MachineError> {
+    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
         if sn == &DUMMY_SN {
             return Ok(true);
         } else {
@@ -241,7 +241,7 @@ impl SakLedger {
         }
     }
 
-    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, MachineError> {
+    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
         let hasher = MiMC::new();
 
         let mut public_inputs = vec![];
@@ -280,7 +280,7 @@ impl SakLedger {
         Ok(verification_result)
     }
 
-    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), MachineError> {
+    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
         bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
             TxCandidate::Mint(_tc) => {
                 return true;
@@ -326,14 +326,9 @@ impl SakLedger {
         data: &[u8],
         tx_ctr_op: TxCtrOp,
         ctr_state_update: &mut CtrStateUpdate,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                // let receipt = self
-                //     .contract_processor
-                //     .invoke(ctr_addr, &data, ContractFn::Init)
-                //     .await?;
-
                 let receipt = self
                     .contract_processor
                     .invoke(ctr_addr, &data, ContractFn::Init)
@@ -412,7 +407,7 @@ impl SakLedger {
         ctr_state_update: &mut CtrStateUpdate,
         merkle_update: &mut MerkleUpdate,
         next_cm_idx: CmIdx,
-    ) -> Result<u128, MachineError> {
+    ) -> Result<u128, LedgerError> {
         let ctr_addr = &tc.ctr_addr;
         let data = &tc.data;
         let tx_ctr_op = tc.get_ctr_op();
@@ -433,7 +428,7 @@ impl SakLedger {
         ctr_state_update: &mut CtrStateUpdate,
         merkle_update: &mut MerkleUpdate,
         next_cm_idx: CmIdx,
-    ) -> Result<u128, MachineError> {
+    ) -> Result<u128, LedgerError> {
         let ctr_addr = &tc.ctr_addr;
         let data = &tc.data;
         let tx_ctr_op = tc.get_ctr_op();
@@ -453,7 +448,7 @@ impl SakLedger {
         merkle_update: &mut MerkleUpdate,
         cms: &Vec<[u8; 32]>,
         next_cm_idx: CmIdx,
-    ) -> Result<u128, MachineError> {
+    ) -> Result<u128, LedgerError> {
         let cm_count = cms.len() as u128;
 
         for (idx, cm) in cms.iter().enumerate() {
