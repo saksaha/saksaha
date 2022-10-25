@@ -20,7 +20,8 @@ pub(crate) fn make_linker(
     mrs: &Arc<MRSAccessor>,
 ) -> Result<Linker<InstanceState>, VMError> {
     let mut linker = Linker::new(&engine);
-    let mrs = mrs.clone();
+    let mrs_get = mrs.clone();
+    let mrs_put = mrs.clone();
 
     linker.func_wrap(
         "host",
@@ -56,16 +57,15 @@ pub(crate) fn make_linker(
             };
 
             // arg == {field}_{key}
-
             let key: String = format!("{}_{}", "ctr_address", arg);
 
             println!("test key: {:?}", key);
 
             // MRS init
-
-            let mrs = mrs.clone();
-            // let b = mrs.put_mrs_data(&key, &"dummy".to_string());
-            let a = mrs.get_mrs_data(&key).unwrap_or(Some("Fail".to_string()));
+            // let mrs = mrs_get.clone();
+            let a = mrs_get
+                .get_mrs_data(&key)
+                .unwrap_or(Some("Fail".to_string()));
             println!("real mrs data!!: {:?}", a);
 
             println!("get_mrs_data(): arg: {}", arg);
@@ -144,8 +144,17 @@ pub(crate) fn make_linker(
                 let k_maybe_arg = k_maybe_arg.ok_or("arg should be given").unwrap();
                 String::from_utf8(k_maybe_arg.to_vec()).expect("arg should be parsable string")
             };
+
+            // let mrs = mrs_put.clone();
+            let latest_idx_key = String::from("latest_idx");
+            let cur_idx = mrs_put
+                .get_mrs_data(&latest_idx_key)
+                .unwrap_or(Some("0".to_string()))
+                .unwrap();
+            let latest_idx = (cur_idx.parse::<i32>().unwrap() + 1).to_string();
+
             let ctr_address = "ctr_address";
-            let key: String = format!("{}_{}", ctr_address, key_arg);
+            let key: String = format!("{}_{}_{}", ctr_address, key_arg, cur_idx);
 
             //
 
@@ -160,58 +169,11 @@ pub(crate) fn make_linker(
                 String::from_utf8(v_maybe_arg.to_vec()).expect("arg should be parsable string")
             };
 
-            // arg == {field}_{key}
-
             println!("put_mrs_data(), key: {:?}", key);
             println!("put_mrs_data(), value: {:?}", value);
 
-            let a = mrs
-                .put_mrs_data(&key, &value)
-                .unwrap_or(Some("Fail".to_string()));
-
-            //----------------------------------------------
-            let dummy_data = Data { d: 123 };
-            //----------------------------------------------
-
-            let data_bytes = match serde_json::to_vec(&dummy_data) {
-                Ok(b) => b,
-                Err(err) => {
-                    error!("Error serializing mrs data, err: {}", err);
-
-                    vec![]
-                }
-            };
-
-            let data_len = data_bytes.len() as u32;
-            let data_len_bytes = data_len.to_be_bytes();
-            let data_len_ptr = data_len_bytes.as_ptr();
-
-            unsafe {
-                let raw = memory.data_ptr(&caller).offset(ptr_ret_len as isize);
-                raw.copy_from(data_len_ptr, size_of::<u32>());
-            }
-
-            println!(
-                "get_mrs_data(): data: {:?}, len: {}, getting memory allocation",
-                &String::from_utf8(data_bytes.clone()),
-                &data_bytes.len(),
-            );
-
-            let alloc = caller
-                .get_export(symbols::CTR__ALLOC)
-                .unwrap()
-                .into_func()
-                .unwrap();
-            let alloc: TypedFunc<i32, i32> = alloc.typed(&caller).unwrap();
-
-            let ptr_offset = alloc.call(&mut caller, data_bytes.len() as i32).unwrap() as isize;
-
-            unsafe {
-                let raw = memory.data_ptr(&caller).offset(ptr_offset);
-                raw.copy_from(data_bytes.as_ptr(), data_len as usize);
-            }
-
-            ptr_offset as i32
+            mrs_put.put_mrs_data(&key, &value).unwrap();
+            mrs_put.put_mrs_data(&latest_idx_key, &latest_idx).unwrap();
         },
     )?;
 
