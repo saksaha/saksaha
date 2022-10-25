@@ -36,7 +36,7 @@ impl SakLedger {
 
         let receipt = self.contract_processor.invoke(&ctr_wasm, ctr_fn)?;
 
-        let result = receipt.result;
+        let result = receipt.result.clone();
 
         Ok(result)
     }

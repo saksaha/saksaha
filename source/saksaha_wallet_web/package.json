@@ -1,0 +1,16 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": [
+    "source/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "lerna": "^5.5.2"
+  },
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "build-deps": "cd externals/saksaha-js/packages/saksaha && yarn run build",
+    "dev": "cd source/wallet && yarn run dev"
+  }
+}
