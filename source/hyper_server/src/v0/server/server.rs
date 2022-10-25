@@ -13,17 +13,20 @@ use tokio::net::TcpListener;
 pub struct TCPServer {}
 
 impl TCPServer {
-    pub async fn run<C, F, R, S>(
+    pub async fn run<C>(
         self,
         tcp_socket: TcpListener,
         ctx: C,
         middlewares: Vec<Middleware<C>>,
-        f: F,
+        f: Box<
+            dyn Fn(
+                Request<Body>,
+            )
+                -> std::pin::Pin<Box<dyn Future<Output = Result<Response<Body>, hyper::Error>>>>,
+        >,
     ) -> Result<(), RPCServerError>
     where
         C: Clone + Send + Sync + 'static,
-        F: FnMut(Request<R>) -> S + Send,
-        S: Future + Send,
     {
         let addr_incoming = match AddrIncoming::from_listener(tcp_socket) {
             Ok(a) => a,
@@ -75,21 +78,25 @@ impl TCPServer {
         let server = Server::builder(addr_incoming);
 
         server.serve(make_service_fn(|_| async {
-            Ok::<_, hyper::Error>(service_fn(
-                f, // |req| async move {
-                  // match (req.method(), req.uri().path()) {
-                  //     (&Method::POST, "/echo") => {
-                  //         let mut response = Response::new(Body::empty());
-                  //         *response.body_mut() = Body::from("Try POSTing data to /echo");
-                  //         Ok(response)
-                  //     }
-                  //     _ => {
-                  //         let mut not_found = Response::new(Body::empty());
-                  //         *not_found.status_mut() = StatusCode::NOT_FOUND;
-                  //         Ok::<_, hyper::Error>(not_found)
-                  //     }
-                  // }
-            ))
+            Ok::<_, hyper::Error>(service_fn(|req| async move {
+                // a(req).await
+                return f(req).await;
+                // match (req.method(), req.uri().path()) {
+                //     (&Method::POST, "/echo") => {
+                //         let mut response = Response::new(Body::empty());
+                //         *response.body_mut() = Body::from("Try POSTing data to /echo");
+                //         Ok(response)
+                //     }
+                //     _ => {
+                //         let mut not_found = Response::new(Body::empty());
+                //         *not_found.status_mut() = StatusCode::NOT_FOUND;
+                //         Ok::<_, hyper::Error>(not_found)
+                //     }
+                // }
+                // let mut not_found = Response::new(Body::empty());
+                // *not_found.status_mut() = StatusCode::NOT_FOUND;
+                // Ok::<_, hyper::Error>(not_found)
+            }))
         }));
 
         Ok(())
