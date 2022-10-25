@@ -1,4 +1,4 @@
-use crate::{get_mrs_data_from_host, put_mrs_data_to_host, RET_LEN_SIZE};
+use crate::{get_mrs_data_from_host, put_mrs_data_to_host, ContractError, RET_LEN_SIZE};
 use std::{collections::HashMap, convert::TryInto};
 
 #[derive(Debug)]
@@ -23,14 +23,25 @@ impl List {
         data
     }
 
-    pub fn push(&self, value: &String) {
-        //TO-DO: get latest idx of the stored List
+    pub fn put(&self, value: &String) {
         let key: String = format!("{}", self._name);
 
         put_mrs_data_to_host(&key, value);
     }
 
+    pub fn push(&mut self, value: Vec<u8>) {
+        //TO-DO: get latest idx of the stored List and update index
+        let latest_idx_key = String::from("latest_idx");
+        let latest_idx = get_mrs_data_from_host(&latest_idx_key);
+
+        let latest_idx = 0;
+
+        let key: String = format!("{}_{}", self._name, latest_idx);
+
+        self.receipt.insert(key, value);
+    }
+
     pub fn receipt(&self) -> HashMap<String, Vec<u8>> {
-        HashMap::from([("str_2".to_string(), vec![234])])
+        self.receipt.clone()
     }
 }
