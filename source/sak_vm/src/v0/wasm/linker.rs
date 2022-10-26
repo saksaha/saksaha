@@ -96,7 +96,7 @@ pub(crate) fn make_linker(
             }
 
             println!(
-                "get_mrs_data(): data: {:?}, len: {}, getting memory allocation",
+                "get_mrs_data(): data: {:?}, len: {}, getting memoy allocation",
                 &String::from_utf8(data_bytes.clone()),
                 &data_bytes.len(),
             );

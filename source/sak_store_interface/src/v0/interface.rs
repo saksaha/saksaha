@@ -13,6 +13,7 @@ pub trait MRSInterface {
     fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), StoreInterfaceError>;
 
     async fn add_session(&self, session_id: String, session: Session);
+    // async fn get_session(&self, session_id: String) -> Session;
 }
 
 pub trait LedgerInterface {

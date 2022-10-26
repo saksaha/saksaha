@@ -8,6 +8,7 @@ use sak_kv_db::WriteBatch;
 use sak_logger::info;
 use sak_store_interface::{MRSInterface, Session};
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::{collections::HashMap, convert::TryInto};
@@ -85,6 +86,17 @@ impl MRSInterface for SakMRS {
         let mut session_store_lock = self.session_store.lock().await;
         session_store_lock.insert(session_id, session);
     }
+
+    // async fn get_session(&self, session_id: String) -> Result<Session, MRSError> {
+    //     let mut session_store_lock = self.session_store.lock().await;
+
+    //     let receipt = session_store_lock
+    //         .get_key_value(&session_id)
+    //         .ok_or("session not found")?;
+    //     session_store_lock.remove(receipt.0);
+    //     let sess = *(receipt.1);
+    //     Ok(sess)
+    // }
 
     fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
         let mut batch = WriteBatch::default();
