@@ -6,7 +6,7 @@ use sak_kv_db::{
 use sak_types::{BlockHash, Cm, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::{io, sync::Arc};
 
 // TODO This has to be dynamically decided
 const APP_NAME: &'static str = "saksaha";
@@ -176,7 +176,7 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub fn get_ser<T: Serialize + Deserialize>(
+    pub fn get_ser<'a, T: Serialize + Deserialize<'a>>(
         &self,
         column: CFSenum,
         key: &[u8],
@@ -184,12 +184,12 @@ impl LedgerDB {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
         match self.db.get_cf(&cf, key)? {
-            Some(v) => Ok(Some(serde_json::from_slice(&v)?)),
+            Some(v) => {
+                let arr = serde_json::from_slice(&v)?;
+
+                Ok(Some(arr))
+            }
             None => Ok(None),
         }
-    }
-
-    pub fn get(&self, column: CFSenum, key: &[u8]) -> Result<Option<Vec<u8>>, MachineError> {
-        self.db.get_cf(column, key)?
     }
 }
