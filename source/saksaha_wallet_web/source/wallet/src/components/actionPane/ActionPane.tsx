@@ -1,11 +1,14 @@
-import { CoinManager } from 'saksaha';
-import { Component, createSignal, Setter } from 'solid-js';
+import { CoinManager, Saksaha, DEV_LOCAL_1_SK } from 'saksaha';
+import { Component, createSignal, Setter, createEffect } from 'solid-js';
 import * as styles from './ActionPane.css';
 
-const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>, wallet_addr_setter: Setter<string> }) => {
+
+const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>, wallet_addr_setter: Setter<string>, mrs_slots_setter: Setter<string[]> }) => {
   let coin_manager_setter: Setter<CoinManager> = props.coin_manager_setter;
 
   let wallet_addr_setter: Setter<string> = props.wallet_addr_setter;
+
+  let mrs_slots_setter: Setter<string[]> = props.mrs_slots_setter;
 
   const [walletAddrInput, setWalletAddrInput] = createSignal("");
 
@@ -13,8 +16,8 @@ const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>
 
 
   const handle_log_in = (wallet_id: string) => {
-    let res = new CoinManager("7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7");
-    // let res = new CoinManager(wallet_id);
+    // let res = new CoinManager(DEV_LOCAL_1_SK);
+    let res = new CoinManager(wallet_id);
 
     coin_manager_setter(res);
 
@@ -23,7 +26,21 @@ const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>
     setWalletAddrInput("");
 
     setLoginStatus(true);
+
   };
+
+  createEffect(() => {
+    if (loginStatus() == true) {
+      console.log("send request to dev_local_1");
+      // TODO: send request `get my mrs slots`
+      // const saksaha = new Saksaha(["http://localhost:34418/rpc/v0"]);
+      // saksaha.query("get_mrs_slot_list", { DEV_LOCAL_1_SK }).then((res) => {
+      //   console.log(55, res);
+      // });
+    }
+  });
+
+
 
 
   return (

@@ -1,4 +1,4 @@
-import { CoinManager } from "./coin";
+import { CoinManager, DEV_LOCAL_1_SK } from "./coin";
 
 export interface Block {
   validator_sig: string;
@@ -21,4 +21,5 @@ export interface JsonResponse<T> {
 
 export {
   CoinManager,
+  DEV_LOCAL_1_SK
 };

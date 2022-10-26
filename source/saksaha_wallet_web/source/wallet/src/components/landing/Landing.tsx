@@ -1,9 +1,9 @@
 import {
-  createSignal, createEffect, For
+  createSignal, createEffect
 } from 'solid-js';
 
 import type { Component, } from 'solid-js';
-import { Saksaha, CoinManager } from 'saksaha';
+import { CoinManager } from 'saksaha';
 import ActionPane from "../actionPane/ActionPane";
 
 import * as styles from './Landing.css';
@@ -15,6 +15,8 @@ const LandingPage: Component = () => {
   const [walletAddress, setWalletAddress] = createSignal("");
 
   const [coinManager, setCoinManager] = createSignal(new CoinManager());
+
+  const [mrsSlots, setMrsSlots] = createSignal([""]);
 
   const [selectedCoin, setSelectedCoin] = createSignal<CoinRecord>({
     addr_pk: "",
@@ -32,20 +34,11 @@ const LandingPage: Component = () => {
 
   const [selectedMrsSlot, setSelectedMrsSlot] = createSignal("");
 
-  // createEffect(() => {
-  //   const saksaha = new Saksaha(["http://localhost:34418/rpc/v0"]);
-  //   // saksaha.query("get_block_list", {}).then((res) => {
-  //   // console.log(55, res.block_list);
-
-  //   // });
-  // });
-
   createEffect(() => {
     console.log(walletAddress());
     console.log(coinManager());
     console.log("Selected Coin: " + selectedCoin().r);
   });
-
 
   return (
     <div class={styles.wrapper}>
@@ -53,6 +46,7 @@ const LandingPage: Component = () => {
         <ActionPane
           coin_manager_setter={setCoinManager}
           wallet_addr_setter={setWalletAddress}
+          mrs_slots_setter={setMrsSlots}
         />
       </div>
       <div class={styles.right_pane}>

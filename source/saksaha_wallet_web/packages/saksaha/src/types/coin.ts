@@ -30,13 +30,15 @@ export type CoinRecord = {
 
 }
 
+export const DEV_LOCAL_1_SK = "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7";
+
 export class CoinManager {
   coins: CoinRecord[]
 
   constructor(id?: String) {
     let coins = new Array<CoinRecord>;
 
-    if (id == "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7") {
+    if (id == DEV_LOCAL_1_SK) {
       let coin_record_1: CoinRecord = {
         addr_pk: "0x65b4b8e3f33c9d4a5a3678715dbb56ca1613ad997f183d9e8762a5a8e020dd3b",
         addr_sk: "0x14",
