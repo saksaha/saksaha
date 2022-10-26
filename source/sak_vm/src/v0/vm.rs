@@ -23,6 +23,7 @@ impl ContractProcess for SakVM {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
+        println!("333");
         let res = match ctr_fn {
             ContractFn::Init => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
@@ -82,7 +83,7 @@ impl SakVM {
         memory: Memory,
         request: CtrRequest,
     ) -> Result<InvokeReceipt, VMError> {
-        println!("111");
+        println!("222");
 
         let contract_fn: CtrExecuteFn =
             { instance.get_typed_func(&mut store, symbols::CTR__EXECUTE)? };
@@ -123,9 +124,7 @@ impl SakVM {
         let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes).unwrap();
 
         println!("power11: {:?}", receipt);
-
         let session_id = format!("{}_{}", ctr_addr, rand());
-
         let session = Session {
             id: session_id,
             receipt,

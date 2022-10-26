@@ -1,10 +1,8 @@
 pub(in crate::rpc) mod v0;
 
 use crate::SystemHandle;
-use futures::Future;
-use hyper::{Body, Response};
 use hyper_rpc_router::{Handler, Path};
-use std::{collections::HashMap, pin::Pin, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler<Arc<SystemHandle>>> {
     let paths: Vec<Path<Arc<SystemHandle>>> = vec![
