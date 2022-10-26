@@ -3,7 +3,9 @@ import { Component, createSignal, Setter } from 'solid-js';
 import * as styles from './ActionPane.css';
 
 const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>, wallet_addr_setter: Setter<string> }) => {
+  let coin_manager_setter: Setter<CoinManager> = props.coin_manager_setter;
 
+  let wallet_addr_setter: Setter<string> = props.wallet_addr_setter;
 
   const [walletAddrInput, setWalletAddrInput] = createSignal("");
 
@@ -11,15 +13,12 @@ const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>
 
 
   const handle_log_in = (wallet_id: string) => {
-    // let res = new CoinManager("7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7");
-    let res = new CoinManager(wallet_id);
+    let res = new CoinManager("7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7");
+    // let res = new CoinManager(wallet_id);
 
-    props.coin_manager_setter(res);
+    coin_manager_setter(res);
 
-    props.wallet_addr_setter(wallet_id);
-
-
-    // setWalletAddressRecord(walletAddress());
+    wallet_addr_setter(wallet_id);
 
     setWalletAddrInput("");
 
@@ -34,7 +33,7 @@ const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>
           class={styles.input_single_field}
           placeholder={
             loginStatus() ?
-              "  ID: " + walletAddrInput().slice(0, 8) + "..."
+              "  Login Done"
               : styles.InputWalletString
           }
           onChange={(e) => setWalletAddrInput(e.currentTarget.value)}
@@ -61,19 +60,10 @@ const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>
           <div class={styles.input_row}>
             <input
               class={styles.input_single_field}
-            // placeholder={styles.SlotIdString}
-            // onChange={(e) => setSlotId(e.currentTarget.value)}
+              placeholder={styles.InputData}
             />
-            <div
-              class={styles.input_btn}
-              onClick={() => {
-                // console.log(slotId() + data());
-              }}
-            >
-              SEND
-            </div>
+            <div class={styles.input_btn}>SEND</div>
           </div >
-
           : null
       }
     </>

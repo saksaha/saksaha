@@ -1,11 +1,11 @@
-enum CoinStatus {
+export enum CoinStatus {
   Unconfirmed = "Unconfirmed ",
   Unused = "Unused",
   Used = "Used",
   Failed = "Failed",
 };
 
-type CoinRecord = {
+export type CoinRecord = {
   addr_pk: String,
 
   addr_sk: String,
