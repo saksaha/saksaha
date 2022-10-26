@@ -6,8 +6,8 @@ mod utils;
 use crate::{
     paths::Paths,
     scripts::{
-        build, build_circuit_params, build_contracts, clean, dev, dev_evl_term, dev_wallet, test,
-        wasm_pack_proof,
+        build, build_circuit_params, build_contracts, clean, dev, dev_evl_term, dev_proof_wasm,
+        dev_wallet, test, wasm_pack_proof,
     },
 };
 
@@ -94,6 +94,9 @@ fn run_script() -> Result<(), CIError> {
         }
         "dev_wallet" => {
             dev_wallet::run(args)?;
+        }
+        "dev_proof_wasm" => {
+            dev_proof_wasm::run(args)?;
         }
         "build_contracts" => {
             build_contracts::run(args)?;
