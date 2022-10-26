@@ -1,4 +1,4 @@
-use crate::{log, CIError};
+use crate::log;
 use std::{
     fs,
     io::{ErrorKind, Write},

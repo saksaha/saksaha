@@ -1,16 +1,14 @@
 use crate::tasks;
 use crate::utils::Kommand;
-use crate::{log, CIError};
-use colored::Colorize;
+use crate::CIError;
 use std::env::Args;
 use std::path::PathBuf;
-use std::process::{Command as Cmd, Stdio};
+use std::process::Stdio;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
     tasks::check_wasm_pack()?;
 
     let sak_proof_wasm_path = PathBuf::from("source/sak_proof_wasm");
-
     sak_proof_wasm_path.try_exists()?;
 
     let program = "wasm-pack";

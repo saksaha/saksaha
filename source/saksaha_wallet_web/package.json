@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "saksaha_wallet_web_root",
   "private": true,
   "workspaces": [
     "source/*",
