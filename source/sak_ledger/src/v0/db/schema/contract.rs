@@ -1,4 +1,4 @@
-use crate::MachineError;
+use crate::LedgerError;
 use crate::{cfs, LedgerDB};
 use sak_contract_std::Storage;
 use sak_kv_db::WriteBatch;
@@ -8,7 +8,7 @@ impl LedgerDB {
     pub async fn get_ctr_data_by_ctr_addr(
         &self,
         ctr_addr: &String,
-    ) -> Result<Option<Vec<u8>>, MachineError> {
+    ) -> Result<Option<Vec<u8>>, LedgerError> {
         let tx_hash = self
             .get_tx_hash_by_ctr_addr(ctr_addr)?
             .ok_or(format!("ctr data does not exist, ctr_addr: {}", ctr_addr))?;
@@ -39,7 +39,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         key: &CtrAddr,
-    ) -> Result<Option<String>, MachineError> {
+    ) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_CTR_ADDR)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -58,7 +58,7 @@ impl LedgerDB {
         &self,
         // db: &DB,
         ctr_addr: &CtrAddr,
-    ) -> Result<Option<Storage>, MachineError> {
+    ) -> Result<Option<Storage>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
 
         match self.db.get_cf(&cf, ctr_addr)? {
@@ -80,7 +80,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         ctr_addr: &CtrAddr,
         ctr_state: &Storage,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
 
         batch.put_cf(&cf, ctr_addr, ctr_state);
@@ -94,7 +94,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         key: &CtrAddr,
         value: &String,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_CTR_ADDR)?;
 
         batch.put_cf(&cf, key, value);

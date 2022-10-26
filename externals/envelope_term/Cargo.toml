@@ -42,7 +42,7 @@ sak_vm_interface = { path = "../../source/sak_vm_interface" }
 sak_ledger = { path = "../../source/sak_ledger" }
 sak_mrs = { path = "../../source/sak_mrs" }
 sak_store_interface = { path = "../../source/sak_store_interface" }
-async-trait = "0.1.57"
+async-trait = "0.1.58"
 
 [[bin]]
 name = "envelope_term"

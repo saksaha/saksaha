@@ -21,5 +21,4 @@ sak_vm = { path = "../../source/sak_vm" }
 sak_vm_interface = { path = "../../source/sak_vm_interface/" }
 tokio = { version = "1.21.2", features = ["full"] }
 sak_mrs = { path = "../../source/sak_mrs" }
-sak_store_accessor = { path = "../../source/sak_store_accessor" }
 sak_credential = { path = "../../source/sak_credential" }

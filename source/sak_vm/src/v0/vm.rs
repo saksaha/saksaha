@@ -1,12 +1,15 @@
 use super::wasm::Wasmtime;
 use crate::VMError;
+use async_trait::async_trait;
 use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
+use sak_crypto::rand;
 use sak_logger::{error, info};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{MRSAccessor, Session};
 use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
 use sak_vm_interface::{
     ContractProcess, CtrExecuteFn, CtrInitFn, InstanceState, InvokeReceipt, VMInterfaceError,
 };
+use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct SakVM {
@@ -16,24 +19,26 @@ pub struct SakVM {
 impl ContractProcess for SakVM {
     fn invoke(
         &self,
+        ctr_addr: &String,
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
+        println!("333");
         let res = match ctr_fn {
             ContractFn::Init => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                Self::invoke_init(instance, store, memory)
+                self.invoke_init(instance, store, memory)
             }
             ContractFn::Execute(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                Self::invoke_query(instance, store, memory, request)
+                self.invoke_execute(ctr_addr, instance, store, memory, request)
             }
             ContractFn::Update(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                Self::invoke_execute(instance, store, memory, request)
+                self.invoke_update(instance, store, memory, request)
             }
         };
 
@@ -50,6 +55,7 @@ impl SakVM {
     }
 
     fn invoke_init(
+        &self,
         instance: Instance,
         mut store: Store<InstanceState>,
         memory: Memory,
@@ -64,17 +70,21 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?;
         }
 
-        let receipt = InvokeReceipt::from_init(storage)?;
+        let receipt = InvokeReceipt::from_init()?;
 
         Ok(receipt)
     }
 
-    fn invoke_query(
+    fn invoke_execute(
+        &self,
+        ctr_addr: &String,
         instance: Instance,
         mut store: Store<InstanceState>,
         memory: Memory,
         request: CtrRequest,
     ) -> Result<InvokeReceipt, VMError> {
+        println!("222");
+
         let contract_fn: CtrExecuteFn =
             { instance.get_typed_func(&mut store, symbols::CTR__EXECUTE)? };
 
@@ -86,7 +96,7 @@ impl SakVM {
 
         let request_ptr = Wasmtime::copy_memory(&request_bytes, &instance, &mut store)?;
 
-        let (result_ptr, result_len, ..) =
+        let (result_ptr, result_len, receipt_ptr, receipt_len) =
             match contract_fn.call(&mut store, (request_ptr as i32, request_len as i32)) {
                 Ok(r) => r,
                 Err(err) => {
@@ -99,17 +109,36 @@ impl SakVM {
                 }
             };
 
-        let result: Vec<u8>;
+        let result_bytes: Vec<u8>;
         unsafe {
-            result = Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
+            result_bytes =
+                Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
         }
 
-        let receipt = InvokeReceipt::from_query(result)?;
+        let receipt_bytes: Vec<u8>;
+        unsafe {
+            receipt_bytes =
+                Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
+        }
+
+        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes).unwrap();
+
+        println!("power11: {:?}", receipt);
+        let session_id = format!("{}_{}", ctr_addr, rand());
+        let session = Session {
+            id: session_id,
+            receipt,
+        };
+
+        self.mrs.add_session(session);
+
+        let receipt = InvokeReceipt::from_query(result_bytes)?;
 
         Ok(receipt)
     }
 
-    fn invoke_execute(
+    fn invoke_update(
+        &self,
         instance: Instance,
         mut store: Store<InstanceState>,
         memory: Memory,

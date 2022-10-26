@@ -29,9 +29,11 @@ impl Dict {
         self.receipt.insert(key, value);
     }
 
-    pub fn receipt(&self) -> Result<Vec<u8>, ContractError> {
-        let res = serde_json::to_vec(&self.receipt)?;
+    pub fn receipt(&self) -> HashMap<String, Vec<u8>> {
+        // let res = serde_json::to_vec(&self.receipt)?;
 
-        Ok(res)
+        // Ok(res)
+
+        HashMap::from([("str_1".to_string(), vec![123])])
     }
 }

@@ -1,7 +1,7 @@
 mod middleware;
-mod rpc_server;
+mod server;
 mod state_machine;
 
 pub use middleware::*;
-pub use rpc_server::*;
+pub use server::*;
 pub use state_machine::*;

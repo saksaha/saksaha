@@ -1,9 +1,9 @@
 use crate::{cfs, LedgerDB};
-use crate::{MachineError, MerkleNodeLoc};
+use crate::{LedgerError, MerkleNodeLoc};
 use sak_kv_db::{IteratorMode, WriteBatch};
 
 impl LedgerDB {
-    pub fn get_latest_cm_idx(&self) -> Result<Option<u128>, MachineError> {
+    pub fn get_latest_cm_idx(&self) -> Result<Option<u128>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
 
         let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
@@ -26,7 +26,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         merkle_node_loc: &MerkleNodeLoc,
         node_val: &[u8; 32],
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
         batch.put_cf(&cf, merkle_node_loc, node_val);

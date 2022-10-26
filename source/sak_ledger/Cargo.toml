@@ -24,7 +24,7 @@ tokio = { version = "1.21.2", features = ["full"] }
 sak_utils_time = { path = "../sak_utils_time" }
 sak_types = { path = "../sak_types" }
 sak_task_queue = { path = "../sak_task_queue" }
-async-trait = "0.1.57"
+async-trait = "0.1.58"
 saksaha = { path = "../../source/saksaha_rs" }
 sak_credential = { path = "../sak_credential" }
 # sak_vm = { path = "../sak_vm" }

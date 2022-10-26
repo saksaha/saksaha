@@ -1,5 +1,5 @@
 use crate::cfs;
-use crate::MachineError;
+use crate::LedgerError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
 use sak_logger::info;
 use std::path::PathBuf;
@@ -16,7 +16,7 @@ impl LedgerDB {
     pub(crate) async fn init(
         // app_prefix: &String,
         db_path: &PathBuf,
-    ) -> Result<LedgerDB, MachineError> {
+    ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
             // let db_path = Self::get_db_path(app_prefix)?;
 

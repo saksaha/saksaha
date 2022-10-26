@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::VMInterfaceError;
 use sak_contract_std::{InvokeResult, Storage, ERROR_PLACEHOLDER};
 
@@ -8,20 +10,22 @@ pub enum FnType {
     Execute,
 }
 
+pub struct Foo {}
+
 pub struct InvokeReceipt {
     pub gas_charged: usize,
     pub fn_type: FnType,
     pub result: InvokeResult,
-    pub updated_storage: Option<Storage>,
+    pub updated_storage: Option<Vec<u8>>,
 }
 
 impl InvokeReceipt {
-    pub fn from_init(storage: Storage) -> Result<InvokeReceipt, VMInterfaceError> {
+    pub fn from_init() -> Result<InvokeReceipt, VMInterfaceError> {
         let rpt = InvokeReceipt {
             gas_charged: 0,
             fn_type: FnType::Init,
             result: vec![],
-            updated_storage: Some(storage),
+            updated_storage: Some(vec![]),
         };
 
         Ok(rpt)
@@ -34,7 +38,7 @@ impl InvokeReceipt {
             gas_charged: 0,
             fn_type: FnType::Query,
             result: res,
-            updated_storage: None,
+            updated_storage: Some(vec![]),
         };
 
         Ok(rpt)
@@ -50,7 +54,7 @@ impl InvokeReceipt {
             gas_charged: 0,
             fn_type: FnType::Execute,
             result: res,
-            updated_storage: Some(storage),
+            updated_storage: Some(vec![]),
         };
 
         Ok(rpt)

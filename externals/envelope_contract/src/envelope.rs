@@ -2,7 +2,7 @@ use crate::{
     request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
-use sak_contract_derive::{CtrStateStore, MRSStore};
+use sak_contract_derive::MRSStore;
 use sak_contract_std::{
     saksaha_contract, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
 };
@@ -43,11 +43,11 @@ pub fn init() -> Result<Storage, ContractError> {
     Ok(v)
 }
 
-pub fn execute(ctx: ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+pub fn execute(ctx: &ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
     // let storage = vec![]; // soon will be removed
 
     unsafe {
-        let param = "key".to_string();
+        let _param = "key".to_string();
 
         let a = ctx.mrs.chats.get(&"power".to_string());
         // let a = ctx.mrs.channels.get(&"!!!key!!!".to_string());
