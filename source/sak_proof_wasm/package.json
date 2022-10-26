@@ -1,0 +1,7 @@
+{
+  "name": "sak_proof_wasm_root",
+  "private": true,
+  "scripts": {
+    "dev": "cd example && yarn run dev"
+  }
+}
