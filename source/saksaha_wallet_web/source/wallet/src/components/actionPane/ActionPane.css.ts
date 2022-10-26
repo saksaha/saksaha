@@ -1,5 +1,7 @@
 import { style } from '@vanilla-extract/css';
 
+export const InputWalletString = "  [1] Input your ID (secret key, nickname, etc...)";
+
 export const ex1 = style({
   color: 'blue',
 });
