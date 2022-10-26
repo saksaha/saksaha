@@ -18,4 +18,4 @@ pub(crate) use sync_pool::*;
 pub use testing::*;
 pub use tests::*;
 
-pub type MachineError = Box<dyn std::error::Error + Send + Sync>;
+pub type LedgerError = Box<dyn std::error::Error + Send + Sync>;

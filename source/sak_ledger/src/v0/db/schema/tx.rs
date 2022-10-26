@@ -1,10 +1,10 @@
-use crate::MachineError;
+use crate::LedgerError;
 use crate::{cfs, LedgerDB};
 use sak_kv_db::{Direction, IteratorMode, WriteBatch};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType};
 
 impl LedgerDB {
-    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, MachineError> {
+    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
         let mut ret = vec![];
 
         for tx_hash in tx_hashes {
@@ -17,7 +17,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, MachineError> {
+    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
         let tx_type = self
             .get_tx_type(tx_hash)?
             .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
@@ -31,7 +31,7 @@ impl LedgerDB {
         Ok(Some(tx))
     }
 
-    fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, MachineError> {
+    fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let created_at = self
             .get_tx_created_at(tx_hash)?
             .ok_or("created_at does not exist")?;
@@ -69,7 +69,7 @@ impl LedgerDB {
         Ok(tx)
     }
 
-    fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, MachineError> {
+    fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let created_at = self
             .get_tx_created_at(tx_hash)?
             .ok_or("created_at does not exist")?;
@@ -115,7 +115,7 @@ impl LedgerDB {
 }
 
 impl LedgerDB {
-    pub fn batch_put_tx(&self, batch: &mut WriteBatch, tx: &Tx) -> Result<TxHash, MachineError> {
+    pub fn batch_put_tx(&self, batch: &mut WriteBatch, tx: &Tx) -> Result<TxHash, LedgerError> {
         println!("\n>> tx to put: {}", tx);
 
         let tx_hash = match tx {
@@ -130,7 +130,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         tx: &MintTx,
-    ) -> Result<TxHash, MachineError> {
+    ) -> Result<TxHash, LedgerError> {
         let tc = &tx.tx_candidate;
 
         let tx_hash = tc.get_tx_hash();
@@ -181,7 +181,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         tx: &PourTx,
-    ) -> Result<TxHash, MachineError> {
+    ) -> Result<TxHash, LedgerError> {
         let tc = &tx.tx_candidate;
 
         let tx_hash = tc.get_tx_hash();
@@ -239,7 +239,7 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
-    fn get_cms_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, MachineError> {
+    fn get_cms_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
         let tx_hash_bytes = tx_hash.as_bytes();
         let mut v = vec![];
 
@@ -273,7 +273,7 @@ impl LedgerDB {
         Ok(v)
     }
 
-    fn get_sns_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, MachineError> {
+    fn get_sns_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
         let tx_hash_bytes = tx_hash.as_bytes();
 
         let mut v = vec![];
@@ -308,7 +308,7 @@ impl LedgerDB {
         Ok(v)
     }
 
-    fn get_merkle_rts_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, MachineError> {
+    fn get_merkle_rts_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
         let tx_hash_bytes = tx_hash.as_bytes();
         let mut v = vec![];
 

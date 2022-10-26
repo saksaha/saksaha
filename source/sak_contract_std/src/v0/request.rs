@@ -16,6 +16,9 @@ pub struct CtrRequest {
     pub ctr_call_type: CtrCallType,
 }
 
+unsafe impl Send for CtrRequest {}
+unsafe impl Sync for CtrRequest {}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CtrRequestData {
     pub req_type: String,

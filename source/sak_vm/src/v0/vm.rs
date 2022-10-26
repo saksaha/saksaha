@@ -18,34 +18,43 @@ pub struct SakVM {
 
 #[async_trait]
 impl ContractProcess for SakVM {
+    // async fn invoke(
+    //     &self,
+    //     ctr_addr: &String,
+    //     contract_wasm: &[u8],
+    //     ctr_fn: ContractFn,
+    // ) -> Result<InvokeReceipt, VMInterfaceError> {
+    //     let res = match ctr_fn {
+    //         ContractFn::Init => {
+    //             let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+
+    //             Self::invoke_init(instance, store, memory)
+    //         }
+    //         ContractFn::Execute(request) => {
+    //             let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+
+    //             self.invoke_execute(ctr_addr, instance, store, memory, request)
+    //                 .await
+    //         }
+    //         ContractFn::Update(request) => {
+    //             let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+
+    //             Self::invoke_update(instance, store, memory, request)
+    //         }
+    //     };
+
+    //     println!("res: {:?}", res.as_ref().unwrap().result);
+
+    //     res
+    // }
+
     async fn invoke(
         &self,
         ctr_addr: &String,
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
-        let res = match ctr_fn {
-            ContractFn::Init => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
-
-                Self::invoke_init(instance, store, memory)
-            }
-            ContractFn::Execute(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
-
-                self.invoke_execute(ctr_addr, instance, store, memory, request)
-                    .await
-            }
-            ContractFn::Update(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
-
-                Self::invoke_update(instance, store, memory, request)
-            }
-        };
-
-        println!("res: {:?}", res.as_ref().unwrap().result);
-
-        res
+        return Err(format!("").into());
     }
 }
 

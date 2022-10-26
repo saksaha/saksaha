@@ -1,10 +1,10 @@
-use crate::MachineError;
+use crate::LedgerError;
 use crate::{cfs, CtrStateUpdate, LedgerDB, MerkleUpdate};
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
 
 impl LedgerDB {
-    pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, MachineError> {
+    pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
         let mut ret = vec![];
         for block_hash in block_hashes {
             match self.get_block(block_hash)? {
@@ -16,7 +16,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, MachineError> {
+    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
         let validator_sig = self.get_validator_sig(&block_hash)?;
 
         let tx_hashes = self.get_tx_hashes(&block_hash)?;
@@ -68,7 +68,7 @@ impl LedgerDB {
         txs: &Vec<Tx>,
         ctr_state_updates: &CtrStateUpdate,
         merkle_updates: &MerkleUpdate,
-    ) -> Result<String, MachineError> {
+    ) -> Result<String, LedgerError> {
         println!("block to write, block: {:?}", block,);
 
         let mut batch = WriteBatch::default();

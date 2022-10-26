@@ -10,6 +10,8 @@ pub enum FnType {
     Execute,
 }
 
+pub struct Foo {}
+
 pub struct InvokeReceipt {
     pub gas_charged: usize,
     pub fn_type: FnType,
