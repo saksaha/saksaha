@@ -52,6 +52,4 @@ export class Saksaha {
   }
 }
 
-
 export default Saksaha;
-

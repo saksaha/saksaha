@@ -3,25 +3,20 @@ import { CoinRecord } from "saksaha/src/types/coin";
 import { Accessor, Component, createEffect, createSignal, For, Setter } from "solid-js";
 import * as styles from './ResultPane.css';
 
-const ResultPane: Component = (props: {
-  wallet_addr: Accessor<string>,
-  coin_manager: Accessor<CoinManager>,
-  selected_coin: Accessor<CoinRecord>,
-  selected_coin_setter: Setter<CoinRecord>,
-  selected_mrs_slot: Accessor<string>,
-  selected_mrs_slot_setter: Setter<string>
-}) => {
-
+const ResultPane: Component = (
+  props: {
+    wallet_addr: Accessor<string>,
+    coin_manager: Accessor<CoinManager>,
+    selected_coin: Accessor<CoinRecord>,
+    selected_coin_setter: Setter<CoinRecord>,
+    selected_mrs_slot: Accessor<string>,
+    selected_mrs_slot_setter: Setter<string>
+  }) => {
   let wallet_addr: Accessor<string> = props.wallet_addr;
-
   let coin_manager: Accessor<CoinManager> = props.coin_manager;
-
   let selected_coin: Accessor<CoinRecord> = props.selected_coin;
-
   let selected_coin_setter: Setter<CoinRecord> = props.selected_coin_setter;
-
   let selected_mrs_slot: Accessor<string> = props.selected_mrs_slot;
-
   let selected_mrs_slot_setter: Setter<string> = props.selected_mrs_slot_setter;
 
   const render_coin_manager = () => {
@@ -66,7 +61,6 @@ const ResultPane: Component = (props: {
 
   return (
     <>
-
       <h2>Saksaha Wallet</h2>
       <h3>wallet addr: {wallet_addr()}</h3>
       <div class={styles.result}>
@@ -81,7 +75,6 @@ const ResultPane: Component = (props: {
 
     </>
   );
-
 };
 
 export default ResultPane;

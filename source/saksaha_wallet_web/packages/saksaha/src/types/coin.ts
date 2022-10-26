@@ -1,3 +1,5 @@
+export const DEV_LOCAL_1_SK = "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7";
+
 export enum CoinStatus {
   Unconfirmed = "Unconfirmed ",
   Unused = "Unused",
@@ -7,30 +9,17 @@ export enum CoinStatus {
 
 export type CoinRecord = {
   addr_pk: String,
-
   addr_sk: String,
-
   rho: String,
-
   r: String,
-
   s: String,
-
   v: String,
-
   cm: String,
-
   coin_status: CoinStatus,
-
   cm_idx: String,
-
   coin_idx: String,
-
   tx_hash: String,
-
-}
-
-export const DEV_LOCAL_1_SK = "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7";
+};
 
 export class CoinManager {
   coins: CoinRecord[]
@@ -69,7 +58,6 @@ export class CoinManager {
 
       coins.push(coin_record_1);
       coins.push(coin_record_2);
-
     }
 
     this.coins = coins;

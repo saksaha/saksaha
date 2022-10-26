@@ -1,23 +1,20 @@
 import {
   createSignal, createEffect
 } from 'solid-js';
-
-import type { Component, } from 'solid-js';
-import { CoinManager } from 'saksaha';
-import ActionPane from "../actionPane/ActionPane";
+import type { Component } from 'solid-js';
 
 import * as styles from './Landing.css';
+
+import ActionPane from "../actionPane/ActionPane";
 import ResultPane from '../resultPane/ResultPane';
+
+import { CoinManager } from 'saksaha';
 import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
 
 const LandingPage: Component = () => {
 
   const [walletAddress, setWalletAddress] = createSignal("");
-
   const [coinManager, setCoinManager] = createSignal(new CoinManager());
-
-  const [mrsSlots, setMrsSlots] = createSignal([""]);
-
   const [selectedCoin, setSelectedCoin] = createSignal<CoinRecord>({
     addr_pk: "",
     addr_sk: "",
@@ -31,7 +28,7 @@ const LandingPage: Component = () => {
     coin_idx: "",
     coin_status: CoinStatus.Failed
   });
-
+  const [mrsSlots, setMrsSlots] = createSignal([""]);
   const [selectedMrsSlot, setSelectedMrsSlot] = createSignal("");
 
   createEffect(() => {
@@ -60,7 +57,6 @@ const LandingPage: Component = () => {
         />
       </div >
     </div >
-
   );
 };
 
