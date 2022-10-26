@@ -9,6 +9,7 @@ members = [
   "source/sak_proof",
   "source/sak_proof_types",
   "source/sak_proof_circuit",
+  "source/sak_proof_wasm",
   "source/sak_dir",
   "source/sak_kv_db",
   "source/sak_mrs",
