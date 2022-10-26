@@ -1,6 +1,6 @@
 use crate::{MachineError, SakLedger};
 use sak_contract_std::Storage;
-use sak_crypto::{sha3::digest::typenum::Le, MerkleTree};
+use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash};
 
@@ -252,10 +252,10 @@ impl SakLedger {
         Ok(latest_merkle_rt)
     }
 
-    pub async fn get_ctr_state(
-        &self,
-        contract_addr: &CtrAddr,
-    ) -> Result<Option<Storage>, MachineError> {
-        self.ledger_db.get_ctr_state(contract_addr)
-    }
+    // pub async fn get_ctr_state(
+    //     &self,
+    //     contract_addr: &CtrAddr,
+    // ) -> Result<Option<Storage>, MachineError> {
+    //     self.ledger_db.get_ctr_state(contract_addr)
+    // }
 }

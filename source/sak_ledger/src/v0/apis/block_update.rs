@@ -205,9 +205,9 @@ impl SakLedger {
         Ok(block_hashes)
     }
 
-    pub fn delete_tx(&self, key: &String) -> Result<(), MachineError> {
-        self.ledger_db.delete_tx(key)
-    }
+    // pub fn delete_tx(&self, key: &String) -> Result<(), MachineError> {
+    //     self.ledger_db.delete_tx(key)
+    // }
 
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
         let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();

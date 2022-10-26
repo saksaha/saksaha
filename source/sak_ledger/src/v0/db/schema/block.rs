@@ -1,5 +1,5 @@
-use crate::MachineError;
 use crate::{cfs, CtrStateUpdate, LedgerDB, MerkleUpdate};
+use crate::{BlockEntity, MachineError};
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
 
@@ -73,21 +73,31 @@ impl LedgerDB {
 
         let mut batch = WriteBatch::default();
 
-        let block_hash = block.get_block_hash();
+        // let block_hash = block.get_block_hash();
 
-        self.batch_put_validator_sig(&mut batch, block_hash, &block.validator_sig)?;
+        let block_entity = BlockEntity {
+            block_hash: block.get_block_hash().to_string(),
+            validator_sig: block.validator_sig.to_owned(),
+            witness_sigs: block.witness_sigs.to_owned(),
+            tx_hashes: block.tx_hashes.to_owned(),
+            created_at: block.created_at.to_owned(),
+            block_height: block.block_height,
+            merkle_rt: block.merkle_rt,
+        };
 
-        self.batch_put_witness_sigs(&mut batch, block_hash, &block.witness_sigs)?;
+        // self.batch_put_validator_sig(&mut batch, block_hash, &block.validator_sig)?;
 
-        self.batch_put_tx_hashes(&mut batch, block_hash, &block.tx_hashes)?;
+        // self.batch_put_witness_sigs(&mut batch, block_hash, &block.witness_sigs)?;
 
-        self.batch_put_block_created_at(&mut batch, block_hash, &block.created_at)?;
+        // self.batch_put_tx_hashes(&mut batch, block_hash, &block.tx_hashes)?;
 
-        self.batch_put_block_hash(&mut batch, &block.block_height, block_hash)?;
+        // self.batch_put_block_created_at(&mut batch, block_hash, &block.created_at)?;
 
-        self.batch_put_block_height(&mut batch, block_hash, &block.block_height)?;
+        self.batch_put_block_hash(&mut batch, &block.block_height, &block_entity.block_hash)?;
 
-        self.batch_put_block_merkle_rt(&mut batch, block_hash, &block.merkle_rt)?;
+        // self.batch_put_block_height(&mut batch, block_hash, &block.block_height)?;
+
+        self.batch_put_block_merkle_rt(&mut batch, &block_entity.block_hash, &block.merkle_rt)?;
 
         self.batch_put_block_merkle_rt_key(&mut batch, &block.merkle_rt)?;
 
@@ -105,6 +115,6 @@ impl LedgerDB {
 
         self.db.write(batch)?;
 
-        return Ok(block_hash.clone());
+        return Ok(block_entity.block_hash);
     }
 }
