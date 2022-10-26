@@ -133,7 +133,7 @@ impl MintTxCandidate {
     }
 
     pub fn get_tx_hash(&self) -> &String {
-        return &self.tx_hash;
+        &self.tx_hash
     }
 
     pub fn get_ctr_op(&self) -> TxCtrOp {

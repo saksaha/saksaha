@@ -1,7 +1,7 @@
 use crate::{cfs, LedgerDB};
 use crate::{MachineError, MintTxEntity};
 use sak_kv_db::WriteBatch;
-use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
+use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
 
 impl LedgerDB {
     pub(crate) fn get_tx_type(&self, tx_hash: &TxHash) -> Result<Option<TxType>, MachineError> {
@@ -169,6 +169,22 @@ impl LedgerDB {
             None => {
                 return Ok(None);
             }
+        }
+    }
+
+    pub(crate) fn get_raw_mint_tx_entity(
+        &self,
+        key: &TxHash,
+    ) -> Result<Option<MintTxEntity>, MachineError> {
+        let cf = self.make_cf_handle(&self.db, cfs::MINT_TX_ENTITY)?;
+
+        match self.db.get_cf(&cf, key)? {
+            Some(v) => {
+                let arr = serde_json::from_slice(&v)?;
+
+                Ok(Some(arr))
+            }
+            None => Ok(None),
         }
     }
 
@@ -450,6 +466,20 @@ impl LedgerDB {
         let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
 
         batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub(crate) fn batch_put_mint_tx_entity(
+        &self,
+        batch: &mut WriteBatch,
+        key: &TxHash,
+        value: &MintTxEntity,
+    ) -> Result<(), MachineError> {
+        let cf = self.make_cf_handle(&self.db, cfs::MINT_TX_ENTITY)?;
+
+        let val_ser = serde_json::to_vec(value)?;
+        batch.put_cf(&cf, key, val_ser);
 
         Ok(())
     }

@@ -56,4 +56,7 @@ pub(crate) mod cfs {
     pub const BLOCK_HASH: &str = "block_hash";
 
     pub const CTR_STATE: &str = "ctr_state";
+
+    // test
+    pub const MINT_TX_ENTITY: &str = "mint_tx_entity";
 }

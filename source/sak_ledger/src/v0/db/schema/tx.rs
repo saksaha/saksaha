@@ -69,6 +69,27 @@ impl LedgerDB {
         Ok(tx)
     }
 
+    fn get_mint_tx_entity(&self, tx_hash: &String) -> Result<Tx, MachineError> {
+        let mint_tx_entity = self
+            .get_raw_mint_tx_entity(tx_hash)?
+            .ok_or("MintTxEntity should exist")?;
+
+        let tx_candidate = MintTxCandidate::new(
+            mint_tx_entity.created_at,
+            mint_tx_entity.data,
+            mint_tx_entity.author_sig,
+            Some(mint_tx_entity.ctr_addr),
+            mint_tx_entity.cms,
+            mint_tx_entity.v,
+            mint_tx_entity.k,
+            mint_tx_entity.s,
+        );
+
+        let tx = Tx::Mint(MintTx::new(tx_candidate, mint_tx_entity.cm_idxes));
+
+        Ok(tx)
+    }
+
     fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, MachineError> {
         let created_at = self
             .get_tx_created_at(tx_hash)?
@@ -122,15 +143,15 @@ impl LedgerDB {
             Tx::Mint(t) => {
                 let tc = &t.tx_candidate;
                 let mint_tx_entity = MintTxEntity {
-                    tx_hash: tc.get_tx_hash(),
+                    tx_hash: tc.get_tx_hash().to_string(),
                     tx_type: tc.get_tx_type(),
-                    cms: tc.get_cms(),
-                    cm_idxes: tx.get_cm_idxes(),
-                    cm_count: &tc.cm_count,
-                    created_at: &tc.created_at,
-                    data: &tc.data,
-                    author_sig: &tc.author_sig,
-                    ctr_addr: &tc.ctr_addr,
+                    cms: tc.get_cms().to_vec(),
+                    cm_idxes: tx.get_cm_idxes().to_vec(),
+                    cm_count: tc.cm_count,
+                    created_at: tc.created_at.to_owned(),
+                    data: tc.data.to_owned(),
+                    author_sig: tc.author_sig.to_owned(),
+                    ctr_addr: tc.ctr_addr.to_owned(),
                     v: tc.v,
                     k: tc.k,
                     s: tc.s,
@@ -150,36 +171,38 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         tx_entity: MintTxEntity,
     ) -> Result<TxHash, MachineError> {
-        let tx_hash = tx_entity.tx_hash;
+        let tx_hash = &tx_entity.tx_hash;
 
-        self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
+        self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
 
-        for (idx, cm) in tx_entity.cms.iter().enumerate() {
-            let key = format!("{}_{}", tx_hash, idx);
+        // self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
 
-            self.batch_put_cm(batch, &key, &cm)?;
-        }
+        // for (idx, cm) in tx_entity.cms.iter().enumerate() {
+        //     let key = format!("{}_{}", tx_hash, idx);
 
-        for (cm, cm_idx) in std::iter::zip(tx_entity.cms, tx_entity.cm_idxes) {
-            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
-            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
-        }
+        //     self.batch_put_cm(batch, &key, &cm)?;
+        // }
 
-        self.batch_put_cm_count(batch, tx_hash, tx_entity.cm_count)?;
+        // for (cm, cm_idx) in std::iter::zip(tx_entity.cms, tx_entity.cm_idxes) {
+        //     self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+        //     self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+        // }
 
-        self.batch_put_tx_created_at(batch, tx_hash, tx_entity.created_at)?;
+        // self.batch_put_cm_count(batch, tx_hash, tx_entity.cm_count)?;
 
-        self.batch_put_data(batch, tx_hash, tx_entity.data)?;
+        // self.batch_put_tx_created_at(batch, tx_hash, tx_entity.created_at)?;
 
-        self.batch_put_author_sig(batch, tx_hash, tx_entity.author_sig)?;
+        // self.batch_put_data(batch, tx_hash, tx_entity.data)?;
 
-        self.batch_put_ctr_addr(batch, tx_hash, tx_entity.ctr_addr)?;
+        // self.batch_put_author_sig(batch, tx_hash, tx_entity.author_sig)?;
 
-        self.batch_put_v(batch, tx_hash, &tx_entity.v)?;
+        // self.batch_put_ctr_addr(batch, tx_hash, tx_entity.ctr_addr)?;
 
-        self.batch_put_k(batch, tx_hash, &tx_entity.k)?;
+        // self.batch_put_v(batch, tx_hash, &tx_entity.v)?;
 
-        self.batch_put_s(batch, tx_hash, &tx_entity.s)?;
+        // self.batch_put_k(batch, tx_hash, &tx_entity.k)?;
+
+        // self.batch_put_s(batch, tx_hash, &tx_entity.s)?;
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {

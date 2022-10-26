@@ -2,6 +2,7 @@ use crate::cfs;
 use crate::MachineError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
 use sak_types::{Cm, TxCtrOp, TxHash, TxType};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -12,24 +13,21 @@ pub struct LedgerDB {
     pub(crate) db: DB,
 }
 
-pub struct MintTxEntity<'a> {
-    pub tx_hash: &'a TxHash,
+#[derive(Serialize, Deserialize)]
+pub struct MintTxEntity {
+    pub tx_hash: TxHash,
     pub tx_type: TxType,
-    pub cms: &'a Vec<Cm>,
-    pub cm_idxes: &'a Vec<u128>,
-    pub cm_count: &'a u128,
-    pub created_at: &'a String,
-    pub data: &'a Vec<u8>,
-    pub author_sig: &'a String,
-    pub ctr_addr: &'a String,
+    pub cms: Vec<Cm>,
+    pub cm_idxes: Vec<u128>,
+    pub cm_count: u128,
+    pub created_at: String,
+    pub data: Vec<u8>,
+    pub author_sig: String,
+    pub ctr_addr: String,
     pub v: [u8; 32],
     pub k: [u8; 32],
     pub s: [u8; 32],
     pub tx_ctr_op: TxCtrOp,
-}
-
-impl<'a> MintTxEntity<'a> {
-    pub fn persist(&self) {}
 }
 
 impl LedgerDB {
@@ -103,6 +101,8 @@ impl LedgerDB {
             ColumnFamilyDescriptor::new(cfs::BLOCK_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::BLOCK_HASH, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CTR_STATE, Options::default()),
+            // test
+            ColumnFamilyDescriptor::new(cfs::MINT_TX_ENTITY, Options::default()),
         ]
     }
 
