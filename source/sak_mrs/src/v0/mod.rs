@@ -2,6 +2,7 @@ mod apis;
 mod db;
 mod events;
 mod mrs;
+mod session_store;
 mod testing;
 
 #[cfg(test)]

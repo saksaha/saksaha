@@ -5,7 +5,7 @@ use crate::{
 };
 use colored::Colorize;
 use hyper_rpc_router::Router;
-use hyper_server::{cors, Middleware, RPCServer};
+use hyper_server::{cors, HttpServer, Middleware};
 use sak_logger::{error, info, warn};
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -72,7 +72,7 @@ impl RPC {
 
         let middlewares = vec![cors, route];
 
-        let rpc_server = RPCServer {};
+        let rpc_server = HttpServer {};
 
         let ctx = {
             let c = RouteCtx {

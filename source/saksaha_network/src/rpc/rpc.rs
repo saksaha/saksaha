@@ -1,7 +1,7 @@
 use super::{routes, RPCError};
 use crate::SystemHandle;
 use hyper_rpc_router::Router;
-use hyper_server::{cors, Middleware, RPCServer};
+use hyper_server::{cors, HttpServer, Middleware};
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -13,12 +13,12 @@ pub(crate) struct RPCArgs {
 pub(crate) struct RPC {
     sys_handle: Arc<SystemHandle>,
     rpc_socket: TcpListener,
-    server: RPCServer,
+    server: HttpServer,
 }
 
 impl RPC {
     pub(crate) fn init(rpc_args: RPCArgs) -> Result<RPC, String> {
-        let server = RPCServer {};
+        let server = HttpServer {};
 
         let rpc = RPC {
             sys_handle: rpc_args.sys_handle,

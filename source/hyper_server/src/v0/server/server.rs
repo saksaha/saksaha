@@ -1,23 +1,43 @@
 use super::{Middleware, StateMachine};
 use crate::RPCServerError;
-use hyper::{server::conn::AddrIncoming, service, Body, Response, Server};
+use futures::Future;
+use hyper::{
+    server::conn::AddrIncoming,
+    service::{self, make_service_fn, service_fn},
+    Body, Method, Request, Response, Server, StatusCode,
+};
 use sak_logger::{debug, error};
-use std::{convert::Infallible, sync::Arc};
+use std::{convert::Infallible, pin::Pin, sync::Arc};
 use tokio::net::TcpListener;
 
-pub struct RPCServer {}
+pub struct P {
+    // pub validator_ctr_addr: String,
+    // pub identity: Arc<Identity>,
+}
 
-impl RPCServer {
+#[async_trait::async_trait]
+pub trait Tr {
+    async fn a(&self);
+}
+
+#[async_trait::async_trait]
+impl Tr for P {
+    async fn a(&self) {}
+}
+
+pub struct HttpServer {}
+
+impl HttpServer {
     pub async fn run<C>(
         self,
-        rpc_socket: TcpListener,
+        tcp_socket: TcpListener,
         ctx: C,
         middlewares: Vec<Middleware<C>>,
     ) -> Result<(), RPCServerError>
     where
         C: Clone + Send + Sync + 'static,
     {
-        let addr_incoming = match AddrIncoming::from_listener(rpc_socket) {
+        let addr_incoming = match AddrIncoming::from_listener(tcp_socket) {
             Ok(a) => a,
             Err(err) => {
                 return Err(format!("Error initializing Addr Incoming, err: {}", err).into());

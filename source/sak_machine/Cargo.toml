@@ -15,7 +15,6 @@ sak_ledger_testing = { path = "../sak_ledger_testing" }
 sak_store_interface = { path = "../sak_store_interface" }
 sak_dir = { path = "../sak_dir" }
 sak_mrs = { path = "../sak_mrs" }
-sak_store_accessor = { path = "../sak_store_accessor" }
 sak_vm = { path = "../sak_vm" }
 sak_vm_interface = { path = "../sak_vm_interface" }
 sak_p2p_id = { path = "../sak_p2p_id" }
@@ -30,7 +29,7 @@ tokio = { version = "1.21.2", features = ["full"] }
 sak_utils_time = { path = "../sak_utils_time" }
 sak_types = { path = "../sak_types" }
 sak_task_queue = { path = "../sak_task_queue" }
-async-trait = "0.1.57"
+async-trait = "0.1.58"
 saksaha = { path = "../../source/saksaha_rs" }
 sak_credential = { path = "../sak_credential" }
 
