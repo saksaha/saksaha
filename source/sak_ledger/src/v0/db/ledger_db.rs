@@ -1,7 +1,7 @@
 use crate::cfs;
 use crate::MachineError;
 use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
-use sak_types::{Cm, TxType};
+use sak_types::{Cm, TxCtrOp, TxHash, TxType};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -12,22 +12,24 @@ pub struct LedgerDB {
     pub(crate) db: DB,
 }
 
-pub struct MintTxEntity {
+pub struct MintTxEntity<'a> {
+    pub tx_hash: &'a TxHash,
     pub tx_type: TxType,
-    pub cms: Vec<Cm>,
-    pub cm_idxes: Vec<u128>,
-    pub cm_count: u128,
-    pub created_at: String,
-    pub data: Vec<u8>,
-    pub author_sig: String,
-    pub ctr_addr: String,
+    pub cms: &'a Vec<Cm>,
+    pub cm_idxes: &'a Vec<u128>,
+    pub cm_count: &'a u128,
+    pub created_at: &'a String,
+    pub data: &'a Vec<u8>,
+    pub author_sig: &'a String,
+    pub ctr_addr: &'a String,
     pub v: [u8; 32],
     pub k: [u8; 32],
     pub s: [u8; 32],
+    pub tx_ctr_op: TxCtrOp,
 }
 
-impl MintTxEntity {
-    pub fn put() {}
+impl<'a> MintTxEntity<'a> {
+    pub fn persist(&self) {}
 }
 
 impl LedgerDB {

@@ -1,7 +1,7 @@
-use crate::MachineError;
 use crate::{cfs, LedgerDB};
+use crate::{MachineError, MintTxEntity};
 use sak_kv_db::WriteBatch;
-use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
+use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
 
 impl LedgerDB {
     pub(crate) fn get_tx_type(&self, tx_hash: &TxHash) -> Result<Option<TxType>, MachineError> {
