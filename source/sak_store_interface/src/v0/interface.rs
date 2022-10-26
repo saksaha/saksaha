@@ -6,14 +6,13 @@ pub type MRSAccessor = Box<dyn MRSInterface + Send + Sync>;
 
 pub type StoreInterfaceError = Box<dyn std::error::Error + Send + Sync>;
 
-#[async_trait]
 pub trait MRSInterface {
     fn get_mrs_data(&self, key: &String) -> Result<Option<String>, StoreInterfaceError>;
 
     fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), StoreInterfaceError>;
 
-    async fn add_session(&self, session_id: String, session: Session);
     // async fn get_session(&self, session_id: String) -> Session;
+    fn add_session(&self, session: Session);
 }
 
 pub trait LedgerInterface {
@@ -28,5 +27,6 @@ pub struct PreflightResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct Session {
+    pub id: String,
     pub receipt: HashMap<String, Vec<u8>>,
 }

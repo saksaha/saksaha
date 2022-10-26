@@ -1,3 +1,4 @@
+use super::session_store::SessionStore;
 use crate::v0::db::MRSDB;
 use crate::MRSError;
 use async_trait::async_trait;
@@ -16,7 +17,7 @@ use tokio::sync::{broadcast, Mutex};
 
 pub struct SakMRS {
     db: MRSDB,
-    session_store: Mutex<HashMap<String, Session>>,
+    session_store: SessionStore,
 }
 
 pub struct SakMRSArgs {
@@ -39,14 +40,7 @@ impl SakMRS {
 
         let db = MRSDB::init(&mrs_db_path).await?;
 
-        // let hasher = MiMC::new();
-
-        // let merkle_tree = MerkleTree::new(32 as u32);
-
-        let session_store = {
-            let s = HashMap::new();
-            Mutex::new(s)
-        };
+        let session_store = SessionStore::init();
 
         let mrs = SakMRS { db, session_store };
 
@@ -82,11 +76,6 @@ impl MRSInterface for SakMRS {
         self.db.get_dummy(key)
     }
 
-    async fn add_session(&self, session_id: String, session: sak_store_interface::Session) {
-        let mut session_store_lock = self.session_store.lock().await;
-        session_store_lock.insert(session_id, session);
-    }
-
     // async fn get_session(&self, session_id: String) -> Result<Session, MRSError> {
     //     let mut session_store_lock = self.session_store.lock().await;
 
@@ -106,5 +95,12 @@ impl MRSInterface for SakMRS {
         self.db.db.write(batch)?;
 
         Ok(())
+    }
+
+    fn add_session(&self, session: Session) {
+        // let mut session_store_lock = self.session_store.lock().await;
+        // session_store_lock.insert(session_id, session);
+
+        self.session_store.add_session(session);
     }
 }

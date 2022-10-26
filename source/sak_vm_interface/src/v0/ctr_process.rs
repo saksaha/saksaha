@@ -4,7 +4,7 @@ use sak_contract_std::{ContractFn, CtrRequest, Storage};
 
 pub type ContractProcessor = Box<dyn ContractProcess + Send + Sync>;
 
-#[async_trait]
+// #[async_trait]
 pub trait ContractProcess {
     // async fn invoke(
     //     &self,
@@ -13,7 +13,7 @@ pub trait ContractProcess {
     //     ctr_fn: ContractFn,
     // ) -> Result<InvokeReceipt, VMInterfaceError>;
 
-    async fn invoke(
+    fn invoke(
         &self,
         ctr_addr: &String,
         contract_wasm: &[u8],

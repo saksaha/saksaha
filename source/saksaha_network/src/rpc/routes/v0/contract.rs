@@ -36,7 +36,6 @@ pub(in crate::rpc) async fn query_ctr(
     };
 
     let res = sys_handle.machine.ledger.execute_ctr(ctr_request).await;
-    // let res = Ok(vec![]);
 
     match res {
         Ok(result) => make_success_response(route_state, QueryCtrResponse { result }),
