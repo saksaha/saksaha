@@ -9,6 +9,7 @@ export const coin_record = style({
   fontSize: "14px",
   fontWeight: "bold",
   marginTop: "10px",
+  padding: "5px",
 
   ":hover": {
     border: "3px solid red",
@@ -26,6 +27,7 @@ export const selected_coin_record = style({
   fontSize: "14px",
   fontWeight: "bold",
   marginTop: "10px",
+  padding: "5px",
 });
 
 export const result = style({
@@ -38,7 +40,6 @@ export const result = style({
   alignItems: "center",
 
 });
-
 
 export const result_coin_pane = style({
   width: "50%",
