@@ -331,8 +331,7 @@ impl SakLedger {
             TxCtrOp::ContractDeploy => {
                 let receipt = self
                     .contract_processor
-                    .invoke(ctr_addr, &data, ContractFn::Init)
-                    .await?;
+                    .invoke(ctr_addr, &data, ContractFn::Init)?;
 
                 let storage = receipt
                     .updated_storage

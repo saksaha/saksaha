@@ -1,8 +1,10 @@
 pub(in crate::rpc) mod v0;
 
 use crate::SystemHandle;
+use futures::Future;
+use hyper::{Body, Response};
 use hyper_rpc_router::{Handler, Path};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, pin::Pin, sync::Arc};
 
 pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler<Arc<SystemHandle>>> {
     let paths: Vec<Path<Arc<SystemHandle>>> = vec![
@@ -42,12 +44,12 @@ pub(in crate::rpc) fn get_routes() -> HashMap<&'static str, Handler<Arc<SystemHa
                 Box::pin(v0::get_block_list(route_state, params, sys_handle))
             }),
         },
-        // Path {
-        //     method: "query_ctr",
-        //     handler: Box::new(|route_state, params, sys_handle| {
-        //         Box::pin(v0::query_ctr(route_state, params, sys_handle))
-        //     }),
-        // },
+        Path {
+            method: "query_ctr",
+            handler: Box::new(|route_state, params, sys_handle| {
+                Box::pin(v0::query_ctr(route_state, params, sys_handle))
+            }),
+        },
         Path {
             method: "get_auth_path",
             handler: Box::new(|route_state, params, sys_handle| {
