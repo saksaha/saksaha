@@ -151,7 +151,7 @@ impl LedgerDB {
     }
 
     pub fn put_ser<T: Serialize>(
-        &mut self,
+        &self,
         batch: &mut WriteBatch,
         column: CFSenum,
         key: &[u8],
@@ -163,7 +163,7 @@ impl LedgerDB {
     }
 
     pub fn put(
-        &mut self,
+        &self,
         batch: &mut WriteBatch,
         column: CFSenum,
         key: &[u8],
