@@ -30,7 +30,7 @@ impl LedgerDB {
         let block_entity: Option<BlockEntity> =
             self.get_ser(CFSenum::BlockEntity, block_hash.as_bytes())?;
 
-        let block_merkle_rt = self.get_block_merkle_rt(&block_hash)?;
+        let block_merkle_rt = self.get_block_merkle_rt(block_hash)?;
 
         match (
             // block_entity.validator_sig,
@@ -50,22 +50,15 @@ impl LedgerDB {
                     b.block_height,
                     mr,
                 );
-                return Ok(Some(b));
+
+                Ok(Some(b))
             }
-            (
-                None,
-                None,
-                // None
-            ) => {
-                return Ok(None);
-            }
-            _ => {
-                return Err(format!(
-                    "Block is corrupted. Some data is missing, block_hash: {}",
-                    block_hash,
-                )
-                .into());
-            }
+            (None, None) => Ok(None),
+            _ => Err(format!(
+                "Block is corrupted. Some data is missing, block_hash: {}",
+                block_hash,
+            )
+            .into()),
         }
     }
 
@@ -129,6 +122,6 @@ impl LedgerDB {
 
         self.db.write(batch)?;
 
-        return Ok(block_entity.block_hash);
+        Ok(block_entity.block_hash)
     }
 }

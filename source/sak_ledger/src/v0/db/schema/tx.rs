@@ -113,9 +113,9 @@ impl LedgerDB {
                     data: tc.data.to_owned(),
                     author_sig: tc.author_sig.to_owned(),
                     ctr_addr: tc.ctr_addr.to_owned(),
-                    pi: tc.pi,
-                    sns: tc.sns,
-                    prf_merkle_rts: tc.merkle_rts,
+                    pi: tc.pi.to_vec(),
+                    sns: tc.sns.to_vec(),
+                    prf_merkle_rts: tc.merkle_rts.to_vec(),
                     tx_ctr_op: tc.get_ctr_op(),
                 };
 
@@ -133,12 +133,12 @@ impl LedgerDB {
     ) -> Result<TxHash, MachineError> {
         let tx_hash = &tx_entity.tx_hash;
 
+        self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
         self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
             self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
             self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
         }
-        self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {
@@ -158,6 +158,7 @@ impl LedgerDB {
     ) -> Result<TxHash, MachineError> {
         let tx_hash = &tx_entity.tx_hash;
 
+        self.batch_put_pour_tx_entity(batch, tx_hash, &tx_entity)?;
         self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
             self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
@@ -167,8 +168,6 @@ impl LedgerDB {
             let key = format!("{}_{}", tx_hash, idx);
             self.batch_put_tx_hash_by_sn(batch, &sn, tx_hash)?;
         }
-
-        self.batch_put_pour_tx_entity(batch, tx_hash, &tx_entity)?;
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {

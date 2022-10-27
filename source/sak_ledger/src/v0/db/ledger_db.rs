@@ -4,7 +4,7 @@ use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, WriteBatch, DB,
 };
 use sak_types::{BlockHash, Cm, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::path::PathBuf;
 use std::{io, sync::Arc};
 
@@ -110,8 +110,8 @@ impl LedgerDB {
             // ColumnFamilyDescriptor::new(cfs::BLOCK_CREATED_AT, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_IDX_CM, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::V, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::K, Options::default()),
@@ -132,6 +132,7 @@ impl LedgerDB {
             // test
             ColumnFamilyDescriptor::new(cfs::MINT_TX_ENTITY, Options::default()),
             ColumnFamilyDescriptor::new(cfs::POUR_TX_ENTITY, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::BLOCK_ENTITY, Options::default()),
         ]
     }
 
@@ -158,7 +159,9 @@ impl LedgerDB {
         value: &T,
     ) -> Result<(), MachineError> {
         let data = serde_json::to_vec(value)?;
-        self.put(batch, column, key, &data);
+
+        self.put(batch, column, key, &data)?;
+
         Ok(())
     }
 
@@ -171,12 +174,12 @@ impl LedgerDB {
     ) -> Result<(), MachineError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
-        batch.put_cf(&cf, key.to_vec(), value.to_vec());
+        batch.put_cf(&cf, key, value);
 
         Ok(())
     }
 
-    pub fn get_ser<'a, T: Serialize + Deserialize<'a>>(
+    pub fn get_ser<T: Serialize + DeserializeOwned>(
         &self,
         column: CFSenum,
         key: &[u8],
@@ -184,8 +187,8 @@ impl LedgerDB {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
         match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = serde_json::from_slice(&v)?;
+            Some(ref v) => {
+                let arr = serde_json::from_slice(v)?;
 
                 Ok(Some(arr))
             }

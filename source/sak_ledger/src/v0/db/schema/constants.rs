@@ -63,7 +63,7 @@ pub(crate) mod cfs {
     pub const BLOCK_ENTITY: &str = "block_entity";
 }
 
-pub(crate) enum CFSenum {
+pub enum CFSenum {
     TxHashByCtrAddr = 0,
     TxHashBySN = 1,
     TxType = 2,
