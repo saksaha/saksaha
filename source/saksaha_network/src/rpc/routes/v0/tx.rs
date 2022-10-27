@@ -5,6 +5,7 @@ use hyper_rpc_router::{
     RouteState,
 };
 use sak_crypto::encode_hex;
+use sak_logger::debug;
 use sak_rpc_interface::{SendMintTxRequest, SendPourTxRequest};
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};

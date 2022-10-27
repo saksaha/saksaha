@@ -108,7 +108,7 @@ impl LedgerDB {
             // ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::BLOCK_CREATED_AT, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),

@@ -18,15 +18,16 @@ impl LedgerDB {
     }
 
     pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
+        // let tx_type = self
+        //     .get_tx_type(tx_hash)?
+        //     .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
+        // println!("tx type1 {:?}", tx_type);
+
         let tx_type = self
-            .get_tx_type(tx_hash)?
-            .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
-
-        let tx_type2 = self
             .get_ser(CFSenum::TxType, tx_hash.as_bytes())?
-            .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
+            .unwrap_or(TxType::Invalid);
 
-        println!("tx type1 {:?}, tx type2 {:?}", tx_type, tx_type2);
+        println!("tx type2 {:?}", tx_type);
 
         let tx = match tx_type {
             TxType::Mint => self.get_mint_tx(tx_hash),
@@ -141,6 +142,7 @@ impl LedgerDB {
 
         // self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
         self.put_ser(batch, CFSenum::MintTxEntity, tx_hash.as_bytes(), &tx_entity)?;
+        println!("tx hash: {:?}", tx_hash);
 
         // self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
         self.put_ser(
@@ -173,8 +175,17 @@ impl LedgerDB {
     ) -> Result<TxHash, LedgerError> {
         let tx_hash = &tx_entity.tx_hash;
 
-        self.batch_put_pour_tx_entity(batch, tx_hash, &tx_entity)?;
-        self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
+        // self.batch_put_pour_tx_entity(batch, tx_hash, &tx_entity)?;
+        // self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
+        self.put_ser(batch, CFSenum::PourTxEntity, tx_hash.as_bytes(), &tx_entity)?;
+
+        self.put_ser(
+            batch,
+            CFSenum::TxType,
+            tx_hash.as_bytes(),
+            &tx_entity.tx_type,
+        )?;
+
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
             self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
             self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
