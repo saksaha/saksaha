@@ -14,6 +14,7 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
     };
 
     let field_name = fields.iter().map(|field| &field.ident);
+    let field_name2 = fields.iter().map(|field| &field.ident);
     let field_type = fields.iter().map(|field| {
         let a = &field.ty;
         println!("aaaaaaaaaaaaa, {:?}", a);
@@ -32,7 +33,7 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
         impl #struct_name {
             fn new_as_contract_param() -> #struct_name {
                 let a = #struct_name {#(
-                    #field_name : ::#field_type::new(stringify!(#field_name).to_string()),
+                    #field_name : sak_contract_std::temp!(#field_type::new(stringify!(#field_name).to_string())),
                 )*};
 
                 println!("a: {:?}", a);
@@ -42,6 +43,18 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
                 }
 
                 return a;
+            }
+
+            pub fn receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+                println!("receipt!!!");
+
+                let mut map = std::collections::HashMap::new();
+
+                #(
+                    map.extend(self.#field_name2.receipt());
+                )*
+
+                map
             }
         }
     })

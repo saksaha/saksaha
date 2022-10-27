@@ -4,7 +4,7 @@ use sak_kv_db::{Direction, IteratorMode, WriteBatch};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType};
 
 impl LedgerDB {
-    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, MachineError> {
+    pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
         let mut ret = vec![];
 
         for tx_hash in tx_hashes {
@@ -17,7 +17,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, MachineError> {
+    pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
         let tx_type = self
             .get_tx_type(tx_hash)?
             .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
@@ -75,7 +75,7 @@ impl LedgerDB {
 }
 
 impl LedgerDB {
-    pub fn batch_put_tx(&self, batch: &mut WriteBatch, tx: &Tx) -> Result<TxHash, MachineError> {
+    pub fn batch_put_tx(&self, batch: &mut WriteBatch, tx: &Tx) -> Result<TxHash, LedgerError> {
         println!("\n>> tx to put: {}", tx);
 
         let tx_hash = match tx {

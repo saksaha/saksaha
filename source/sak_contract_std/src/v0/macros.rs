@@ -17,7 +17,13 @@ macro_rules! define_host_ffi {
 
             fn HOST__get_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
 
-            fn HOST__put_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
+            fn HOST__put_mrs_data(
+                param1: *mut u8,
+                param2: u32,
+                param3: *mut u8,
+                param4: u32,
+                ptr_ret_len: *mut u32,
+            ) -> i32;
         }
     };
 }
@@ -74,13 +80,22 @@ macro_rules! define_ctr_fns {
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32, *mut u8, i32) {
+            HOST__log(22, 33);
+
             let request = $crate::parse_request!(request_ptr, request_len);
 
             let mrs = make_mrs_storage_param();
 
-            let ctx = ContractCtx { mrs };
+            let ctx = ContractCtx { mrs: mrs };
 
-            let result: Result<$crate::InvokeResult, $crate::ContractError> = execute(ctx, request);
+            let result: Result<$crate::InvokeResult, $crate::ContractError> =
+                execute(&ctx, request);
+
+            let receipt = ctx.mrs.receipt();
+            let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
+            let receipt_ptr = receipt_bytes.as_mut_ptr();
+            let receipt_len = receipt_bytes.len();
+            std::mem::forget(receipt_bytes);
 
             let mut result: $crate::InvokeResult =
                 $crate::return_err_4!(result, "something failed");
@@ -88,16 +103,11 @@ macro_rules! define_ctr_fns {
             let result_len = result.len();
             std::mem::forget(result);
 
-            let mut empty_vec = Vec::new();
-            let empty_vec_ptr = empty_vec.as_mut_ptr();
-            let empty_vec_len = empty_vec.len();
-            std::mem::forget(empty_vec);
-
             return (
                 result_ptr,
                 result_len as i32,
-                empty_vec_ptr,
-                empty_vec_len as i32,
+                receipt_ptr,
+                receipt_len as i32,
             );
         }
 
@@ -195,4 +205,11 @@ macro_rules! return_err_4 {
             }
         }
     };
+}
+
+#[macro_export]
+macro_rules! temp {
+    ($t: expr) => {{
+        $t
+    }};
 }

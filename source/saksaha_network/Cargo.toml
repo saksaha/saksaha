@@ -32,7 +32,7 @@ sak_rpc_interface = { path = "../sak_rpc_interface" }
 sak_task_queue = { path = "../sak_task_queue" }
 sak_types = { path = "../sak_types" }
 type_extension = { path = "../type_extension" }
-async-trait = "0.1.56"
+async-trait = "0.1.58"
 sak_contract_std = { path = "../sak_contract_std" }
 clap = { version = "3.1.6", features = ["cargo"] }
 serde = { version = "1.0.130", features = ["derive"] }

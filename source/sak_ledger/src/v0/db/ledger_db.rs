@@ -64,7 +64,7 @@ impl LedgerDB {
     pub(crate) async fn init(
         // app_prefix: &String,
         db_path: &PathBuf,
-    ) -> Result<LedgerDB, MachineError> {
+    ) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
             // let db_path = Self::get_db_path(app_prefix)?;
 

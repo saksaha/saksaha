@@ -1,4 +1,4 @@
-use crate::{LedgerDB, MachineError};
+use crate::{LedgerDB, LedgerError};
 use sak_kv_db::WriteBatch;
 use sak_types::Tx;
 

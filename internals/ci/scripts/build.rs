@@ -1,8 +1,7 @@
 use crate::utils::Kommand;
-use crate::{log, CIError};
-use colored::Colorize;
+use crate::CIError;
 use std::env::Args;
-use std::process::{Command as Cmd, Stdio};
+use std::process::Stdio;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let program = "cargo";

@@ -1,4 +1,5 @@
 use crate::system::SystemHandle;
+use async_trait::async_trait;
 use hyper::{Body, Response};
 use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed, require_some_params, Params,
@@ -35,16 +36,9 @@ pub(in crate::rpc) async fn query_ctr(
         ctr_call_type: rb.req.ctr_call_type,
     };
 
-    match sys_handle
-        .machine
-        .ledger
-        // .dist_ledger
-        .execute_ctr(
-            // &rb.ctr_addr, rb.req
-            ctr_request,
-        )
-        .await
-    {
+    let res = sys_handle.machine.ledger.execute_ctr(ctr_request).await;
+
+    match res {
         Ok(result) => make_success_response(route_state, QueryCtrResponse { result }),
         Err(err) => make_error_response(route_state.resp, Some(route_state.id), err),
     }

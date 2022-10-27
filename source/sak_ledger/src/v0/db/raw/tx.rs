@@ -4,7 +4,7 @@ use sak_kv_db::WriteBatch;
 use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
 
 impl LedgerDB {
-    pub(crate) fn get_tx_type(&self, tx_hash: &TxHash) -> Result<Option<TxType>, MachineError> {
+    pub(crate) fn get_tx_type(&self, tx_hash: &TxHash) -> Result<Option<TxType>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_TYPE)?;
 
         match self.db.get_cf(&cf, tx_hash)? {
@@ -39,7 +39,7 @@ impl LedgerDB {
     //     }
     // }
 
-    pub(crate) fn get_data(&self, key: &TxHash) -> Result<Option<Vec<u8>>, MachineError> {
+    pub(crate) fn get_data(&self, key: &TxHash) -> Result<Option<Vec<u8>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::DATA)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -95,7 +95,7 @@ impl LedgerDB {
     //     }
     // }
 
-    pub fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, MachineError> {
+    pub fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;
 
         match self.db.get_cf(&cf, cm)? {
@@ -155,7 +155,7 @@ impl LedgerDB {
     //     }
     // }
 
-    pub fn get_tx_hash_by_sn(&self, key: &Sn) -> Result<Option<String>, MachineError> {
+    pub fn get_tx_hash_by_sn(&self, key: &Sn) -> Result<Option<String>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
         // let serialized = key.iter().flatten().copied().collect::<Vec<u8>>();
@@ -209,7 +209,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         tx_hash: &TxHash,
         tx_type: TxType,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_TYPE)?;
 
         batch.put_cf(&cf, tx_hash, &[tx_type as u8]);
@@ -247,7 +247,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &Vec<u8>,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::DATA)?;
 
         batch.put_cf(&cf, key, value);
@@ -335,7 +335,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         key: &Sn,
         value: &String,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::TX_HASH_BY_SN)?;
 
         batch.put_cf(&cf, key, value);
@@ -348,7 +348,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         cm_idx: &CmIdx,
         cm: &Cm,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cm_idx = cm_idx.to_be_bytes();
 
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
@@ -363,7 +363,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         cm: &Cm,
         cm_idx: &CmIdx,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cm_idx = cm_idx.to_be_bytes();
 
         let cf = self.make_cf_handle(&self.db, cfs::CM_IDX)?;

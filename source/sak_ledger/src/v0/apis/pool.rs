@@ -1,4 +1,4 @@
-use crate::{MachineError, SakLedger};
+use crate::{LedgerError, SakLedger};
 use sak_logger::warn;
 use sak_types::{BlockCandidate, TxCandidate};
 
@@ -25,9 +25,7 @@ impl SakLedger {
         self.sync_pool.get_txs(tx_hashes).await
     }
 
-    pub(crate) async fn make_block_candidate(
-        &self,
-    ) -> Result<Option<BlockCandidate>, MachineError> {
+    pub(crate) async fn make_block_candidate(&self) -> Result<Option<BlockCandidate>, LedgerError> {
         let tx_candidates = self.sync_pool.get_all_txs().await?;
 
         if tx_candidates.is_empty() {

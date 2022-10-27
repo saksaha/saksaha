@@ -8,9 +8,14 @@ pub type MethodName = &'static str;
 pub type Params = Option<Vec<u8>>;
 
 pub type Handler<C> = Box<
-    dyn Fn(RouteState, Params, C) -> Pin<Box<dyn Future<Output = Response<Body>> + Send + Sync>>
+    dyn Fn(
+            RouteState,
+            Params,
+            C,
+        ) -> Pin<Box<dyn Future<Output = Response<Body>> + Send + Sync + 'static>>
         + Send
-        + Sync,
+        + Sync
+        + 'static,
 >;
 
 pub struct Path<C> {
