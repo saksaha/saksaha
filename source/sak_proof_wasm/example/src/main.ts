@@ -8,8 +8,9 @@ const wasm = import('../../pkg');
 // console.log(11, a());
 
 wasm.then(m => {
-  console.log(1, m);
+  console.log(1, Date.now());
   m.greet('power');
+  console.log(2, Date.now());
 });
 
 
