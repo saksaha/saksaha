@@ -25,7 +25,7 @@ impl LedgerDB {
 
         let tx_type = self
             .get_ser(CFSenum::TxType, tx_hash.as_bytes())?
-            .unwrap_or(TxType::Invalid);
+            .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
 
         println!("tx type2 {:?}", tx_type);
 
@@ -39,8 +39,12 @@ impl LedgerDB {
     }
 
     fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
-        let mint_tx_entity = self
-            .get_raw_mint_tx_entity(tx_hash)?
+        // let mint_tx_entity = self
+        //     .get_raw_mint_tx_entity(tx_hash)?
+        //     .ok_or("MintTxEntity should exist")?;
+
+        let mint_tx_entity: MintTxEntity = self
+            .get_ser(CFSenum::MintTxEntity, tx_hash.as_bytes())?
             .ok_or("MintTxEntity should exist")?;
 
         let tx_candidate = MintTxCandidate::new(
@@ -60,8 +64,12 @@ impl LedgerDB {
     }
 
     fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
-        let pour_tx_entity = self
-            .get_raw_pour_tx_entity(tx_hash)?
+        // let pour_tx_entity = self
+        //     .get_raw_pour_tx_entity(tx_hash)?
+        //     .ok_or("PourTxEntity should exist")?;
+
+        let pour_tx_entity: PourTxEntity = self
+            .get_ser(CFSenum::PourTxEntity, tx_hash.as_bytes())?
             .ok_or("PourTxEntity should exist")?;
 
         let tx_candidate = PourTxCandidate::new(
@@ -142,7 +150,6 @@ impl LedgerDB {
 
         // self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
         self.put_ser(batch, CFSenum::MintTxEntity, tx_hash.as_bytes(), &tx_entity)?;
-        println!("tx hash: {:?}", tx_hash);
 
         // self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
         self.put_ser(
@@ -152,14 +159,25 @@ impl LedgerDB {
             &tx_entity.tx_type,
         )?;
 
+        // self.batch_put_data(batch, tx_hash, &tx_entity.data)?;
+        self.put_ser(batch, CFSenum::DATA, tx_hash.as_bytes(), &tx_entity.data)?;
+
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
-            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
-            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+            // self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+            // self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+            self.put_ser(batch, CFSenum::CMIdx, cm, cm_idx)?;
+            self.put_ser(batch, CFSenum::CMIdxCM, &cm_idx.to_be_bytes(), cm)?;
         }
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.batch_put_tx_hash_by_contract_addr(batch, &tx_entity.ctr_addr, tx_hash)?;
+                // self.batch_put_tx_hash_by_contract_addr(batch, &tx_entity.ctr_addr, tx_hash)?;
+                self.put_ser(
+                    batch,
+                    CFSenum::TxHashByCtrAddr,
+                    tx_entity.ctr_addr.as_bytes(),
+                    tx_hash,
+                )?;
             }
             TxCtrOp::ContractCall => {}
             TxCtrOp::None => {}
@@ -186,18 +204,30 @@ impl LedgerDB {
             &tx_entity.tx_type,
         )?;
 
+        // self.batch_put_data(batch, tx_hash, &tx_entity.data)?;
+        self.put_ser(batch, CFSenum::DATA, tx_hash.as_bytes(), &tx_entity.data)?;
+
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
-            self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
-            self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+            // self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
+            // self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
+            self.put_ser(batch, CFSenum::CMIdx, cm, cm_idx)?;
+            self.put_ser(batch, CFSenum::CMIdxCM, &cm_idx.to_be_bytes(), cm)?;
         }
         for (idx, sn) in tx_entity.sns.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);
-            self.batch_put_tx_hash_by_sn(batch, &sn, tx_hash)?;
+            // self.batch_put_tx_hash_by_sn(batch, &sn, tx_hash)?;
+            self.put_ser(batch, CFSenum::TxHashBySN, sn, tx_hash)?;
         }
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.batch_put_tx_hash_by_contract_addr(batch, &tx_entity.ctr_addr, tx_hash)?;
+                // self.batch_put_tx_hash_by_contract_addr(batch, &tx_entity.ctr_addr, tx_hash)?;
+                self.put_ser(
+                    batch,
+                    CFSenum::TxHashByCtrAddr,
+                    tx_entity.ctr_addr.as_bytes(),
+                    tx_hash,
+                )?;
             }
             TxCtrOp::ContractCall => {}
             TxCtrOp::None => {}
