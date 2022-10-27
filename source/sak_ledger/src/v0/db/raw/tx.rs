@@ -1,5 +1,5 @@
-use crate::{cfs, LedgerDB, PourTxEntity};
-use crate::{MachineError, MintTxEntity};
+use crate::MintTxEntity;
+use crate::{cfs, LedgerDB, LedgerError, PourTxEntity};
 use sak_kv_db::WriteBatch;
 use sak_types::{Cm, CmIdx, MerkleRt, Sn, TxHash, TxType};
 
@@ -24,7 +24,7 @@ impl LedgerDB {
         };
     }
 
-    // pub(crate) fn get_tx_created_at(&self, key: &TxHash) -> Result<Option<String>, MachineError> {
+    // pub(crate) fn get_tx_created_at(&self, key: &TxHash) -> Result<Option<String>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::TX_CREATED_AT)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -52,7 +52,7 @@ impl LedgerDB {
         }
     }
 
-    // pub(crate) fn get_author_sig(&self, key: &TxHash) -> Result<Option<String>, MachineError> {
+    // pub(crate) fn get_author_sig(&self, key: &TxHash) -> Result<Option<String>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::AUTHOR_SIG)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -67,7 +67,7 @@ impl LedgerDB {
     //     }
     // }
 
-    // pub(crate) fn get_pi(&self, key: &TxHash) -> Result<Option<Vec<u8>>, MachineError> {
+    // pub(crate) fn get_pi(&self, key: &TxHash) -> Result<Option<Vec<u8>>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::PI)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -80,7 +80,7 @@ impl LedgerDB {
     //     }
     // }
 
-    // pub(crate) fn get_ctr_addr(&self, key: &TxHash) -> Result<Option<String>, MachineError> {
+    // pub(crate) fn get_ctr_addr(&self, key: &TxHash) -> Result<Option<String>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::CTR_ADDR)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -110,7 +110,7 @@ impl LedgerDB {
         }
     }
 
-    // pub(crate) fn get_v(&self, key: &TxHash) -> Result<Option<[u8; 32]>, MachineError> {
+    // pub(crate) fn get_v(&self, key: &TxHash) -> Result<Option<[u8; 32]>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::V)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -125,7 +125,7 @@ impl LedgerDB {
     //     }
     // }
 
-    // pub(crate) fn get_k(&self, key: &TxHash) -> Result<Option<[u8; 32]>, MachineError> {
+    // pub(crate) fn get_k(&self, key: &TxHash) -> Result<Option<[u8; 32]>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::K)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -140,7 +140,7 @@ impl LedgerDB {
     //     }
     // }
 
-    // pub(crate) fn get_s(&self, key: &TxHash) -> Result<Option<[u8; 32]>, MachineError> {
+    // pub(crate) fn get_s(&self, key: &TxHash) -> Result<Option<[u8; 32]>, LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::S)?;
 
     //     match self.db.get_cf(&cf, key)? {
@@ -175,7 +175,7 @@ impl LedgerDB {
     pub(crate) fn get_raw_mint_tx_entity(
         &self,
         key: &TxHash,
-    ) -> Result<Option<MintTxEntity>, MachineError> {
+    ) -> Result<Option<MintTxEntity>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::MINT_TX_ENTITY)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -191,7 +191,7 @@ impl LedgerDB {
     pub(crate) fn get_raw_pour_tx_entity(
         &self,
         key: &TxHash,
-    ) -> Result<Option<PourTxEntity>, MachineError> {
+    ) -> Result<Option<PourTxEntity>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::POUR_TX_ENTITY)?;
 
         match self.db.get_cf(&cf, key)? {
@@ -222,7 +222,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     block_hash: &TxHash,
     //     created_at: &String,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::TX_CREATED_AT)?;
 
     //     batch.put_cf(&cf, block_hash, created_at);
@@ -234,7 +234,7 @@ impl LedgerDB {
     //     &self,
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::TX_CREATED_AT)?;
 
     //     batch.delete_cf(&cf, key);
@@ -259,7 +259,7 @@ impl LedgerDB {
     //     &self,
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::DATA)?;
 
     //     batch.delete_cf(&cf, key);
@@ -272,7 +272,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &Vec<u8>,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::PI)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -284,7 +284,7 @@ impl LedgerDB {
     //     &self,
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::PI)?;
 
     //     batch.delete_cf(&cf, key);
@@ -297,7 +297,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &String,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::AUTHOR_SIG)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -309,7 +309,7 @@ impl LedgerDB {
     //     &self,
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::AUTHOR_SIG)?;
 
     //     batch.delete_cf(&cf, key);
@@ -322,7 +322,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &String,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::CTR_ADDR)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -378,7 +378,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &[u8; 32],
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::V)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -391,7 +391,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &[u8; 32],
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::K)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -404,7 +404,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &[u8; 32],
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::S)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -417,7 +417,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &Sn,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::SN)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -430,7 +430,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &String,
     //     value: &Cm,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::CM)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -443,7 +443,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     cm_count: &u128,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cm_count = cm_count.to_be_bytes();
 
     //     let cf = self.make_cf_handle(&self.db, cfs::CM_COUNT)?;
@@ -458,7 +458,7 @@ impl LedgerDB {
     //     batch: &mut WriteBatch,
     //     key: &TxHash,
     //     value: &MerkleRt,
-    // ) -> Result<(), MachineError> {
+    // ) -> Result<(), LedgerError> {
     //     let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
 
     //     batch.put_cf(&cf, key, value);
@@ -471,7 +471,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &MintTxEntity,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::MINT_TX_ENTITY)?;
 
         let val_ser = serde_json::to_vec(value)?;
@@ -485,7 +485,7 @@ impl LedgerDB {
         batch: &mut WriteBatch,
         key: &TxHash,
         value: &PourTxEntity,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, cfs::POUR_TX_ENTITY)?;
 
         let val_ser = serde_json::to_vec(value)?;

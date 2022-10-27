@@ -1,5 +1,5 @@
-use crate::{cfs, CFSenum, CtrStateUpdate, LedgerDB, MerkleUpdate};
-use crate::{BlockEntity, MachineError};
+use crate::BlockEntity;
+use crate::{cfs, CFSenum, CtrStateUpdate, LedgerDB, LedgerError, MerkleUpdate};
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
 
@@ -16,7 +16,7 @@ impl LedgerDB {
         Ok(ret)
     }
 
-    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, MachineError> {
+    pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
         // let validator_sig = self.get_validator_sig(&block_hash)?;
 
         // let tx_hashes = self.get_tx_hashes(&block_hash)?;

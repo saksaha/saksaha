@@ -1,5 +1,5 @@
-use crate::{cfs, LedgerDB, PourTxEntity};
-use crate::{MachineError, MintTxEntity};
+use crate::{cfs, CFSenum, LedgerDB, PourTxEntity};
+use crate::{LedgerError, MintTxEntity};
 use sak_kv_db::{Direction, IteratorMode, WriteBatch};
 use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType};
 
@@ -22,6 +22,12 @@ impl LedgerDB {
             .get_tx_type(tx_hash)?
             .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
 
+        let tx_type2 = self
+            .get_ser(CFSenum::TxType, tx_hash.as_bytes())?
+            .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
+
+        println!("tx type1 {:?}, tx type2 {:?}", tx_type, tx_type2);
+
         let tx = match tx_type {
             TxType::Mint => self.get_mint_tx(tx_hash),
             TxType::Pour => self.get_pour_tx(tx_hash),
@@ -31,7 +37,7 @@ impl LedgerDB {
         Ok(Some(tx))
     }
 
-    fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, MachineError> {
+    fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let mint_tx_entity = self
             .get_raw_mint_tx_entity(tx_hash)?
             .ok_or("MintTxEntity should exist")?;
@@ -52,7 +58,7 @@ impl LedgerDB {
         Ok(tx)
     }
 
-    fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, MachineError> {
+    fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let pour_tx_entity = self
             .get_raw_pour_tx_entity(tx_hash)?
             .ok_or("PourTxEntity should exist")?;
@@ -130,11 +136,20 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         tx_entity: MintTxEntity,
-    ) -> Result<TxHash, MachineError> {
+    ) -> Result<TxHash, LedgerError> {
         let tx_hash = &tx_entity.tx_hash;
 
-        self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
-        self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
+        // self.batch_put_mint_tx_entity(batch, tx_hash, &tx_entity)?;
+        self.put_ser(batch, CFSenum::MintTxEntity, tx_hash.as_bytes(), &tx_entity)?;
+
+        // self.batch_put_tx_type(batch, tx_hash, tx_entity.tx_type)?;
+        self.put_ser(
+            batch,
+            CFSenum::TxType,
+            tx_hash.as_bytes(),
+            &tx_entity.tx_type,
+        )?;
+
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
             self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
             self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
@@ -155,7 +170,7 @@ impl LedgerDB {
         &self,
         batch: &mut WriteBatch,
         tx_entity: PourTxEntity,
-    ) -> Result<TxHash, MachineError> {
+    ) -> Result<TxHash, LedgerError> {
         let tx_hash = &tx_entity.tx_hash;
 
         self.batch_put_pour_tx_entity(batch, tx_hash, &tx_entity)?;
@@ -180,7 +195,7 @@ impl LedgerDB {
         Ok(tx_hash.clone())
     }
 
-    // fn get_cms_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, MachineError> {
+    // fn get_cms_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
     //     let tx_hash_bytes = tx_hash.as_bytes();
     //     let mut v = vec![];
 
@@ -214,7 +229,7 @@ impl LedgerDB {
     //     Ok(v)
     // }
 
-    // fn get_sns_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, MachineError> {
+    // fn get_sns_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
     //     let tx_hash_bytes = tx_hash.as_bytes();
 
     //     let mut v = vec![];
@@ -249,7 +264,7 @@ impl LedgerDB {
     //     Ok(v)
     // }
 
-    // fn get_merkle_rts_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, MachineError> {
+    // fn get_merkle_rts_iteratively(&self, tx_hash: &TxHash) -> Result<Vec<[u8; 32]>, LedgerError> {
     //     let tx_hash_bytes = tx_hash.as_bytes();
     //     let mut v = vec![];
 

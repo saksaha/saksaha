@@ -1,4 +1,4 @@
-use crate::v0::testing;
+use crate::{v0::testing, LedgerDB};
 use sak_kv_db::WriteBatch;
 use sak_types::{BlockCandidate, Tx, TxCandidate};
 
@@ -25,6 +25,38 @@ use sak_types::{BlockCandidate, Tx, TxCandidate};
 //     for (idx, tx_hash) in tx_hashes.iter().enumerate() {
 //         let tx_val_retrieved = dist_ledger
 //             .get_tx(tx_hash)
+//             .await
+//             .expect("Tx should exist")
+//             .expect("tx should exist");
+
+//         assert_eq!(tx_val_retrieved.get_tx_hash(), &tx_hashes[idx]);
+
+//         println!(" tx_hash : {:?}", &tx_hashes[idx]);
+//     }
+// }
+
+// #[tokio::test(flavor = "multi_thread")]
+// async fn test_put_and_get_transaction() {
+//     let ledger_db = LedgerDB::init(&std::path::PathBuf::from("test")).await;
+
+//     let bc = sak_types::mock_block_2();
+
+//     // let block_hash = dist_ledger
+//     //     .write_block(Some(bc))
+//     //     .await
+//     //     .expect("block should be written")
+//     //     .unwrap();
+
+//     // println!("[+] block hash: {:?}", bc.block_hash);
+
+//     // let tx_hashes = dist_ledger
+//     //     .ledger_db
+//     //     .get_tx_hashes(&block_hash)
+//     //     .expect("block should be written")
+//     //     .unwrap();
+
+//     for (idx, tx_hash) in bc.tx_candidates.iter().enumerate() {
+//         let tx_val_retrieved = LedgerDB::get_tx(tx_hash)
 //             .await
 //             .expect("Tx should exist")
 //             .expect("tx should exist");

@@ -1,4 +1,4 @@
-use crate::MachineError;
+use crate::LedgerError;
 use crate::{cfs, CFSenum};
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, WriteBatch, DB,
@@ -157,7 +157,7 @@ impl LedgerDB {
         column: CFSenum,
         key: &[u8],
         value: &T,
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let data = serde_json::to_vec(value)?;
 
         self.put(batch, column, key, &data)?;
@@ -171,7 +171,7 @@ impl LedgerDB {
         column: CFSenum,
         key: &[u8],
         value: &[u8],
-    ) -> Result<(), MachineError> {
+    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
         batch.put_cf(&cf, key, value);
@@ -183,7 +183,7 @@ impl LedgerDB {
         &self,
         column: CFSenum,
         key: &[u8],
-    ) -> Result<Option<T>, MachineError> {
+    ) -> Result<Option<T>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
         match self.db.get_cf(&cf, key)? {
