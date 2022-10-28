@@ -70,7 +70,7 @@ impl SakLedger {
 
         let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
             Some(i) => {
-                if i >= 2_u128.pow(CM_TREE_DEPTH).into() {
+                if i >= 2_u128.pow(CM_TREE_DEPTH) {
                     return Err("CM idx exceeded the tree depth".into());
                 }
                 i + 1
@@ -209,16 +209,33 @@ impl SakLedger {
     //     self.ledger_db.delete_tx(key)
     // }
 
+    // pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+    //     let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
+
+    //     if merkle_rt == &dummy_merkle_rt {
+    //         return true;
+    //     } else {
+    //         match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+    //             Ok(Some(_)) => return true,
+    //             Ok(None) => return false,
+    //             Err(_err) => return false,
+    //         }
+    //     }
+    // }
+
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
         let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
 
         if merkle_rt == &dummy_merkle_rt {
-            return true;
+            true
         } else {
-            match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
-                Ok(Some(_)) => return true,
-                Ok(None) => return false,
-                Err(_err) => return false,
+            match self
+                .ledger_db
+                .get_ser::<Vec<u8>>(CFSenum::EmptyValue, merkle_rt)
+            {
+                Ok(Some(_)) => true,
+                Ok(None) => false,
+                Err(_err) => false,
             }
         }
     }
