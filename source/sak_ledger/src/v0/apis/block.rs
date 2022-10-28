@@ -1,5 +1,4 @@
-use crate::{LedgerError, SakLedger};
-use sak_contract_std::Storage;
+use crate::{CFSenum, LedgerError, SakLedger};
 use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash};
@@ -43,7 +42,8 @@ impl SakLedger {
     }
 
     pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
-        self.ledger_db.get_cm_idx_by_cm(cm)
+        // self.ledger_db.get_cm_idx_by_cm(cm)
+        self.ledger_db.get_ser(CFSenum::CMIdxCM, cm)
     }
 
     pub async fn get_latest_block_hash(
