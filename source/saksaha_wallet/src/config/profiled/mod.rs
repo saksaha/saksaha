@@ -87,7 +87,7 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 0x33,
                 0x34,
                 100,
-                Some(4),
+                Some(5),
                 None,
                 Some(
                     "\
@@ -102,7 +102,7 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 0x43,
                 0x44,
                 100,
-                Some(5),
+                Some(6),
                 None,
                 Some(
                     "\

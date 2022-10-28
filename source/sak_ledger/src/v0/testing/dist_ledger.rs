@@ -41,7 +41,6 @@
 
 //     dist_ledger
 // }
-
 // pub async fn mock_dist_ledger_1() -> SakLedger {
 //     let pos = mock_pos();
 //     let credential = CredentialProfile::test_1();
@@ -61,8 +60,16 @@
 
 //     let mrs_path = { test_dir.join("mrs") };
 
+//     let mrs = {
+//         let mrs_args = SakMRSArgs { mrs_db_path };
+
+//         let m = SakMRS::init(mrs_args).await.unwrap();
+//         let m = Box::new(m) as MRSAccessor;
+//         Arc::new(m)
+//     };
+
 //     let vm: ContractProcessor = {
-//         let v = SakVM::init().unwrap();
+//         let v = SakVM::init(mrs.clone()).unwrap();
 //         Box::new(v)
 //     };
 
@@ -72,8 +79,7 @@
 //         consensus: pos,
 //         block_sync_interval: None,
 //         ledger_path,
-//         contract_processor: vm,
-//         // mrs_path,
+//         contract_processor: Box::default(),
 //     };
 
 //     let dist_ledger = SakLedger::init(dist_ledger_args)

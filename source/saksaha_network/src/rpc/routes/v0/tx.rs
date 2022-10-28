@@ -5,6 +5,7 @@ use hyper_rpc_router::{
     RouteState,
 };
 use sak_crypto::encode_hex;
+use sak_logger::debug;
 use sak_rpc_interface::{SendMintTxRequest, SendPourTxRequest};
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
@@ -97,13 +98,7 @@ pub(in crate::rpc) async fn get_tx(
 
     let rb: GetTxRequest = require_params_parsed!(route_state, &params);
 
-    match sys_handle
-        .machine
-        .ledger
-        // .dist_ledger
-        .get_tx(&rb.hash)
-        .await
-    {
+    match sys_handle.machine.ledger.get_tx(&rb.hash).await {
         Ok(tx) => {
             let get_tx_resp = GetTxResponse { tx };
 

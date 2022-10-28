@@ -31,17 +31,17 @@ impl LedgerDB {
     //     Ok(tx_hash)
     // }
 
-    pub fn delete_tx(&self, tx_hash: &String) -> Result<(), LedgerError> {
-        let mut batch = WriteBatch::default();
+    // pub fn delete_tx(&self, tx_hash: &String) -> Result<(), MachineError> {
+    //     let mut batch = WriteBatch::default();
 
-        self.batch_delete_tx_created_at(&mut batch, tx_hash)?;
+    //     self.batch_delete_tx_created_at(&mut batch, tx_hash)?;
 
-        self.batch_delete_data(&mut batch, tx_hash)?;
+    //     self.batch_delete_data(&mut batch, tx_hash)?;
 
-        self.batch_delete_pi(&mut batch, tx_hash)?;
+    //     self.batch_delete_pi(&mut batch, tx_hash)?;
 
-        self.batch_delete_author_sig(&mut batch, tx_hash)?;
+    //     self.batch_delete_author_sig(&mut batch, tx_hash)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }

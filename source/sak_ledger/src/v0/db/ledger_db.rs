@@ -1,15 +1,63 @@
-use crate::cfs;
 use crate::LedgerError;
-use sak_kv_db::{BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, DB};
-use sak_logger::info;
+use crate::{cfs, CFSenum};
+use sak_kv_db::{
+    BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, WriteBatch, DB,
+};
+use sak_types::{BlockHash, Cm, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::{io, sync::Arc};
 
 // TODO This has to be dynamically decided
 const APP_NAME: &'static str = "saksaha";
 
 pub struct LedgerDB {
     pub(crate) db: DB,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MintTxEntity {
+    pub tx_hash: TxHash,
+    pub tx_type: TxType,
+    pub cms: Vec<Cm>,
+    pub cm_idxes: Vec<u128>,
+    pub cm_count: u128,
+    pub created_at: String,
+    pub data: Vec<u8>,
+    pub author_sig: String,
+    pub ctr_addr: String,
+    pub v: [u8; 32],
+    pub k: [u8; 32],
+    pub s: [u8; 32],
+    pub tx_ctr_op: TxCtrOp,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PourTxEntity {
+    pub tx_hash: TxHash,
+    pub tx_type: TxType,
+    pub cms: Vec<Cm>,
+    pub cm_idxes: Vec<u128>,
+    pub cm_count: u128,
+    pub created_at: String,
+    pub data: Vec<u8>,
+    pub author_sig: String,
+    pub ctr_addr: String,
+    pub pi: Vec<u8>,
+    pub sns: Vec<Sn>,
+    pub prf_merkle_rts: Vec<MerkleRt>,
+    pub tx_ctr_op: TxCtrOp,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BlockEntity {
+    pub block_hash: BlockHash,
+    pub validator_sig: String,
+    pub witness_sigs: Vec<String>,
+    pub tx_hashes: Vec<TxHash>,
+    pub created_at: String,
+    pub block_height: u128,
+    pub merkle_rt: MerkleRt,
 }
 
 impl LedgerDB {
@@ -56,33 +104,35 @@ impl LedgerDB {
         vec![
             ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_SN, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::PI, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::BLOCK_CREATED_AT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::PI, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::BLOCK_CREATED_AT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
             ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CM_IDX_CM, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::V, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::K, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::S, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::SNS, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::CMS, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::SN, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM_COUNT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::V, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::K, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::S, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::SN, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::CM_COUNT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::BLOCK_MERKLE_RT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::EMPTY_VALUE, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::PRF_MERKLE_RT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::PRF_MERKLE_RT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::MERKLE_NODE, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::VALIDATOR_SIG, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::TX_HASHES, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::WITNESS_SIGS, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::BLOCK_HEIGHT, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::VALIDATOR_SIG, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::TX_HASHES, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::WITNESS_SIGS, Options::default()),
+            // ColumnFamilyDescriptor::new(cfs::BLOCK_HEIGHT, Options::default()),
             ColumnFamilyDescriptor::new(cfs::BLOCK_HASH, Options::default()),
             ColumnFamilyDescriptor::new(cfs::CTR_STATE, Options::default()),
+            // test
+            ColumnFamilyDescriptor::new(cfs::MINT_TX_ENTITY, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::POUR_TX_ENTITY, Options::default()),
+            ColumnFamilyDescriptor::new(cfs::BLOCK_ENTITY, Options::default()),
         ]
     }
 
@@ -99,5 +149,50 @@ impl LedgerDB {
         };
 
         Ok(cf_handle)
+    }
+
+    pub fn put_ser<T: Serialize>(
+        &self,
+        batch: &mut WriteBatch,
+        column: CFSenum,
+        key: &[u8],
+        value: &T,
+    ) -> Result<(), LedgerError> {
+        let data = serde_json::to_vec(value)?;
+
+        self.put(batch, column, key, &data)?;
+
+        Ok(())
+    }
+
+    pub fn put(
+        &self,
+        batch: &mut WriteBatch,
+        column: CFSenum,
+        key: &[u8],
+        value: &[u8],
+    ) -> Result<(), LedgerError> {
+        let cf = self.make_cf_handle(&self.db, column.as_str())?;
+
+        batch.put_cf(&cf, key, value);
+
+        Ok(())
+    }
+
+    pub fn get_ser<T: Serialize + DeserializeOwned>(
+        &self,
+        column: CFSenum,
+        key: &[u8],
+    ) -> Result<Option<T>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, column.as_str())?;
+
+        match self.db.get_cf(&cf, key)? {
+            Some(ref v) => {
+                let arr = serde_json::from_slice(v)?;
+
+                Ok(Some(arr))
+            }
+            None => Ok(None),
+        }
     }
 }
