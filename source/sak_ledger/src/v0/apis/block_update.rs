@@ -1,4 +1,4 @@
-use crate::{CtrStateUpdate, LedgerError, MerkleUpdate, SakLedger};
+use crate::{CFSenum, CtrStateUpdate, LedgerError, MerkleUpdate, SakLedger};
 use colored::Colorize;
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
@@ -9,7 +9,7 @@ use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
 use sak_types::{
     Block, BlockCandidate, CmIdx, MerkleRt, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate,
-    TxCtrOp,
+    TxCtrOp, TxHash,
 };
 
 impl SakLedger {
@@ -70,7 +70,7 @@ impl SakLedger {
 
         let next_cm_idx = match self.ledger_db.get_latest_cm_idx()? {
             Some(i) => {
-                if i >= 2_u128.pow(CM_TREE_DEPTH).into() {
+                if i >= 2_u128.pow(CM_TREE_DEPTH) {
                     return Err("CM idx exceeded the tree depth".into());
                 }
                 i + 1
@@ -209,33 +209,64 @@ impl SakLedger {
     //     self.ledger_db.delete_tx(key)
     // }
 
+    // pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+    //     let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
+
+    //     if merkle_rt == &dummy_merkle_rt {
+    //         return true;
+    //     } else {
+    //         match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
+    //             Ok(Some(_)) => return true,
+    //             Ok(None) => return false,
+    //             Err(_err) => return false,
+    //         }
+    //     }
+    // }
+
     pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
         let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
 
         if merkle_rt == &dummy_merkle_rt {
-            return true;
+            true
         } else {
-            match self.ledger_db.get_block_merkle_rt_key(merkle_rt) {
-                Ok(Some(_)) => return true,
-                Ok(None) => return false,
-                Err(_err) => return false,
+            match self
+                .ledger_db
+                .get_ser::<Vec<u8>>(CFSenum::EmptyValue, merkle_rt)
+            {
+                Ok(Some(_)) => true,
+                Ok(None) => false,
+                Err(_err) => false,
             }
         }
     }
 
+    // pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+    //     if sn == &DUMMY_SN {
+    //         return Ok(true);
+    //     } else {
+    //         match self.ledger_db.get_tx_hash_by_sn(sn) {
+    //             Ok(Some(_)) => {
+    //                 return Err(format!("Serial numbers already exists, sns: {:?}", sn).into())
+    //             }
+    //             Ok(None) => return Ok(true),
+    //             Err(_) => {
+    //                 return Err(
+    //                     format!("Tx with serial numbers does not exist, sns: {:?}", sn).into(),
+    //                 )
+    //             }
+    //         }
+    //     }
+    // }
+
     pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
         if sn == &DUMMY_SN {
-            return Ok(true);
+            Ok(true)
         } else {
-            match self.ledger_db.get_tx_hash_by_sn(sn) {
-                Ok(Some(_)) => {
-                    return Err(format!("Serial numbers already exists, sns: {:?}", sn).into())
-                }
-                Ok(None) => return Ok(true),
+            match self.ledger_db.get_ser::<TxHash>(CFSenum::TxHashBySN, sn) {
+                Ok(Some(_)) => Err(format!("Serial numbers already exists, sns: {:?}", sn).into()),
+                Ok(None) => Ok(true),
                 Err(_) => {
-                    return Err(
-                        format!("Tx with serial numbers does not exist, sns: {:?}", sn).into(),
-                    )
+                    Err(format!("Tx with serial numbers does not exist, sns: {:?}", sn).into())
                 }
             }
         }

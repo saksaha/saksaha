@@ -1,4 +1,4 @@
-use crate::{cfs, keys, LedgerDB};
+use crate::{cfs, keys, CFSenum, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
 use sak_crypto::ScalarExt;
 use sak_kv_db::DB;
@@ -9,25 +9,39 @@ use std::sync::Arc;
 use type_extension::U8Array;
 
 impl LedgerDB {
-    pub(crate) fn get_merkle_node(
-        &self,
-        // db: &DB,
-        key: &String,
-    ) -> Result<[u8; 32], LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
+    // pub(crate) fn get_merkle_node(
+    //     &self,
+    //     // db: &DB,
+    //     key: &String,
+    // ) -> Result<[u8; 32], LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::MERKLE_NODE)?;
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr = type_extension::convert_vec_into_u8_32(v)?;
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let arr = type_extension::convert_vec_into_u8_32(v)?;
 
-                return Ok(arr);
-            }
+    //             return Ok(arr);
+    //         }
+    //         None => {
+    //             let zero_value = {
+    //                 let arr = U8Array::new_empty_32();
+    //                 ScalarExt::parse_arr(&arr).unwrap()
+    //             };
+    //             return Ok(zero_value.to_bytes());
+    //         }
+    //     }
+    // }
+
+    pub(crate) fn get_merkle_node(&self, key: &String) -> Result<[u8; 32], LedgerError> {
+        match self.get_ser(CFSenum::MerkleNode, key.as_bytes())? {
+            Some(v) => Ok(v),
             None => {
                 let zero_value = {
                     let arr = U8Array::new_empty_32();
                     ScalarExt::parse_arr(&arr).unwrap()
                 };
-                return Ok(zero_value.to_bytes());
+
+                Ok(zero_value.to_bytes())
             }
         }
     }
@@ -69,13 +83,26 @@ impl LedgerDB {
     //     }
     // }
 
-    pub fn get_latest_block_height(
-        &self,
-        // db: &DB,
-    ) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
+    // pub fn get_latest_block_height(
+    //     &self,
+    //     // db: &DB,
+    // ) -> Result<Option<u128>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HASH)?;
 
-        let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
+    //     let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
+
+    //     let (height_bytes, _hash) = match iter.next() {
+    //         Some(a) => a,
+    //         None => return Ok(None),
+    //     };
+
+    //     let height = type_extension::convert_u8_slice_into_u128(&height_bytes)?;
+
+    //     Ok(Some(height))
+    // }
+
+    pub fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
+        let mut iter = self.iter(CFSenum::BlockHash)?;
 
         let (height_bytes, _hash) = match iter.next() {
             Some(a) => a,

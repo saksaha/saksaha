@@ -1,21 +1,29 @@
-use crate::LedgerError;
 use crate::{cfs, LedgerDB};
+use crate::{CFSenum, LedgerError};
 use sak_contract_std::Storage;
 use sak_kv_db::WriteBatch;
-use sak_types::CtrAddr;
+use sak_types::{CtrAddr, TxHash};
 
 impl LedgerDB {
     pub async fn get_ctr_data_by_ctr_addr(
         &self,
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
-        let tx_hash = self
-            .get_tx_hash_by_ctr_addr(ctr_addr)?
-            .ok_or(format!("ctr data does not exist, ctr_addr: {}", ctr_addr))?;
+        // let tx_hash = self
+        //     .get_tx_hash_by_ctr_addr(ctr_addr)?
+        //     .ok_or(format!("ctr data does not exist, ctr_addr: {}", ctr_addr))?;
+
+        // let ctr_data = self
+        //     .get_data(&tx_hash)?
+        //     .ok_or(format!("data does not exist, ctr_addr: {}", ctr_addr))?;
+
+        let tx_hash: TxHash = self
+            .get_ser(CFSenum::TxHashByCtrAddr, ctr_addr.as_bytes())?
+            .ok_or("TxHashByCtrAddr should exist")?;
 
         let ctr_data = self
-            .get_data(&tx_hash)?
-            .ok_or(format!("data does not exist, ctr_addr: {}", ctr_addr))?;
+            .get_ser(CFSenum::Data, tx_hash.as_bytes())?
+            .ok_or("TxHashByCtrAddr should exist")?;
 
         Ok(Some(ctr_data))
     }
@@ -54,22 +62,22 @@ impl LedgerDB {
         }
     }
 
-    pub fn get_ctr_state(
-        &self,
-        // db: &DB,
-        ctr_addr: &CtrAddr,
-    ) -> Result<Option<Storage>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
+    // pub fn get_ctr_state(
+    //     &self,
+    //     // db: &DB,
+    //     ctr_addr: &CtrAddr,
+    // ) -> Result<Option<Storage>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CTR_STATE)?;
 
-        match self.db.get_cf(&cf, ctr_addr)? {
-            Some(v) => {
-                return Ok(Some(v));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //     match self.db.get_cf(&cf, ctr_addr)? {
+    //         Some(v) => {
+    //             return Ok(Some(v));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 }
 
 // writer
