@@ -1,7 +1,9 @@
 use crate::{cfs, CFSenum, LedgerDB, PourTxEntity};
 use crate::{LedgerError, MintTxEntity};
 use sak_kv_db::WriteBatch;
-use sak_types::{MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType};
+use sak_types::{
+    CmIdx, MintTx, MintTxCandidate, PourTx, PourTxCandidate, Tx, TxCtrOp, TxHash, TxType,
+};
 
 impl LedgerDB {
     pub async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
@@ -162,8 +164,8 @@ impl LedgerDB {
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
             // self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
             // self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
-            self.put_ser(batch, CFSenum::CMIdx, cm, cm_idx)?;
-            self.put_ser(batch, CFSenum::CMIdxCM, &cm_idx.to_be_bytes(), cm)?;
+            self.put_ser(batch, CFSenum::CMIdxByCM, cm, cm_idx)?;
+            self.put_ser(batch, CFSenum::CMByCMIdx, &cm_idx.to_be_bytes(), cm)?;
         }
 
         match tx_entity.tx_ctr_op {
@@ -207,8 +209,8 @@ impl LedgerDB {
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
             // self.batch_put_cm_cm_idx(batch, cm, cm_idx)?;
             // self.batch_put_cm_idx_cm(batch, cm_idx, cm)?;
-            self.put_ser(batch, CFSenum::CMIdx, cm, cm_idx)?;
-            self.put_ser(batch, CFSenum::CMIdxCM, &cm_idx.to_be_bytes(), cm)?;
+            self.put_ser(batch, CFSenum::CMIdxByCM, cm, cm_idx)?;
+            self.put_ser(batch, CFSenum::CMByCMIdx, &cm_idx.to_be_bytes(), cm)?;
         }
         for (idx, sn) in tx_entity.sns.iter().enumerate() {
             let key = format!("{}_{}", tx_hash, idx);

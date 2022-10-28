@@ -43,7 +43,7 @@ impl SakLedger {
 
     pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
         // self.ledger_db.get_cm_idx_by_cm(cm)
-        self.ledger_db.get_ser(CFSenum::CMIdxCM, cm)
+        self.ledger_db.get_ser(CFSenum::CMIdxByCM, cm)
     }
 
     // pub async fn get_latest_block_hash(

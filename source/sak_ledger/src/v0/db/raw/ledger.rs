@@ -25,7 +25,7 @@ impl LedgerDB {
 
         // let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
 
-        let mut iter = self.iter(CFSenum::CMIdxCM)?;
+        let mut iter = self.iter(CFSenum::CMIdxByCM)?;
 
         match iter.next() {
             Some((cm_idx, _cm)) => {
