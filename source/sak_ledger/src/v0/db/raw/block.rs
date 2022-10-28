@@ -11,98 +11,98 @@ use sak_types::{
 use std::convert::TryInto;
 
 impl LedgerDB {
-    pub fn get_validator_sig(
-        &self,
-        // db: &DB,
-        block_hash: &BlockHash,
-    ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::VALIDATOR_SIG)?;
+    // pub fn get_validator_sig(
+    //     &self,
+    //     // db: &DB,
+    //     block_hash: &BlockHash,
+    // ) -> Result<Option<String>, MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::VALIDATOR_SIG)?;
 
-        match self.db.get_cf(&cf, block_hash)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    //     match self.db.get_cf(&cf, block_hash)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        };
-    }
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     };
+    // }
 
-    pub fn get_tx_hashes(
-        &self,
-        // db: &DB,
-        block_hash: &BlockHash,
-    ) -> Result<Option<Vec<String>>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASHES)?;
+    // pub fn get_tx_hashes(
+    //     &self,
+    //     // db: &DB,
+    //     block_hash: &BlockHash,
+    // ) -> Result<Option<Vec<String>>, MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASHES)?;
 
-        match self.db.get_cf(&cf, block_hash)? {
-            Some(v) => {
-                let th: Vec<String> = serde_json::from_slice(&v).unwrap();
-                return Ok(Some(th));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //     match self.db.get_cf(&cf, block_hash)? {
+    //         Some(v) => {
+    //             let th: Vec<String> = serde_json::from_slice(&v).unwrap();
+    //             return Ok(Some(th));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
-    pub fn get_witness_sigs(
-        &self,
-        // db: &DB,
-        block_hash: &BlockHash,
-    ) -> Result<Option<Vec<String>>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::WITNESS_SIGS)?;
+    // pub fn get_witness_sigs(
+    //     &self,
+    //     // db: &DB,
+    //     block_hash: &BlockHash,
+    // ) -> Result<Option<Vec<String>>, MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::WITNESS_SIGS)?;
 
-        match self.db.get_cf(&cf, block_hash)? {
-            Some(v) => {
-                let th: Vec<String> = serde_json::from_slice(&v).unwrap();
-                return Ok(Some(th));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //     match self.db.get_cf(&cf, block_hash)? {
+    //         Some(v) => {
+    //             let th: Vec<String> = serde_json::from_slice(&v).unwrap();
+    //             return Ok(Some(th));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
-    pub fn get_block_created_at(
-        &self,
-        // db: &DB,
-        key: &BlockHash,
-    ) -> Result<Option<String>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
+    // pub fn get_block_created_at(
+    //     &self,
+    //     // db: &DB,
+    //     key: &BlockHash,
+    // ) -> Result<Option<String>, MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let str = String::from_utf8(v)?;
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let str = String::from_utf8(v)?;
 
-                return Ok(Some(str));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(str));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
-    pub(crate) fn get_block_height(
-        &self,
-        // db: &DB,
-        block_hash: &BlockHash,
-    ) -> Result<Option<BlockHeight>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
+    // pub(crate) fn get_block_height(
+    //     &self,
+    //     // db: &DB,
+    //     block_hash: &BlockHash,
+    // ) -> Result<Option<BlockHeight>, MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
 
-        match self.db.get_cf(&cf, block_hash)? {
-            Some(h) => {
-                let height = type_extension::convert_u8_slice_into_u128(&h)?;
+    //     match self.db.get_cf(&cf, block_hash)? {
+    //         Some(h) => {
+    //             let height = type_extension::convert_u8_slice_into_u128(&h)?;
 
-                return Ok(Some(height));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(height));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
     pub fn get_block_hash_by_block_height(
         &self,
@@ -168,87 +168,87 @@ impl LedgerDB {
         }
     }
 
-    pub fn get_prf_merkle_rt(
-        &self,
-        // db: &DB,
-        key: &BlockHash,
-    ) -> Result<Option<[u8; 32]>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
+    // pub fn get_prf_merkle_rt(
+    //     &self,
+    //     // db: &DB,
+    //     key: &BlockHash,
+    // ) -> Result<Option<[u8; 32]>, MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::PRF_MERKLE_RT)?;
 
-        match self.db.get_cf(&cf, key)? {
-            Some(v) => {
-                let arr: [u8; 32] = match v.try_into() {
-                    Ok(a) => a,
-                    Err(err) => return Err(format!("Cannot convert cm into an array",).into()),
-                };
+    //     match self.db.get_cf(&cf, key)? {
+    //         Some(v) => {
+    //             let arr: [u8; 32] = match v.try_into() {
+    //                 Ok(a) => a,
+    //                 Err(err) => return Err(format!("Cannot convert cm into an array",).into()),
+    //             };
 
-                return Ok(Some(arr));
-            }
-            None => {
-                return Ok(None);
-            }
-        }
-    }
+    //             return Ok(Some(arr));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
 
-    pub fn batch_put_validator_sig(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &BlockHash,
-        validator_sig: &String,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::VALIDATOR_SIG)?;
+    // pub fn batch_put_validator_sig(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     block_hash: &BlockHash,
+    //     validator_sig: &String,
+    // ) -> Result<(), MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::VALIDATOR_SIG)?;
 
-        batch.put_cf(&cf, block_hash, validator_sig);
+    //     batch.put_cf(&cf, block_hash, validator_sig);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub(crate) fn batch_put_witness_sigs(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &BlockHash,
-        witness_sigs: &Vec<String>,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::WITNESS_SIGS)?;
+    // pub(crate) fn batch_put_witness_sigs(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     block_hash: &BlockHash,
+    //     witness_sigs: &Vec<String>,
+    // ) -> Result<(), MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::WITNESS_SIGS)?;
 
-        let witness_sigs = serde_json::to_string(witness_sigs)?;
+    //     let witness_sigs = serde_json::to_string(witness_sigs)?;
 
-        batch.put_cf(&cf, block_hash, witness_sigs);
+    //     batch.put_cf(&cf, block_hash, witness_sigs);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub(crate) fn batch_put_tx_hashes(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &BlockHash,
-        tx_hashes: &Vec<String>,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::TX_HASHES)?;
+    // pub(crate) fn batch_put_tx_hashes(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     block_hash: &BlockHash,
+    //     tx_hashes: &Vec<String>,
+    // ) -> Result<(), MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::TX_HASHES)?;
 
-        let transactions = serde_json::to_string(tx_hashes)?;
+    //     let transactions = serde_json::to_string(tx_hashes)?;
 
-        batch.put_cf(&cf, block_hash, transactions);
+    //     batch.put_cf(&cf, block_hash, transactions);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub(crate) fn batch_put_block_created_at(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &BlockHash,
-        created_at: &String,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
+    // pub(crate) fn batch_put_block_created_at(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     block_hash: &BlockHash,
+    //     created_at: &String,
+    // ) -> Result<(), MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_CREATED_AT)?;
 
-        batch.put_cf(&cf, block_hash, created_at);
+    //     batch.put_cf(&cf, block_hash, created_at);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub(crate) fn batch_put_block_hash(
         &self,
@@ -266,21 +266,21 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub(crate) fn batch_put_block_height(
-        &self,
-        // db: &DB,
-        batch: &mut WriteBatch,
-        block_hash: &BlockHash,
-        block_height: &BlockHeight,
-    ) -> Result<(), LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
+    // pub(crate) fn batch_put_block_height(
+    //     &self,
+    //     // db: &DB,
+    //     batch: &mut WriteBatch,
+    //     block_hash: &BlockHash,
+    //     block_height: &BlockHeight,
+    // ) -> Result<(), MachineError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::BLOCK_HEIGHT)?;
 
-        let v = block_height.to_be_bytes();
+    //     let v = block_height.to_be_bytes();
 
-        batch.put_cf(&cf, block_hash, v);
+    //     batch.put_cf(&cf, block_hash, v);
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub(crate) fn batch_put_block_merkle_rt(
         &self,

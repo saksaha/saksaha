@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum TxType {
     Invalid = 0,
     Mint,

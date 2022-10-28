@@ -2,7 +2,6 @@ use crate::KVDBError;
 use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use sak_logger::info;
 use std::path::Path;
-use std::path::PathBuf;
 
 pub struct KeyValueDatabase<P: AsRef<Path>> {
     pub db_instance: DB,
@@ -18,13 +17,13 @@ where
         options: Options,
         cf_descriptors: Vec<ColumnFamilyDescriptor>,
     ) -> Result<KeyValueDatabase<P>, KVDBError> {
-        if !db_path.as_ref().clone().exists() {
+        if !(db_path.as_ref()).exists() {
             info!(
                 "DB path does not exist. Creating {}",
                 db_path.as_ref().to_string_lossy()
             );
 
-            std::fs::create_dir_all(db_path.as_ref().clone())?;
+            std::fs::create_dir_all(db_path.as_ref())?;
         }
 
         let db_instance = match DB::open_cf_descriptors(&options, &db_path, cf_descriptors) {

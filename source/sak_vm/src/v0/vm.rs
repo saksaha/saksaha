@@ -42,7 +42,7 @@ impl ContractProcess for SakVM {
             }
         };
 
-        println!("res: {:?}", res.as_ref().unwrap().result);
+        // println!("res: {:?}", res.as_ref().unwrap().result);
 
         res
     }
@@ -121,7 +121,7 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
         }
 
-        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes).unwrap();
+        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
 
         println!("power11: {:?}", receipt);
         let session_id = format!("{}_{}", ctr_addr, rand());
