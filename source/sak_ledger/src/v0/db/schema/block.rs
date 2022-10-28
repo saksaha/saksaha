@@ -1,15 +1,14 @@
 use crate::BlockEntity;
-use crate::{cfs, CFSenum, CtrStateUpdate, LedgerDB, LedgerError, MerkleUpdate};
+use crate::{CFSenum, CtrStateUpdate, LedgerDB, LedgerError, MerkleUpdate};
 use sak_kv_db::WriteBatch;
-use sak_types::{Block, BlockHash, BlockHeight, Tx};
+use sak_types::{Block, Tx};
 
 impl LedgerDB {
     pub async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
         let mut ret = vec![];
         for block_hash in block_hashes {
-            match self.get_block(block_hash)? {
-                Some(b) => ret.push(b),
-                None => (),
+            if let Some(b) = self.get_block(block_hash)? {
+                ret.push(b);
             }
         }
 
@@ -30,7 +29,8 @@ impl LedgerDB {
         let block_entity: Option<BlockEntity> =
             self.get_ser(CFSenum::BlockEntity, block_hash.as_bytes())?;
 
-        let block_merkle_rt = self.get_block_merkle_rt(block_hash)?;
+        // let block_merkle_rt = self.get_block_merkle_rt(block_hash)?;
+        let block_merkle_rt = self.get_ser(CFSenum::BlockMerkleRt, block_hash.as_bytes())?;
 
         match (
             // block_entity.validator_sig,
@@ -100,24 +100,49 @@ impl LedgerDB {
 
         // self.batch_put_block_created_at(&mut batch, block_hash, &block.created_at)?;
 
-        self.batch_put_block_hash(&mut batch, &block.block_height, &block_entity.block_hash)?;
+        // self.batch_put_block_hash(&mut batch, &block.block_height, &block_entity.block_hash)?;
+        self.put_ser(
+            &mut batch,
+            CFSenum::BlockHash,
+            &block_entity.block_height.to_be_bytes(),
+            &block_entity.block_hash,
+        )?;
 
         // self.batch_put_block_height(&mut batch, block_hash, &block.block_height)?;
 
-        self.batch_put_block_merkle_rt(&mut batch, &block_entity.block_hash, &block.merkle_rt)?;
+        // self.batch_put_block_merkle_rt(&mut batch, &block_entity.block_hash, &block.merkle_rt)?;
+        self.put_ser(
+            &mut batch,
+            CFSenum::BlockMerkleRt,
+            block_entity.block_hash.as_bytes(),
+            &block_entity.merkle_rt,
+        )?;
 
-        self.batch_put_block_merkle_rt_key(&mut batch, &block.merkle_rt)?;
+        // self.batch_put_block_merkle_rt_key(&mut batch, &block.merkle_rt)?;
+        self.put_ser(
+            &mut batch,
+            CFSenum::EmptyValue,
+            &block_entity.merkle_rt,
+            &[0u8; 1],
+        )?;
 
         for tx in txs {
             self.batch_put_tx(&mut batch, tx)?;
         }
 
         for (ctr_addr, ctr_state) in ctr_state_updates {
-            self.batch_put_ctr_state(&mut batch, ctr_addr, ctr_state)?;
+            // self.batch_put_ctr_state(&mut batch, ctr_addr, ctr_state)?;
+            self.put_ser(
+                &mut batch,
+                CFSenum::CtrState,
+                ctr_addr.as_bytes(),
+                ctr_state,
+            )?;
         }
 
         for (loc, node_val) in merkle_updates {
-            self.batch_put_merkle_node(&mut batch, loc, node_val)?;
+            // self.batch_put_merkle_node(&mut batch, loc, node_val)?;
+            self.put_ser(&mut batch, CFSenum::MerkleNode, loc.as_bytes(), node_val)?;
         }
 
         self.db.write(batch)?;

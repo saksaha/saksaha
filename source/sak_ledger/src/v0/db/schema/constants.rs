@@ -21,9 +21,9 @@ pub(crate) mod cfs {
 
     // pub const CTR_ADDR: &str = "ctr_addr";
 
-    pub const CM_IDX: &str = "cm_idx";
+    pub const CM_IDX: &str = "cm_by_cm_idx";
 
-    pub const CM_IDX_CM: &str = "cm_idx_cm";
+    pub const CM_IDX_CM: &str = "cm_idx_by_cm";
 
     // pub const V: &str = "v";
 
@@ -67,9 +67,9 @@ pub enum CFSenum {
     TxHashByCtrAddr = 0,
     TxHashBySN = 1,
     TxType = 2,
-    DATA = 3,
-    CMIdx = 4,
-    CMIdxCM = 5,
+    Data = 3,
+    CMByCMIdx = 4,
+    CMIdxByCM = 5,
     BlockMerkleRt = 6,
     EmptyValue = 7,
     MerkleNode = 8,
@@ -87,9 +87,9 @@ impl CFSenum {
             CFSenum::TxHashByCtrAddr => "tx_hash_by_ctr_addr",
             CFSenum::TxHashBySN => "tx_hash_by_sn",
             CFSenum::TxType => "tx_type",
-            CFSenum::DATA => "data",
-            CFSenum::CMIdx => "cm_idx",
-            CFSenum::CMIdxCM => "cm_idx_cm",
+            CFSenum::Data => "data",
+            CFSenum::CMByCMIdx => "cm_by_cm_idx",
+            CFSenum::CMIdxByCM => "cm_idx_by_cm",
             CFSenum::BlockMerkleRt => "block_merkle_rt",
             CFSenum::EmptyValue => "empty_value",
             CFSenum::MerkleNode => "merkle_node",

@@ -1,22 +1,39 @@
-use crate::{cfs, LedgerDB};
+use crate::{cfs, CFSenum, LedgerDB};
 use crate::{LedgerError, MerkleNodeLoc};
 use sak_kv_db::{IteratorMode, WriteBatch};
 
 impl LedgerDB {
-    pub fn get_latest_cm_idx(&self) -> Result<Option<u128>, LedgerError> {
-        let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
+    // pub fn get_latest_cm_idx(&self) -> Result<Option<u128>, LedgerError> {
+    //     let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
 
-        let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
+    //     let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
+
+    //     match iter.next() {
+    //         Some((cm_idx, cm)) => {
+    //             let val = type_extension::convert_u8_slice_into_u128(&cm_idx)?;
+
+    //             return Ok(Some(val));
+    //         }
+    //         None => {
+    //             return Ok(None);
+    //         }
+    //     }
+    // }
+
+    pub fn get_latest_cm_idx(&self) -> Result<Option<u128>, LedgerError> {
+        // let cf = self.make_cf_handle(&self.db, cfs::CM_IDX_CM)?;
+
+        // let mut iter = self.db.iterator_cf(&cf, IteratorMode::End);
+
+        let mut iter = self.iter(CFSenum::CMIdxByCM)?;
 
         match iter.next() {
-            Some((cm_idx, cm)) => {
+            Some((cm_idx, _cm)) => {
                 let val = type_extension::convert_u8_slice_into_u128(&cm_idx)?;
 
-                return Ok(Some(val));
+                Ok(Some(val))
             }
-            None => {
-                return Ok(None);
-            }
+            None => Ok(None),
         }
     }
 

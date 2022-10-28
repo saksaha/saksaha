@@ -223,7 +223,6 @@ impl Wallet {
 
         let old_coin = self.convert_to_old_coin(coin, auth_path)?;
 
-        println!("coin: {:?}", coin);
         let old_sn_1 = self.compute_sn(coin);
 
         let dummy_coin = CoinRecord::new_dummy();

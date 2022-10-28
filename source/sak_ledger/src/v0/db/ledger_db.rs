@@ -1,7 +1,8 @@
 use crate::LedgerError;
 use crate::{cfs, CFSenum};
 use sak_kv_db::{
-    BoundColumnFamily, ColumnFamilyDescriptor, KeyValueDatabase, Options, WriteBatch, DB,
+    BoundColumnFamily, ColumnFamilyDescriptor, DBIteratorWithThreadMode, DBWithThreadMode,
+    IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
 };
 use sak_types::{BlockHash, Cm, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -194,5 +195,14 @@ impl LedgerDB {
             }
             None => Ok(None),
         }
+    }
+
+    pub fn iter(
+        &self,
+        column: CFSenum,
+    ) -> Result<DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>, LedgerError> {
+        let cf = self.make_cf_handle(&self.db, column.as_str())?;
+
+        Ok(self.db.iterator_cf(&cf, IteratorMode::End))
     }
 }

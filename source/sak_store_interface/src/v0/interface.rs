@@ -15,9 +15,9 @@ pub trait MRSInterface {
     fn add_session(&self, session: Session);
 }
 
-pub trait LedgerInterface {
-    fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, StoreInterfaceError>;
-}
+// pub trait LedgerInterface {
+//     fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, StoreInterfaceError>;
+// }
 
 #[derive(Serialize, Deserialize)]
 pub struct PreflightResponse {
