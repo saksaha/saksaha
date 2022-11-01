@@ -1,5 +1,3 @@
-console.log(1)
-
 /*
  * Copyright 2022 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +13,7 @@ console.log(1)
 
 import * as Comlink from 'comlink';
 
-const maxIterations = 1000;
+// const maxIterations = 1000;
 
 // const canvas = document.getElementById('canvas');
 // const { width, height } = canvas;
@@ -23,48 +21,64 @@ const maxIterations = 1000;
 // const timeOutput = document.getElementById('time');
 
 (async function init() {
-    console.log(4)
+  console.log("init")
 
-    // Create a separate thread from wasm-worker.js and get a proxy to its handlers.
-    let remote = await Comlink.wrap(
-        new Worker(new URL('./wasm-worker.js', import.meta.url), {
-            type: 'module'
-        })
-    );
+  // Create a separate thread from wasm-worker.js and get a proxy to its handlers.
+  // let handlers = await Comlink.wrap(
+  //   new Worker(new URL('./wasm-worker.js', import.meta.url), {
+  //     type: 'module'
+  //   })
+  // ).handlers;
 
-    console.log(33, remote)
+  let worker = new Worker(new URL('./wasm-worker.js', import.meta.url), {
+    type: 'module'
+  });
 
-    let handlers = remote.handlers;
+  console.log('worker', worker);
 
-    console.log(3, handlers)
+  let handlers = await Comlink.wrap(worker).handlers;
 
-    function setupBtn(id) {
-        // Handlers are named in the same way as buttons.
-        let handler = handlers[id];
-        // If handler doesn't exist, it's not supported.
+  console.log('handlers', handlers);
 
-        console.log(333, handler)
+  function setupBtn(id) {
+    console.log("[11] id: ", id);
+    // Handlers are named in the same way as buttons.
+    let handler = handlers[id];
+    // If handler doesn't exist, it's not supported.
+    console.log("handler: ", handler);
 
-        if (!handler) return;
-        // Assign onclick handler + enable the button.
-        Object.assign(document.getElementById(id), {
-            async onclick() {
-                console.log("hello aaron")
-                // let { rawImageData, time } = await handler({
-                //     width,
-                //     height,
-                //     maxIterations
-                // });
-                // timeOutput.value = `${time.toFixed(2)} ms`;
-                // const imgData = new ImageData(rawImageData, width, height);
-                // ctx.putImageData(imgData, 0, 0);
-            },
-            disabled: false
-        });
-    }
+    if (!handler) return;
+    // Assign onclick handler + enable the button.
+    Object.assign(document.getElementById(id), {
+      async onclick() {
+        console.log("hello aaron")
 
-    setupBtn('multiThread');
-    // if (await handlers.supportsThreads) {
-    //     setupBtn('multiThread');
-    // }
+        const int_arr = [11, 22];
+
+        console.log("ccccccccccccccccccccccccccc");
+
+        let { res, time } = await handler({ int_arr });
+        console.log(time.toFixed(2), 'ms');
+
+        console.log("fffffffffffffffffffffffffff");
+
+        console.log(res);
+        // let { rawImageData, time } = await handler({
+        //     width,
+        //     height,
+        //     maxIterations
+        // });
+        // timeOutput.value = `${ time.toFixed(2) } ms`;
+        // const imgData = new ImageData(rawImageData, width, height);
+        // ctx.putImageData(imgData, 0, 0);
+      },
+      disabled: false
+    });
+  }
+
+  setupBtn('multiThread');
+  // if (await handlers.supportsThreads) {
+  //   setupBtn('multiThread');
+  // }
 })();
+

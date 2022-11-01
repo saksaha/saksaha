@@ -63,7 +63,9 @@ impl CoinProof {
         coin_2_new: NewCoin,
     ) -> Result<Proof<Bls12>, ProofError> {
         let hasher = MiMC::new();
+
         let constants = hasher.get_mimc_constants().to_vec();
+
         let de_params = get_mimc_params_2_to_2(&constants)?;
 
         let c = CoinProofCircuit2to2 {

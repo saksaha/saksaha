@@ -12,11 +12,11 @@ const wasm = import('../../pkg');
 
 (async function init() {
   // Create a separate thread from wasm-worker.js and get a proxy to its handlers.
-  let handlers = (await Comlink.wrap(
-    new Worker(new URL('./wasm-worker.js', import.meta.url), {
-      type: 'module'
-    })
-  ) as any)["handlers"];
+  // let handlers = (await Comlink.wrap(
+  //   new Worker(new URL('./wasm-worker.js', import.meta.url), {
+  //     type: 'module'
+  //   })
+  // ) as any)["handlers"];
 
   // '../../pkg/sak_proof_wasm.js'
 

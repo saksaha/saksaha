@@ -24,7 +24,7 @@ jni = "0.5.2"
 # rand = "0.8.4"
 # pairing = "0.21.0"
 
-bellman = {version = "0.13.1", default-features=false, features=["groth16"]}
+bellman = { version = "0.13.1", features = ["multicore"] }
 bls12_381 = "0.7"
 ff = "0.12"
 sha2 = "0.10.1"

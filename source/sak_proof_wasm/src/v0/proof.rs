@@ -1,130 +1,126 @@
 use sak_proof::{make_test_context_2_to_2, CoinProof};
 use sak_proof_types::{NewCoin, OldCoin};
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, Clamped};
 
 use rayon::prelude::*;
 
 pub use wasm_bindgen_rayon::init_thread_pool;
 
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet(numbers: &[i32]) -> i32 {
-    alert(&format!("array"));
-    let result = numbers.par_iter().sum();
-    alert(&format!("sum result: {}", result));
-
-    result
-}
-
 // #[wasm_bindgen]
-// pub fn greet_proof(name: &str) {
-//     let test_context = make_test_context_2_to_2();
-
-//     let coin_1_old = OldCoin {
-//         addr_pk: Some(test_context.addr_pk_1_old),
-//         addr_sk: Some(test_context.addr_sk_1_old),
-//         rho: Some(test_context.rho_1_old),
-//         r: Some(test_context.r_1_old),
-//         s: Some(test_context.s_1_old),
-//         v: Some(test_context.v_1_old),
-//         cm: Some(test_context.cm_1_old),
-//         auth_path: test_context.auth_path_1.map(|e| Some(e)),
-//     };
-
-//     let coin_2_old = OldCoin {
-//         addr_pk: Some(test_context.addr_pk_2_old),
-//         addr_sk: Some(test_context.addr_sk_2_old),
-//         rho: Some(test_context.rho_2_old),
-//         r: Some(test_context.r_2_old),
-//         s: Some(test_context.s_2_old),
-//         v: Some(test_context.v_2_old),
-//         cm: Some(test_context.cm_2_old),
-//         auth_path: test_context.auth_path_2.map(|e| Some(e)),
-//     };
-
-//     let coin_1_new = NewCoin {
-//         addr_pk: Some(test_context.addr_pk_1),
-//         rho: Some(test_context.rho_1),
-//         r: Some(test_context.r_1),
-//         s: Some(test_context.s_1),
-//         v: Some(test_context.v_1),
-//     };
-
-//     let coin_2_new = NewCoin {
-//         addr_pk: Some(test_context.addr_pk_2),
-//         rho: Some(test_context.rho_2),
-//         r: Some(test_context.r_2),
-//         s: Some(test_context.s_2),
-//         v: Some(test_context.v_2),
-//     };
-
-//     // Here success
-//     alert(&format!("Hello 333"));
-
-//     let start = std::time::SystemTime::now();
-//     alert(&format!("start: {:?}", start));
-//     let proof =
-//         match CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new) {
-//             Ok(v) => v,
-//             Err(err) => {
-//                 alert(&format!("failed to generate proof: {:?}", err.to_string()));
-//                 panic!();
-//             }
-//         };
-
-//     // let end = std::time::SystemTime::now();
-//     // alert(&format!("end: {:?}", end));
-
-//     // let pi_serialized = CoinProof::serialize_pi(&proof).unwrap();
-
-//     // alert(&format!("Hello, {:?}!, my pi: {:?}", name, pi_serialized));
-
-//     // let mut key = [0u8; 16];
-//     // OsRng.fill_bytes(&mut key);
-//     // let random_u64 = OsRng.next_u64();
-
-//     // alert(&format!("random_u64:{}", random_u64));
-
-//     // // Create parameters for our circuit. In a production deployment these would
-//     // // be generated securely using a multiparty computation.
-//     // let params = {
-//     //     let c = MyCircuit { preimage: None };
-//     //     groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng).unwrap()
-//     // };
-
-//     // alert(&format!("proof 1"));
-
-//     // // Prepare the verification key (for proof verification).
-//     // let pvk = groth16::prepare_verifying_key(&params.vk);
-
-//     // // Pick a preimage and compute its hash.
-//     // let preimage = [42; 80];
-//     // let hash = Sha256::digest(&Sha256::digest(&preimage));
-
-//     // alert(&format!("proof 2"));
-
-//     // // Create an instance of our circuit (with the preimage as a witness).
-//     // let c = MyCircuit {
-//     //     preimage: Some(preimage),
-//     // };
-
-//     // alert(&format!("Hello 333"));
-//     // // Create a Groth16 proof with our parameters.
-//     // let proof = groth16::create_random_proof(c, &params, &mut OsRng).unwrap();
-
-//     // alert(&format!("Hello 444"));
-
-//     // // Pack the hash as inputs for proof verification.
-//     // // let hash_bits = multipack::bytes_to_bits_le(&hash);
-//     // // let inputs = multipack::compute_multipacking(&hash_bits);
-
-//     // // Check the proof!
-//     // // assert!(groth16::verify_proof(&pvk, &proof, &inputs).is_ok());
+//     fn alert(s: &str);
+// extern "C" {
 // }
+
+// pub fn greet(numbers: &[i32]) -> Clamped<Vec<u8>> {
+//     // let result = numbers.par_iter().sum();
+//     let result = Clamped(vec![234]);
+
+//     result
+// }
+
+#[wasm_bindgen]
+pub fn greet(numbers: &[i32]) -> Clamped<Vec<u8>> {
+    let test_context = make_test_context_2_to_2();
+
+    let coin_1_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_1_old),
+        addr_sk: Some(test_context.addr_sk_1_old),
+        rho: Some(test_context.rho_1_old),
+        r: Some(test_context.r_1_old),
+        s: Some(test_context.s_1_old),
+        v: Some(test_context.v_1_old),
+        cm: Some(test_context.cm_1_old),
+        auth_path: test_context.auth_path_1.map(|e| Some(e)),
+    };
+
+    let coin_2_old = OldCoin {
+        addr_pk: Some(test_context.addr_pk_2_old),
+        addr_sk: Some(test_context.addr_sk_2_old),
+        rho: Some(test_context.rho_2_old),
+        r: Some(test_context.r_2_old),
+        s: Some(test_context.s_2_old),
+        v: Some(test_context.v_2_old),
+        cm: Some(test_context.cm_2_old),
+        auth_path: test_context.auth_path_2.map(|e| Some(e)),
+    };
+
+    let coin_1_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_1),
+        rho: Some(test_context.rho_1),
+        r: Some(test_context.r_1),
+        s: Some(test_context.s_1),
+        v: Some(test_context.v_1),
+    };
+
+    let coin_2_new = NewCoin {
+        addr_pk: Some(test_context.addr_pk_2),
+        rho: Some(test_context.rho_2),
+        r: Some(test_context.r_2),
+        s: Some(test_context.s_2),
+        v: Some(test_context.v_2),
+    };
+
+    // Here success
+
+    // let start = std::time::SystemTime::now();
+
+    // let proof =
+    match CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new) {
+        Ok(v) => return Clamped(vec![44]),
+        Err(err) => return Clamped(vec![55]),
+    };
+
+    return Clamped(vec![111]);
+
+    // let end = std::time::SystemTime::now();
+    // alert(&format!("end: {:?}", end));
+
+    // let pi_serialized = CoinProof::serialize_pi(&proof).unwrap();
+
+    // alert(&format!("Hello, {:?}!, my pi: {:?}", name, pi_serialized));
+
+    // let mut key = [0u8; 16];
+    // OsRng.fill_bytes(&mut key);
+    // let random_u64 = OsRng.next_u64();
+
+    // alert(&format!("random_u64:{}", random_u64));
+
+    // // Create parameters for our circuit. In a production deployment these would
+    // // be generated securely using a multiparty computation.
+    // let params = {
+    //     let c = MyCircuit { preimage: None };
+    //     groth16::generate_random_parameters::<Bls12, _, _>(c, &mut OsRng).unwrap()
+    // };
+
+    // alert(&format!("proof 1"));
+
+    // // Prepare the verification key (for proof verification).
+    // let pvk = groth16::prepare_verifying_key(&params.vk);
+
+    // // Pick a preimage and compute its hash.
+    // let preimage = [42; 80];
+    // let hash = Sha256::digest(&Sha256::digest(&preimage));
+
+    // alert(&format!("proof 2"));
+
+    // // Create an instance of our circuit (with the preimage as a witness).
+    // let c = MyCircuit {
+    //     preimage: Some(preimage),
+    // };
+
+    // alert(&format!("Hello 333"));
+    // // Create a Groth16 proof with our parameters.
+    // let proof = groth16::create_random_proof(c, &params, &mut OsRng).unwrap();
+
+    // alert(&format!("Hello 444"));
+
+    // // Pack the hash as inputs for proof verification.
+    // // let hash_bits = multipack::bytes_to_bits_le(&hash);
+    // // let inputs = multipack::compute_multipacking(&hash_bits);
+
+    // // Check the proof!
+    // // assert!(groth16::verify_proof(&pvk, &proof, &inputs).is_ok());
+}
 
 // use bellman::{
 //     gadgets::{
@@ -203,9 +199,4 @@ pub fn greet(numbers: &[i32]) -> i32 {
 //         // Expose the vector of 32 boolean variables as compact public inputs.
 //         multipack::pack_into_inputs(cs.namespace(|| "pack hash"), &hash)
 //     }
-// }
-
-// #[wasm_bindgen]
-// pub fn greet_(name: &str) {
-//     alert(&format!("Hello, {}!", name));
 // }
