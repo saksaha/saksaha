@@ -13,6 +13,7 @@ use std::sync::Arc;
 pub struct MRSDB {
     pub(crate) db: DB,
 }
+
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -71,7 +72,7 @@ impl MRSDB {
         let cf_handle = match db.cf_handle(col_name) {
             Some(h) => h,
             None => {
-                return Err(format!("Fail to open ledger colums {}", col_name,));
+                return Err(format!("Fail to open mrs db colums {}", col_name,));
             }
         };
 
