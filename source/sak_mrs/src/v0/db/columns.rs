@@ -11,11 +11,13 @@ pub(crate) mod cfs {
 }
 
 pub enum CFSenum {
-    MrsKey = 0,
-    MrsValue = 1,
-    IntegrityBits = 2,
-    Timestamp = 3,
-    Idx = 4,
+    MrsEntity = 0,
+    // MrsKey = 0,
+    // MrsValue = 1,
+    // IntegrityBits = 2,
+    // Timestamp = 3,
+    // Idx = 4,
+
     // CMIdxByCM = 5,
     // BlockMerkleRt = 6,
     // EmptyValue = 7,
@@ -31,11 +33,12 @@ pub enum CFSenum {
 impl CFSenum {
     pub fn as_str(&self) -> &'static str {
         match self {
-            CFSenum::MrsKey => "mrs_key",
-            CFSenum::MrsValue => "mrs_value",
-            CFSenum::IntegrityBits => "integrity_bits",
-            CFSenum::Timestamp => "timestamp",
-            CFSenum::Idx => "idx",
+            CFSenum::MrsEntity => "mrs_entity"
+            // CFSenum::MrsKey => "mrs_key",
+            // CFSenum::MrsValue => "mrs_value",
+            // CFSenum::IntegrityBits => "integrity_bits",
+            // CFSenum::Timestamp => "timestamp",
+            // CFSenum::Idx => "idx",
         }
     }
 }

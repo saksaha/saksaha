@@ -76,6 +76,16 @@ impl MRSInterface for SakMRS {
         self.db.get_dummy(key)
     }
 
+    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
+        let mut batch = WriteBatch::default();
+
+        self.db.batch_put_dummy(&mut batch, key, value)?;
+
+        self.db.db.write(batch)?;
+
+        Ok(())
+    }
+
     // async fn get_session(&self, session_id: String) -> Result<Session, MRSError> {
     //     let mut session_store_lock = self.session_store.lock().await;
 
@@ -86,16 +96,6 @@ impl MRSInterface for SakMRS {
     //     let sess = *(receipt.1);
     //     Ok(sess)
     // }
-
-    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
-        let mut batch = WriteBatch::default();
-
-        self.db.batch_put_dummy(&mut batch, key, value)?;
-
-        self.db.db.write(batch)?;
-
-        Ok(())
-    }
 
     fn add_session(&self, session: Session) {
         // let mut session_store_lock = self.session_store.lock().await;

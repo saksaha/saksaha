@@ -27,11 +27,16 @@ impl MRSDB {
             timestamp,
             idx,
         };
+
         self.put_ser(
             &mut batch,
-            CFSenum::M,
-            block_entity.block_hash.as_bytes(),
+            CFSenum::MrsEntity,
+            mrs_entity.mrs_key.as_bytes(),
             &mrs_entity,
         )?;
+
+        self.db.write(batch)?;
+
+        Ok(mrs_entity.mrs_key)
     }
 }

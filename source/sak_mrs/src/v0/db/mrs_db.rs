@@ -26,7 +26,20 @@ pub struct MrsEntity {
 }
 
 impl MRSDB {
-    pub(crate) async fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
+    pub(crate) async fn init(db_path: &PathBuf) -> Result<MRSDB, MRSError> {
+        // pub(crate) async fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
+        let mrs_db_path = {
+            // let db_path = Self::get_db_path(app_prefix)?;
+
+            if !db_path.exists() {
+                std::fs::create_dir_all(db_path.clone())?;
+            }
+
+            db_path
+        };
+
+        println!(" MRS DB path: {:?}", mrs_db_path);
+
         let options = {
             let mut o = Options::default();
             o.create_missing_column_families(true);
@@ -35,7 +48,7 @@ impl MRSDB {
             o
         };
 
-        let kv_db = match KeyValueDatabase::new(db_path, options, Self::make_cf_descriptors()) {
+        let kv_db = match KeyValueDatabase::new(mrs_db_path, options, Self::make_cf_descriptors()) {
             Ok(d) => d,
             Err(err) => {
                 return Err(format!("Error initializing key value database, err: {}", err).into());
@@ -51,11 +64,12 @@ impl MRSDB {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(CFSenum::MrsKey.as_str(), Options::default()),
-            ColumnFamilyDescriptor::new(CFSenum::MrsValue.as_str(), Options::default()),
-            ColumnFamilyDescriptor::new(CFSenum::IntegrityBits.as_str(), Options::default()),
-            ColumnFamilyDescriptor::new(CFSenum::Timestamp.as_str(), Options::default()),
-            ColumnFamilyDescriptor::new(CFSenum::Idx.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::MrsEntity.as_str(), Options::default()),
+            // ColumnFamilyDescriptor::new(CFSenum::MrsKey.as_str(), Options::default()),
+            // ColumnFamilyDescriptor::new(CFSenum::MrsValue.as_str(), Options::default()),
+            // ColumnFamilyDescriptor::new(CFSenum::IntegrityBits.as_str(), Options::default()),
+            // ColumnFamilyDescriptor::new(CFSenum::Timestamp.as_str(), Options::default()),
+            // ColumnFamilyDescriptor::new(CFSenum::Idx.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(cfs::MRS_KEY, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::MRS_VALUE, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::INTEGRITY_BITS, Options::default()),
