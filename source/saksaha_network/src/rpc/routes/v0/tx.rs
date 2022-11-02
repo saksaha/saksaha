@@ -38,8 +38,10 @@ pub(in crate::rpc) async fn send_mint_tx(
         .send_tx(tx_candidate)
         .await
     {
-        Ok(_) => {
-            return make_success_response(route_state, "success");
+        // Ok(_) => {
+        Ok(tx_hash) => {
+            // return make_success_response(route_state, "success");
+            return make_success_response(route_state, tx_hash);
         }
         Err(err) => {
             return make_error_response(route_state.resp, Some(route_state.id), err.into());

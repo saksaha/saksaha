@@ -11,6 +11,7 @@ import ProofGenBtn from '../proofGenBtn/ProofGenBtn';
 
 import { CoinManager } from 'saksaha';
 import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
+import FaucetBtn from '../faucetBtn/FaucetBtn';
 
 const LandingPage: Component = () => {
 
@@ -47,6 +48,8 @@ const LandingPage: Component = () => {
           mrs_slots_setter={setMrsSlots}
         />
         <ProofGenBtn />
+        <br />
+        <FaucetBtn />
       </div>
       <div class={styles.right_pane}>
         <ResultPane

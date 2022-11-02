@@ -7,11 +7,13 @@ impl ScalarExt {
     pub fn parse_arr(arr: &[u8; 32]) -> Result<Scalar, CryptoError> {
         let s = Scalar::from_bytes(arr);
 
+        // println!("[! aaron] s: {:?}", s);
+
         if s.is_some().into() {
             let ret = s.unwrap();
             return Ok(ret);
         } else {
-            return Err(format!("Fail to parse byte array into scalar").into());
+            return Err(format!(" 111 Fail to parse byte array into scalar").into());
         }
     }
 
