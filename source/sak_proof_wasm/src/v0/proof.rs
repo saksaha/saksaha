@@ -65,12 +65,18 @@ pub fn greet(numbers: &[i32]) -> Clamped<Vec<u8>> {
     // let start = std::time::SystemTime::now();
 
     // let proof =
-    match CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new) {
-        Ok(v) => return Clamped(vec![44]),
-        Err(err) => return Clamped(vec![55]),
-    };
+    let proof =
+        match CoinProof::generate_proof_2_to_2(coin_1_old, coin_2_old, coin_1_new, coin_2_new) {
+            Ok(v) => v,
+            Err(err) => return Clamped(vec![44]),
+        };
 
-    return Clamped(vec![111]);
+    let mut pi_ser = Vec::new();
+    proof.write(&mut pi_ser).expect("pi should be serialized");
+
+    return Clamped(pi_ser);
+
+    // return Clamped(vec![111]);
 
     // let end = std::time::SystemTime::now();
     // alert(&format!("end: {:?}", end));
