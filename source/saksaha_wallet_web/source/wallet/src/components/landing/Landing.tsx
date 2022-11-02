@@ -7,6 +7,7 @@ import * as styles from './Landing.css';
 
 import ActionPane from "../actionPane/ActionPane";
 import ResultPane from '../resultPane/ResultPane';
+import ProofGenBtn from '../proofGenBtn/ProofGenBtn';
 
 import { CoinManager } from 'saksaha';
 import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
@@ -32,9 +33,9 @@ const LandingPage: Component = () => {
   const [selectedMrsSlot, setSelectedMrsSlot] = createSignal("");
 
   createEffect(() => {
-    console.log(walletAddress());
-    console.log(coinManager());
-    console.log("Selected Coin: " + selectedCoin().r);
+    // console.log(walletAddress());
+    // console.log(coinManager());
+    // console.log("Selected Coin: " + selectedCoin().r);
   });
 
   return (
@@ -45,6 +46,7 @@ const LandingPage: Component = () => {
           wallet_addr_setter={setWalletAddress}
           mrs_slots_setter={setMrsSlots}
         />
+        <ProofGenBtn />
       </div>
       <div class={styles.right_pane}>
         <ResultPane

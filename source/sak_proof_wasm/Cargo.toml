@@ -11,13 +11,34 @@ doctest = false
 
 [dependencies]
 wasm-bindgen = "0.2.83"
-# sak_crypto = { path = "../sak_crypto" }
-# sak_logger = { path = "../sak_logger" }
-# sak_ledger_cfg = { path = "../sak_ledger_cfg" }
-# type_extension = { path = "../type_extension" }
-# serde_json = "1.0.59"
-# serde = { version = "1.0.130", features = ["derive"] }
+sak_proof_types = { path = "../sak_proof_types" }
+sak_proof = { path = "../sak_proof" }
+getrandom = { version = "0.2", features = ["js"] }
+# bellman = "0.13.1"
+rayon = { version = "1.5"}
+wasm-bindgen-rayon = { version = "1.0"}
+
+# bellman = {version = "0.13.1", default-features=false, features=["groth16"]}
+# bls12_381 = "0.7"
+# ff = "0.12"
+# sha2 = "0.10.1"
+# rand = "0.8.4"
+# pairing = { version = "0.22"}
+# rand_core = "0.6.3"
+# group = "0.12"
+# subtle = "2.2.1"
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
 tokio = { version = "1.21.2", features = ["full"] }
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+# [build]
+# rustc = "rustc"               # the rust compiler tool
+# rustflags = ["-C", "target-feature=+atomics,+bulk-memory,+mutable-globals"]
+
+# [features]
+# parallel = ["rayon", "wasm-bindgen-rayon"]
+
