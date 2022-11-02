@@ -1,4 +1,4 @@
-use super::columns::{self, cfs, CFSenum};
+use super::columns::{self, CFSenum};
 
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, DBIteratorWithThreadMode, DBWithThreadMode,
@@ -16,7 +16,7 @@ pub struct MRSDB {
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MrsEntity {
     pub mrs_key: String,
     pub mrs_value: String,
@@ -26,8 +26,8 @@ pub struct MrsEntity {
 }
 
 impl MRSDB {
-    pub(crate) async fn init(db_path: &PathBuf) -> Result<MRSDB, MRSError> {
-        // pub(crate) async fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
+    pub(crate) fn init(db_path: &PathBuf) -> Result<MRSDB, MRSError> {
+        // pub(crate) fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
         let mrs_db_path = {
             // let db_path = Self::get_db_path(app_prefix)?;
 
@@ -37,8 +37,6 @@ impl MRSDB {
 
             db_path
         };
-
-        println!(" MRS DB path: {:?}", mrs_db_path);
 
         let options = {
             let mut o = Options::default();

@@ -1,14 +1,14 @@
-pub(crate) mod cfs {
-    pub const MRS_KEY: &str = "mrs_key";
+// pub(crate) mod cfs {
+//     pub const MRS_KEY: &str = "mrs_key";
 
-    pub const MRS_VALUE: &str = "mrs_value";
+//     pub const MRS_VALUE: &str = "mrs_value";
 
-    pub const INTEGRITY_BITS: &str = "integrity_bits";
+//     pub const INTEGRITY_BITS: &str = "integrity_bits";
 
-    pub const TIMESTAMP: &str = "timestamp";
+//     pub const TIMESTAMP: &str = "timestamp";
 
-    pub const IDX: &str = "idx";
-}
+//     pub const IDX: &str = "idx";
+// }
 
 pub enum CFSenum {
     MrsEntity = 0,

@@ -1,19 +1,14 @@
 use super::session_store::SessionStore;
-use crate::v0::db::MRSDB;
+use crate::v0::db::{MrsEntity, MRSDB};
 use crate::MRSError;
 use async_trait::async_trait;
-use colored::Colorize;
-use sak_crypto::hasher::MiMC;
-use sak_crypto::MerkleTree;
+
 use sak_kv_db::WriteBatch;
 use sak_logger::info;
 use sak_store_interface::{MRSInterface, Session};
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::{collections::HashMap, convert::TryInto};
-use tokio::sync::{broadcast, Mutex};
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub struct SakMRS {
     db: MRSDB,
@@ -38,16 +33,36 @@ impl SakMRS {
     pub async fn init(mrs_args: SakMRSArgs) -> Result<Self, MRSError> {
         let SakMRSArgs { mrs_db_path } = mrs_args;
 
-        let db = MRSDB::init(&mrs_db_path).await?;
+        let db = MRSDB::init(&mrs_db_path)?;
 
         let session_store = SessionStore::init();
 
         let mrs = SakMRS { db, session_store };
 
-        let mut batch = WriteBatch::default();
-        mrs.db
-            .batch_put_dummy(&mut batch, &"latest_idx".to_string(), &"0".to_string())?;
-        mrs.db.db.write(batch)?;
+        // Move to Test code
+        let mrs_entity = MrsEntity {
+            mrs_key: "slot_field_key".to_string(),
+            mrs_value: "value_dummy".to_string(),
+            ib: [0].to_vec(),
+            timestamp: "22_1102_1600".to_string(),
+            idx: 0,
+        };
+
+        let mrs_entity_fail = MrsEntity {
+            mrs_key: "fail".to_string(),
+            mrs_value: "fail".to_string(),
+            ib: [1].to_vec(),
+            timestamp: "fail".to_string(),
+            idx: 1,
+        };
+
+        let mrs_put_key = mrs.db.put_data(mrs_entity).await?;
+
+        let data = mrs.db.get_data(&mrs_put_key)?.unwrap_or(mrs_entity_fail);
+
+        info!("Got data: {:?}", data);
+
+        // Move to Test code
 
         info!("Initialized Mutable record storage (MRS)",);
 
