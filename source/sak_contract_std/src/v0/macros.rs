@@ -213,3 +213,20 @@ macro_rules! temp {
         $t
     }};
 }
+
+#[macro_export]
+macro_rules! parse_generics {
+    ($a:ident,$($b:tt)* ) => {{
+        $a
+    }};
+}
+
+#[macro_export]
+macro_rules! parse_generics2 {
+    ($t: expr) => {{
+        $t
+    }};
+    ($t: ty) => {{
+        $t
+    }};
+}
