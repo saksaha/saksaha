@@ -3,10 +3,14 @@ import { Component, createSignal, Setter, createEffect } from 'solid-js';
 import * as styles from './ActionPane.css';
 
 
-const ActionPane: Component = (props: { coin_manager_setter: Setter<CoinManager>, wallet_addr_setter: Setter<string>, mrs_slots_setter: Setter<string[]> }) => {
+const ActionPane: Component<{
+  coin_manager_setter: Setter<CoinManager>,//
+  wallet_addr_setter: Setter<string>,//
+  mrs_slots_setter: Setter<string[]>
+}> = (props) => {
   let coin_manager_setter: Setter<CoinManager> = props.coin_manager_setter;
   let wallet_addr_setter: Setter<string> = props.wallet_addr_setter;
-  let mrs_slots_setter: Setter<string[]> = props.mrs_slots_setter;
+  // let mrs_slots_setter: Setter<string[]> = props.mrs_slots_setter;
 
   const [walletAddrInput, setWalletAddrInput] = createSignal("");
   const [loginStatus, setLoginStatus] = createSignal(false);

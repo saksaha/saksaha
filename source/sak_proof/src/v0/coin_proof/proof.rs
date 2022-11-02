@@ -6,6 +6,12 @@ use sak_crypto::{
 use sak_crypto::{Bls12, OsRng, Scalar};
 use sak_proof_circuit::CoinProofCircuit2to2;
 use sak_proof_types::{NewCoin, OldCoin};
+// use wasm_bindgen::prelude::*;
+
+// #[wasm_bindgen]
+// extern "C" {
+//     fn alert(s: &str);
+// }
 
 const CIRCUIT_PARAMS_2TO2: &[u8] = include_bytes!("../../../../prebuild/circuit_params_2to2");
 
@@ -56,13 +62,10 @@ impl CoinProof {
         coin_1_new: NewCoin,
         coin_2_new: NewCoin,
     ) -> Result<Proof<Bls12>, ProofError> {
-        // println!(
-        //     "111, coin_1_old: {:?}, \ncoin_2_old: {:?}\ncoin_1_new: {:?}\ncoin_2_new: {:?}",
-        //     coin_1_old, coin_2_old, coin_1_new, coin_2_new,
-        // );
-
         let hasher = MiMC::new();
+
         let constants = hasher.get_mimc_constants().to_vec();
+
         let de_params = get_mimc_params_2_to_2(&constants)?;
 
         let c = CoinProofCircuit2to2 {
@@ -74,12 +77,19 @@ impl CoinProof {
             constants,
         };
 
+        // alert(&format!("gen_proof 333"));
+
         let proof = match groth16::create_random_proof(c, &de_params, &mut OsRng) {
             Ok(p) => p,
             Err(err) => {
-                return Err(format!("Failed to generate groth16 proof, err: {}", err).into());
+                return {
+                    // alert(&format!("failed to create random proof: {:?}", err));
+                    Err(format!("Failed to generate groth16 proof, err: {}", err).into())
+                };
             }
         };
+
+        // alert(&format!("gen_proof 444"));
 
         Ok(proof)
     }
