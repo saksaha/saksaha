@@ -5,15 +5,15 @@ use std::{collections::HashMap, marker::PhantomData};
 pub struct List<T> {
     _name: String,
     receipt: HashMap<String, Vec<u8>>,
-    phantom: PhantomData<T>,
+    phantom: Vec<T>,
 }
 
 impl<T> List<T> {
-    pub fn new(_name: String) -> List<T> {
+    pub fn new(_name: String) -> Self {
         List {
             _name,
             receipt: HashMap::new(),
-            phantom: PhantomData,
+            phantom: Vec::new(),
         }
     }
 

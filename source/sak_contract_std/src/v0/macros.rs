@@ -216,17 +216,10 @@ macro_rules! temp {
 
 #[macro_export]
 macro_rules! parse_generics {
-    ($a:ident,$($b:tt)* ) => {{
-        $a
-    }};
-}
-
-#[macro_export]
-macro_rules! parse_generics2 {
-    ($t: expr) => {{
+    ($t:ident) => {
         $t
-    }};
-    ($t: ty) => {{
+    };
+    ($t:ident<$ty:ty>) => {
         $t
-    }};
+    };
 }

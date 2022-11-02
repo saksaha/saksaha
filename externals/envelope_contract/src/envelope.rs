@@ -17,7 +17,7 @@ saksaha_contract!(0.0.1);
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {
     pub chats: List<String>,
-    pub channels: Dict,
+    // pub channels: Dict,
 }
 
 // pub struct S<T> {
