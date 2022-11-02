@@ -11,18 +11,27 @@ sak_logger = { path = "../sak_logger" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 k256 = { version = "0.9.6", features = ["ecdh"] }
-bls12_381 = "0.6.0"
-pairing = "0.21.0"
 sha3 = "0.10.1"
-rand_core = "0.6.3"
-rand = "0.8.4"
 base64ct = { version = "1.5.0", features = ["alloc"] }
 hkdf = "0.12.3"
-sha2 = "0.10.1"
 aes-gcm-siv = "0.10.3"
 jni = "0.5.2"
-bellman = "0.11.1"
-ff = "0.11"
+# bellman = "0.11.1"
+# ff = "0.11"
+# bls12_381 = "0.6.0"
+# sha2 = "0.10.1"
+# rand_core = "0.6.3"
+# rand = "0.8.4"
+# pairing = "0.21.0"
+
+bellman = { version = "0.13.1", features = ["multicore"] }
+bls12_381 = "0.7"
+ff = "0.12"
+sha2 = "0.10.1"
+rand = "0.8.4"
+pairing = { version = "0.22"}
+rand_core = "0.6.3"
+
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
