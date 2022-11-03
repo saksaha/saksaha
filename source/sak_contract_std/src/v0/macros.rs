@@ -220,6 +220,6 @@ macro_rules! parse_generics {
         $t
     };
     ($t:ident<$ty:ty>) => {
-        $t
+        $t::<$ty>
     };
 }
