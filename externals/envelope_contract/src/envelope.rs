@@ -1,5 +1,5 @@
 use crate::{
-    request_type::{GET_CH_LIST, GET_MSG, OPEN_CH, SEND_MSG},
+    request_type::{OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_derive::MRSStore;
@@ -17,20 +17,8 @@ saksaha_contract!(0.0.1);
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {
     pub chats: List<String>,
-    // pub channels: Dict,
+    pub channels: Dict<String>,
 }
-
-// pub struct S<T> {
-//     t: Vec<T>,
-// }
-
-// impl S {
-//     pub fn a() {
-//         S {
-//             t: Vec<usize>::new(),
-//         }
-//     }
-// }
 
 pub fn init() -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
