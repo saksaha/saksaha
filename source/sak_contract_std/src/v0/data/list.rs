@@ -1,5 +1,5 @@
 use crate::{get_mrs_data_from_host, put_mrs_data_to_host};
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct List<T> {
@@ -10,9 +10,6 @@ pub struct List<T> {
 
 impl<T> List<T> {
     pub fn new(_name: String) -> Self {
-        let a = List::<String>::new("p".to_string());
-        let a = <List<String>>::new("p".to_string());
-
         List {
             _name,
             receipt: HashMap::new(),
