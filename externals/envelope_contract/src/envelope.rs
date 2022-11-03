@@ -16,8 +16,8 @@ saksaha_contract!(0.0.1);
 
 #[derive(Debug, MRSStore)]
 pub struct SomeMRSStorage {
-    pub chats: sak_contract_std::List,
-    pub channels: sak_contract_std::Dict,
+    pub chats: List<String>,
+    // pub channels: Dict,
 }
 
 // pub struct S<T> {

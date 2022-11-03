@@ -213,3 +213,13 @@ macro_rules! temp {
         $t
     }};
 }
+
+#[macro_export]
+macro_rules! parse_generics {
+    ($t:ident) => {
+        $t
+    };
+    ($t:ident<$ty:ty>) => {
+        $t::<$ty>
+    };
+}
