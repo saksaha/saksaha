@@ -11,8 +11,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub struct SakMRS {
-    db: MRSDB,
-    session_store: SessionStore,
+    pub(crate) db: MRSDB,
+    pub(crate) session_store: SessionStore,
 }
 
 pub struct SakMRSArgs {
@@ -38,31 +38,6 @@ impl SakMRS {
         let session_store = SessionStore::init();
 
         let mrs = SakMRS { db, session_store };
-
-        // Should Move to Test code
-        let mrs_entity = MrsEntity {
-            mrs_key: "slot_field_key".to_string(),
-            mrs_value: "value_dummy".to_string(),
-            ib: [0].to_vec(),
-            timestamp: "22_1102_1600".to_string(),
-            idx: 0,
-        };
-
-        let mrs_entity_fail = MrsEntity {
-            mrs_key: "fail".to_string(),
-            mrs_value: "fail".to_string(),
-            ib: [1].to_vec(),
-            timestamp: "fail".to_string(),
-            idx: 1,
-        };
-
-        let mrs_put_key = mrs.db.put_data(mrs_entity).await?;
-
-        let data = mrs.db.get_data(&mrs_put_key)?.unwrap_or(mrs_entity_fail);
-
-        info!("Got data: {:?}", data);
-
-        // Should Move to Test code
 
         info!("Initialized Mutable record storage (MRS)",);
 

@@ -16,7 +16,7 @@ pub struct MRSDB {
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MrsEntity {
     pub mrs_key: String,
     pub mrs_value: String,
