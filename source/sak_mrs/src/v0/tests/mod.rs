@@ -1,2 +1,2 @@
-mod mrs;
+mod slot;
 mod utils;

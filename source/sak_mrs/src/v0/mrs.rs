@@ -1,23 +1,18 @@
 use super::session_store::SessionStore;
-use crate::v0::db::MRSDB;
+use crate::v0::db::{MrsEntity, MRSDB};
 use crate::MRSError;
 use async_trait::async_trait;
-use colored::Colorize;
-use sak_crypto::hasher::MiMC;
-use sak_crypto::MerkleTree;
+
 use sak_kv_db::WriteBatch;
 use sak_logger::info;
 use sak_store_interface::{MRSInterface, Session};
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::{collections::HashMap, convert::TryInto};
-use tokio::sync::{broadcast, Mutex};
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub struct SakMRS {
-    db: MRSDB,
-    session_store: SessionStore,
+    pub(crate) db: MRSDB,
+    pub(crate) session_store: SessionStore,
 }
 
 pub struct SakMRSArgs {
@@ -38,16 +33,11 @@ impl SakMRS {
     pub async fn init(mrs_args: SakMRSArgs) -> Result<Self, MRSError> {
         let SakMRSArgs { mrs_db_path } = mrs_args;
 
-        let db = MRSDB::init(&mrs_db_path).await?;
+        let db = MRSDB::init(&mrs_db_path)?;
 
         let session_store = SessionStore::init();
 
         let mrs = SakMRS { db, session_store };
-
-        let mut batch = WriteBatch::default();
-        mrs.db
-            .batch_put_dummy(&mut batch, &"latest_idx".to_string(), &"0".to_string())?;
-        mrs.db.db.write(batch)?;
 
         info!("Initialized Mutable record storage (MRS)",);
 
@@ -76,6 +66,16 @@ impl MRSInterface for SakMRS {
         self.db.get_dummy(key)
     }
 
+    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
+        let mut batch = WriteBatch::default();
+
+        self.db.batch_put_dummy(&mut batch, key, value)?;
+
+        self.db.db.write(batch)?;
+
+        Ok(())
+    }
+
     // async fn get_session(&self, session_id: String) -> Result<Session, MRSError> {
     //     let mut session_store_lock = self.session_store.lock().await;
 
@@ -86,16 +86,6 @@ impl MRSInterface for SakMRS {
     //     let sess = *(receipt.1);
     //     Ok(sess)
     // }
-
-    fn put_mrs_data(&self, key: &String, value: &String) -> Result<(), MRSError> {
-        let mut batch = WriteBatch::default();
-
-        self.db.batch_put_dummy(&mut batch, key, value)?;
-
-        self.db.db.write(batch)?;
-
-        Ok(())
-    }
 
     fn add_session(&self, session: Session) {
         // let mut session_store_lock = self.session_store.lock().await;
