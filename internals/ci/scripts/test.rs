@@ -17,11 +17,19 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
 
     let cli_args: Vec<String> = args.map(|a| a.to_string()).collect();
 
-    let cargo_test_args: Vec<String> =
-        ["--", "--nocapture", "--show-output", "--test-threads", "1"]
-            .iter()
-            .map(|a| a.to_string())
-            .collect();
+    let cargo_test_args: Vec<String> = [
+        "--workspace",
+        "--exclude",
+        "sak_proof_wasm",
+        "--",
+        "--nocapture",
+        "--show-output",
+        "--test-threads",
+        "1",
+    ]
+    .iter()
+    .map(|a| a.to_string())
+    .collect();
 
     let args = vec![vec!["test".to_string()], cli_args, cargo_test_args].concat();
 

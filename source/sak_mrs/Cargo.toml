@@ -9,6 +9,7 @@ colored = "2"
 sak_kv_db = { path = "../sak_kv_db" }
 sak_logger = { path = "../sak_logger" }
 sak_contract_std = { path = "../sak_contract_std" }
+sak_credential = { path = "../sak_credential" }
 sak_store_interface = { path = "../sak_store_interface" }
 sak_dir = { path = "../sak_dir" }
 sak_p2p_id = { path = "../sak_p2p_id" }

@@ -1,2 +1,2 @@
-mod block;
+mod slot;
 mod testing;

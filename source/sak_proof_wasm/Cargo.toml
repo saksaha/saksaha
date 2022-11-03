@@ -14,7 +14,6 @@ wasm-bindgen = "0.2.83"
 sak_proof_types = { path = "../sak_proof_types" }
 sak_proof = { path = "../sak_proof" }
 getrandom = { version = "0.2", features = ["js"] }
-# bellman = "0.13.1"
 rayon = { version = "1.5"}
 wasm-bindgen-rayon = { version = "1.0"}
 
