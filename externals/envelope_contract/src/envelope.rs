@@ -66,7 +66,7 @@ pub fn update(
     let mut storage = vec![];
     match request.req_type.as_ref() {
         OPEN_CH => {
-            return handle_open_channel(&mut storage, request.args);
+            return handle_open_channel(&ctx, request.args);
         }
         SEND_MSG => {
             return handle_send_msg(&mut storage, request.args);
@@ -149,7 +149,8 @@ fn get_ch_list(storage: Storage, args: RequestArgs) -> Result<Vec<u8>, ContractE
 }
 
 fn handle_open_channel(
-    storage: &mut Storage,
+    // storage: &mut Storage,
+    ctx: &ContractCtx,
     args: RequestArgs,
 ) -> Result<InvokeResult, ContractError> {
     let mut evl_storage: EnvelopeStorage = match serde_json::from_slice(storage) {
