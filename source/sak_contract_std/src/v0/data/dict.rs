@@ -1,17 +1,19 @@
-use crate::{get_mrs_data_from_host, ContractError, RET_LEN_SIZE};
+use crate::get_mrs_data_from_host;
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct Dict {
+pub struct Dict<T> {
     _name: String,
     receipt: HashMap<String, Vec<u8>>,
+    phantom: Vec<T>,
 }
 
-impl Dict {
-    pub fn new(_name: String) -> Dict {
+impl<T> Dict<T> {
+    pub fn new(_name: String) -> Self {
         Dict {
             _name,
             receipt: HashMap::<String, Vec<u8>>::new(),
+            phantom: Vec::new(),
         }
     }
 
