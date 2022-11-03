@@ -139,7 +139,9 @@ impl PConfig {
         let index_file_path = config_dir.join(index_file_name);
 
         if index_file_path.exists() {
-            let pk = std::fs::read_to_string(&index_file_path)?;
+            let mut pk = std::fs::read_to_string(&index_file_path)?;
+            let len = pk.len();
+            pk.truncate(len - 1);
 
             if &pk != public_key {
                 return Err(format!(

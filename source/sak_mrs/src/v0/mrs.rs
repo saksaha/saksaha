@@ -39,7 +39,7 @@ impl SakMRS {
 
         let mrs = SakMRS { db, session_store };
 
-        // Move to Test code
+        // Should Move to Test code
         let mrs_entity = MrsEntity {
             mrs_key: "slot_field_key".to_string(),
             mrs_value: "value_dummy".to_string(),
@@ -62,7 +62,7 @@ impl SakMRS {
 
         info!("Got data: {:?}", data);
 
-        // Move to Test code
+        // Should Move to Test code
 
         info!("Initialized Mutable record storage (MRS)",);
 
