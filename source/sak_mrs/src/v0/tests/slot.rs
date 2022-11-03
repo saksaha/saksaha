@@ -5,7 +5,7 @@ use crate::{
 };
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_get_and_put_mrs_entity() {
+async fn test_get_and_put_mrs_dummy_data() {
     let mrs = MRSTestUtils::mock_mrs_db().await;
 
     let mrs_entity = MrsEntity {
