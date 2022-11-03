@@ -13,12 +13,15 @@ async fn test_get_and_put_mrs_dummy_data() {
         mrs_value: "value_dummy".to_string(),
         ib: [0].to_vec(),
         timestamp: "22_1102_1600".to_string(),
-        idx: 0,
     };
 
     let mrs_put_key = mrs.db.put_data(mrs_entity.clone()).await.unwrap();
 
     let data = mrs.db.get_data(&mrs_put_key).unwrap().unwrap();
+
+    let latest_idx = mrs.db.get_latest_index().unwrap().unwrap();
+
+    println!("latest_idx:{:?}", latest_idx);
 
     assert_eq!(mrs_entity.mrs_key, data.mrs_key);
 }

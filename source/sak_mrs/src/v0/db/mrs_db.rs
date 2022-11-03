@@ -22,7 +22,7 @@ pub struct MrsEntity {
     pub mrs_value: String,
     pub ib: Vec<u8>,
     pub timestamp: String,
-    pub idx: u32,
+    // pub idx: u32,
 }
 
 impl MRSDB {
@@ -63,11 +63,12 @@ impl MRSDB {
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
             ColumnFamilyDescriptor::new(CFSenum::MrsEntity.as_str(), Options::default()),
-            // ColumnFamilyDescriptor::new(CFSenum::MrsKey.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::MrsKey.as_str(), Options::default()),
+            // ColumnFamilyDescriptor::new(CFSenum::Idx.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(CFSenum::MrsValue.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(CFSenum::IntegrityBits.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(CFSenum::Timestamp.as_str(), Options::default()),
-            // ColumnFamilyDescriptor::new(CFSenum::Idx.as_str(), Options::default()),
+
             // ColumnFamilyDescriptor::new(cfs::MRS_KEY, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::MRS_VALUE, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::INTEGRITY_BITS, Options::default()),
