@@ -10,6 +10,9 @@ pub struct List<T> {
 
 impl<T> List<T> {
     pub fn new(_name: String) -> Self {
+        let a = List::<String>::new("p".to_string());
+        let a = <List<String>>::new("p".to_string());
+
         List {
             _name,
             receipt: HashMap::new(),
