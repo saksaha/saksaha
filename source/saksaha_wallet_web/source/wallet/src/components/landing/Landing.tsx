@@ -7,13 +7,11 @@ import * as styles from './Landing.css';
 
 import ActionPane from "../actionPane/ActionPane";
 import ResultPane from '../resultPane/ResultPane';
-import ProofGenBtn from '../proofGenBtn/ProofGenBtn';
 
 import { CoinManager } from 'saksaha';
-import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
+import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin_record';
 
 const LandingPage: Component = () => {
-
   const [walletAddress, setWalletAddress] = createSignal("");
   const [coinManager, setCoinManager] = createSignal(new CoinManager());
   const [selectedCoin, setSelectedCoin] = createSignal<CoinRecord>({
@@ -33,9 +31,8 @@ const LandingPage: Component = () => {
   const [selectedMrsSlot, setSelectedMrsSlot] = createSignal("");
 
   createEffect(() => {
-    // console.log(walletAddress());
-    // console.log(coinManager());
-    // console.log("Selected Coin: " + selectedCoin().r);
+    console.log("[#Landing] coin manager:", coinManager());
+    console.log("Selected Coin: " + selectedCoin().cm);
   });
 
   return (
@@ -43,10 +40,11 @@ const LandingPage: Component = () => {
       <div class={styles.left_pane}>
         <ActionPane
           coin_manager_setter={setCoinManager}
+          coin_manager={coinManager}
+          wallet_addr={walletAddress}
           wallet_addr_setter={setWalletAddress}
           mrs_slots_setter={setMrsSlots}
         />
-        <ProofGenBtn />
       </div>
       <div class={styles.right_pane}>
         <ResultPane
