@@ -1,5 +1,5 @@
 use crate::LedgerError;
-use crate::{cfs, CFSenum};
+use crate::{col_labels, LedgerCols};
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, DBIteratorWithThreadMode, DBWithThreadMode,
     IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
@@ -7,10 +7,7 @@ use sak_kv_db::{
 use sak_types::{BlockHash, Cm, MerkleRt, Sn, TxCtrOp, TxHash, TxType};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::path::PathBuf;
-use std::{io, sync::Arc};
-
-// TODO This has to be dynamically decided
-const APP_NAME: &'static str = "saksaha";
+use std::sync::Arc;
 
 pub struct LedgerDB {
     pub(crate) db: DB,
@@ -62,13 +59,8 @@ pub struct BlockEntity {
 }
 
 impl LedgerDB {
-    pub(crate) async fn init(
-        // app_prefix: &String,
-        db_path: &PathBuf,
-    ) -> Result<LedgerDB, LedgerError> {
+    pub(crate) async fn init(db_path: &PathBuf) -> Result<LedgerDB, LedgerError> {
         let ledger_db_path = {
-            // let db_path = Self::get_db_path(app_prefix)?;
-
             if !db_path.exists() {
                 std::fs::create_dir_all(db_path.clone())?;
             }
@@ -103,37 +95,21 @@ impl LedgerDB {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_CTR_ADDR, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::TX_HASH_BY_SN, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::PI, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::AUTHOR_SIG, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::TX_CREATED_AT, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::BLOCK_CREATED_AT, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::DATA, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::CTR_ADDR, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::TX_TYPE, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM_IDX, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CM_IDX_CM, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::V, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::K, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::S, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::SN, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::CM, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::CM_COUNT, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::BLOCK_MERKLE_RT, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::EMPTY_VALUE, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::PRF_MERKLE_RT, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::MERKLE_NODE, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::VALIDATOR_SIG, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::TX_HASHES, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::WITNESS_SIGS, Options::default()),
-            // ColumnFamilyDescriptor::new(cfs::BLOCK_HEIGHT, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::BLOCK_HASH, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::CTR_STATE, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::TX_HASH_BY_CTR_ADDR, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::TX_HASH_BY_SN, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::DATA, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::TX_TYPE, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::CM_IDX, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::CM_IDX_CM, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::BLOCK_MERKLE_RT, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::EMPTY_VALUE, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::MERKLE_NODE, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::BLOCK_HASH, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::CTR_STATE, Options::default()),
             // test
-            ColumnFamilyDescriptor::new(cfs::MINT_TX_ENTITY, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::POUR_TX_ENTITY, Options::default()),
-            ColumnFamilyDescriptor::new(cfs::BLOCK_ENTITY, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::MINT_TX_ENTITY, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::POUR_TX_ENTITY, Options::default()),
+            ColumnFamilyDescriptor::new(col_labels::BLOCK_ENTITY, Options::default()),
         ]
     }
 
@@ -152,37 +128,25 @@ impl LedgerDB {
         Ok(cf_handle)
     }
 
-    pub fn put_ser<T: Serialize>(
+    pub fn put<T: Serialize>(
         &self,
         batch: &mut WriteBatch,
-        column: CFSenum,
+        column: LedgerCols,
         key: &[u8],
         value: &T,
     ) -> Result<(), LedgerError> {
         let data = serde_json::to_vec(value)?;
 
-        self.put(batch, column, key, &data)?;
-
-        Ok(())
-    }
-
-    pub fn put(
-        &self,
-        batch: &mut WriteBatch,
-        column: CFSenum,
-        key: &[u8],
-        value: &[u8],
-    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
-        batch.put_cf(&cf, key, value);
+        batch.put_cf(&cf, key, data);
 
         Ok(())
     }
 
-    pub fn get_ser<T: Serialize + DeserializeOwned>(
+    pub fn get<T: Serialize + DeserializeOwned>(
         &self,
-        column: CFSenum,
+        column: LedgerCols,
         key: &[u8],
     ) -> Result<Option<T>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
@@ -199,7 +163,7 @@ impl LedgerDB {
 
     pub fn iter(
         &self,
-        column: CFSenum,
+        column: LedgerCols,
     ) -> Result<DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
