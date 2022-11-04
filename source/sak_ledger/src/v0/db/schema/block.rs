@@ -62,28 +62,28 @@ impl LedgerDB {
             merkle_rt: block.merkle_rt,
         };
 
-        self.put_ser(
+        self.put(
             &mut batch,
             LedgerCols::BlockEntity,
             block_entity.block_hash.as_bytes(),
             &block_entity,
         )?;
 
-        self.put_ser(
+        self.put(
             &mut batch,
             LedgerCols::BlockHash,
             &block_entity.block_height.to_be_bytes(),
             &block_entity.block_hash,
         )?;
 
-        self.put_ser(
+        self.put(
             &mut batch,
             LedgerCols::BlockMerkleRt,
             block_entity.block_hash.as_bytes(),
             &block_entity.merkle_rt,
         )?;
 
-        self.put_ser(
+        self.put(
             &mut batch,
             LedgerCols::EmptyValue,
             &block_entity.merkle_rt,
@@ -95,7 +95,7 @@ impl LedgerDB {
         }
 
         for (ctr_addr, ctr_state) in ctr_state_updates {
-            self.put_ser(
+            self.put(
                 &mut batch,
                 LedgerCols::CtrState,
                 ctr_addr.as_bytes(),
@@ -104,7 +104,7 @@ impl LedgerDB {
         }
 
         for (loc, node_val) in merkle_updates {
-            self.put_ser(&mut batch, LedgerCols::MerkleNode, loc.as_bytes(), node_val)?;
+            self.put(&mut batch, LedgerCols::MerkleNode, loc.as_bytes(), node_val)?;
         }
 
         self.db.write(batch)?;

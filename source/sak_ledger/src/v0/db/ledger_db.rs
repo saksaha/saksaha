@@ -128,7 +128,7 @@ impl LedgerDB {
         Ok(cf_handle)
     }
 
-    pub fn put_ser<T: Serialize>(
+    pub fn put<T: Serialize>(
         &self,
         batch: &mut WriteBatch,
         column: LedgerCols,
@@ -137,21 +137,9 @@ impl LedgerDB {
     ) -> Result<(), LedgerError> {
         let data = serde_json::to_vec(value)?;
 
-        self.put(batch, column, key, &data)?;
-
-        Ok(())
-    }
-
-    pub fn put(
-        &self,
-        batch: &mut WriteBatch,
-        column: LedgerCols,
-        key: &[u8],
-        value: &[u8],
-    ) -> Result<(), LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
-        batch.put_cf(&cf, key, value);
+        batch.put_cf(&cf, key, data);
 
         Ok(())
     }

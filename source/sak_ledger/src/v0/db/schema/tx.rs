@@ -130,30 +130,30 @@ impl LedgerDB {
     ) -> Result<TxHash, LedgerError> {
         let tx_hash = &tx_entity.tx_hash;
 
-        self.put_ser(
+        self.put(
             batch,
             LedgerCols::MintTxEntity,
             tx_hash.as_bytes(),
             &tx_entity,
         )?;
 
-        self.put_ser(
+        self.put(
             batch,
             LedgerCols::TxType,
             tx_hash.as_bytes(),
             &tx_entity.tx_type,
         )?;
 
-        self.put_ser(batch, LedgerCols::Data, tx_hash.as_bytes(), &tx_entity.data)?;
+        self.put(batch, LedgerCols::Data, tx_hash.as_bytes(), &tx_entity.data)?;
 
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
-            self.put_ser(batch, LedgerCols::CMIdxByCM, cm, cm_idx)?;
-            self.put_ser(batch, LedgerCols::CMByCMIdx, &cm_idx.to_be_bytes(), cm)?;
+            self.put(batch, LedgerCols::CMIdxByCM, cm, cm_idx)?;
+            self.put(batch, LedgerCols::CMByCMIdx, &cm_idx.to_be_bytes(), cm)?;
         }
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.put_ser(
+                self.put(
                     batch,
                     LedgerCols::TxHashByCtrAddr,
                     tx_entity.ctr_addr.as_bytes(),
@@ -174,35 +174,35 @@ impl LedgerDB {
     ) -> Result<TxHash, LedgerError> {
         let tx_hash = &tx_entity.tx_hash;
 
-        self.put_ser(
+        self.put(
             batch,
             LedgerCols::PourTxEntity,
             tx_hash.as_bytes(),
             &tx_entity,
         )?;
 
-        self.put_ser(
+        self.put(
             batch,
             LedgerCols::TxType,
             tx_hash.as_bytes(),
             &tx_entity.tx_type,
         )?;
 
-        self.put_ser(batch, LedgerCols::Data, tx_hash.as_bytes(), &tx_entity.data)?;
+        self.put(batch, LedgerCols::Data, tx_hash.as_bytes(), &tx_entity.data)?;
 
         for (cm, cm_idx) in std::iter::zip(&tx_entity.cms, &tx_entity.cm_idxes) {
-            self.put_ser(batch, LedgerCols::CMIdxByCM, cm, cm_idx)?;
-            self.put_ser(batch, LedgerCols::CMByCMIdx, &cm_idx.to_be_bytes(), cm)?;
+            self.put(batch, LedgerCols::CMIdxByCM, cm, cm_idx)?;
+            self.put(batch, LedgerCols::CMByCMIdx, &cm_idx.to_be_bytes(), cm)?;
         }
         for (idx, sn) in tx_entity.sns.iter().enumerate() {
             let _key = format!("{}_{}", tx_hash, idx);
 
-            self.put_ser(batch, LedgerCols::TxHashBySN, sn, tx_hash)?;
+            self.put(batch, LedgerCols::TxHashBySN, sn, tx_hash)?;
         }
 
         match tx_entity.tx_ctr_op {
             TxCtrOp::ContractDeploy => {
-                self.put_ser(
+                self.put(
                     batch,
                     LedgerCols::TxHashByCtrAddr,
                     tx_entity.ctr_addr.as_bytes(),
