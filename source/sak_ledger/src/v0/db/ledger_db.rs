@@ -1,5 +1,5 @@
 use crate::LedgerError;
-use crate::{cfs, CFSenum};
+use crate::{cfs, LedgerCols};
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, DBIteratorWithThreadMode, DBWithThreadMode,
     IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
@@ -155,7 +155,7 @@ impl LedgerDB {
     pub fn put_ser<T: Serialize>(
         &self,
         batch: &mut WriteBatch,
-        column: CFSenum,
+        column: LedgerCols,
         key: &[u8],
         value: &T,
     ) -> Result<(), LedgerError> {
@@ -169,7 +169,7 @@ impl LedgerDB {
     pub fn put(
         &self,
         batch: &mut WriteBatch,
-        column: CFSenum,
+        column: LedgerCols,
         key: &[u8],
         value: &[u8],
     ) -> Result<(), LedgerError> {
@@ -182,7 +182,7 @@ impl LedgerDB {
 
     pub fn get_ser<T: Serialize + DeserializeOwned>(
         &self,
-        column: CFSenum,
+        column: LedgerCols,
         key: &[u8],
     ) -> Result<Option<T>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
@@ -199,7 +199,7 @@ impl LedgerDB {
 
     pub fn iter(
         &self,
-        column: CFSenum,
+        column: LedgerCols,
     ) -> Result<DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>, LedgerError> {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 

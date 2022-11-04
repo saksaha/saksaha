@@ -1,5 +1,5 @@
 use crate::{cfs, LedgerDB};
-use crate::{CFSenum, LedgerError};
+use crate::{LedgerCols, LedgerError};
 use sak_contract_std::Storage;
 use sak_kv_db::WriteBatch;
 use sak_types::{CtrAddr, TxHash};
@@ -18,11 +18,11 @@ impl LedgerDB {
         //     .ok_or(format!("data does not exist, ctr_addr: {}", ctr_addr))?;
 
         let tx_hash: TxHash = self
-            .get_ser(CFSenum::TxHashByCtrAddr, ctr_addr.as_bytes())?
+            .get_ser(LedgerCols::TxHashByCtrAddr, ctr_addr.as_bytes())?
             .ok_or("TxHashByCtrAddr should exist")?;
 
         let ctr_data = self
-            .get_ser(CFSenum::Data, tx_hash.as_bytes())?
+            .get_ser(LedgerCols::Data, tx_hash.as_bytes())?
             .ok_or("TxHashByCtrAddr should exist")?;
 
         Ok(Some(ctr_data))

@@ -1,5 +1,5 @@
 use crate::BlockEntity;
-use crate::{CFSenum, CtrStateUpdate, LedgerDB, LedgerError, MerkleUpdate};
+use crate::{CtrStateUpdate, LedgerCols, LedgerDB, LedgerError, MerkleUpdate};
 use sak_kv_db::WriteBatch;
 use sak_types::{Block, Tx};
 
@@ -27,10 +27,10 @@ impl LedgerDB {
         // let block_height = self.get_block_height(&block_hash)?;
 
         let block_entity: Option<BlockEntity> =
-            self.get_ser(CFSenum::BlockEntity, block_hash.as_bytes())?;
+            self.get_ser(LedgerCols::BlockEntity, block_hash.as_bytes())?;
 
         // let block_merkle_rt = self.get_block_merkle_rt(block_hash)?;
-        let block_merkle_rt = self.get_ser(CFSenum::BlockMerkleRt, block_hash.as_bytes())?;
+        let block_merkle_rt = self.get_ser(LedgerCols::BlockMerkleRt, block_hash.as_bytes())?;
 
         match (
             // block_entity.validator_sig,
@@ -87,7 +87,7 @@ impl LedgerDB {
 
         self.put_ser(
             &mut batch,
-            CFSenum::BlockEntity,
+            LedgerCols::BlockEntity,
             block_entity.block_hash.as_bytes(),
             &block_entity,
         )?;
@@ -103,7 +103,7 @@ impl LedgerDB {
         // self.batch_put_block_hash(&mut batch, &block.block_height, &block_entity.block_hash)?;
         self.put_ser(
             &mut batch,
-            CFSenum::BlockHash,
+            LedgerCols::BlockHash,
             &block_entity.block_height.to_be_bytes(),
             &block_entity.block_hash,
         )?;
@@ -113,7 +113,7 @@ impl LedgerDB {
         // self.batch_put_block_merkle_rt(&mut batch, &block_entity.block_hash, &block.merkle_rt)?;
         self.put_ser(
             &mut batch,
-            CFSenum::BlockMerkleRt,
+            LedgerCols::BlockMerkleRt,
             block_entity.block_hash.as_bytes(),
             &block_entity.merkle_rt,
         )?;
@@ -121,7 +121,7 @@ impl LedgerDB {
         // self.batch_put_block_merkle_rt_key(&mut batch, &block.merkle_rt)?;
         self.put_ser(
             &mut batch,
-            CFSenum::EmptyValue,
+            LedgerCols::EmptyValue,
             &block_entity.merkle_rt,
             &[0u8; 1],
         )?;
@@ -134,7 +134,7 @@ impl LedgerDB {
             // self.batch_put_ctr_state(&mut batch, ctr_addr, ctr_state)?;
             self.put_ser(
                 &mut batch,
-                CFSenum::CtrState,
+                LedgerCols::CtrState,
                 ctr_addr.as_bytes(),
                 ctr_state,
             )?;
@@ -142,7 +142,7 @@ impl LedgerDB {
 
         for (loc, node_val) in merkle_updates {
             // self.batch_put_merkle_node(&mut batch, loc, node_val)?;
-            self.put_ser(&mut batch, CFSenum::MerkleNode, loc.as_bytes(), node_val)?;
+            self.put_ser(&mut batch, LedgerCols::MerkleNode, loc.as_bytes(), node_val)?;
         }
 
         self.db.write(batch)?;

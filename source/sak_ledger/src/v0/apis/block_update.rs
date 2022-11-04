@@ -1,4 +1,4 @@
-use crate::{CFSenum, CtrStateUpdate, LedgerError, MerkleUpdate, SakLedger};
+use crate::{CtrStateUpdate, LedgerCols, LedgerError, MerkleUpdate, SakLedger};
 use colored::Colorize;
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
@@ -231,7 +231,7 @@ impl SakLedger {
         } else {
             match self
                 .ledger_db
-                .get_ser::<Vec<u8>>(CFSenum::EmptyValue, merkle_rt)
+                .get_ser::<Vec<u8>>(LedgerCols::EmptyValue, merkle_rt)
             {
                 Ok(Some(_)) => true,
                 Ok(None) => false,
@@ -262,7 +262,7 @@ impl SakLedger {
         if sn == &DUMMY_SN {
             Ok(true)
         } else {
-            match self.ledger_db.get_ser::<TxHash>(CFSenum::TxHashBySN, sn) {
+            match self.ledger_db.get_ser::<TxHash>(LedgerCols::TxHashBySN, sn) {
                 Ok(Some(_)) => Err(format!("Serial numbers already exists, sns: {:?}", sn).into()),
                 Ok(None) => Ok(true),
                 Err(_) => {

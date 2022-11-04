@@ -1,4 +1,4 @@
-use crate::{CFSenum, LedgerError, SakLedger};
+use crate::{LedgerCols, LedgerError, SakLedger};
 use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash};
@@ -43,7 +43,7 @@ impl SakLedger {
 
     pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
         // self.ledger_db.get_cm_idx_by_cm(cm)
-        self.ledger_db.get_ser(CFSenum::CMIdxByCM, cm)
+        self.ledger_db.get_ser(LedgerCols::CMIdxByCM, cm)
     }
 
     // pub async fn get_latest_block_hash(
@@ -75,7 +75,7 @@ impl SakLedger {
 
         let latest_block_hash = match self
             .ledger_db
-            .get_ser::<BlockHash>(CFSenum::BlockHash, &latest_block_height.to_be_bytes())?
+            .get_ser::<BlockHash>(LedgerCols::BlockHash, &latest_block_height.to_be_bytes())?
         {
             Some(block_hash) => block_hash,
             None => return Ok(None),
@@ -245,7 +245,7 @@ impl SakLedger {
     ) -> Result<Option<Block>, LedgerError> {
         match self
             .ledger_db
-            .get_ser(CFSenum::BlockHash, &block_height.to_be_bytes())?
+            .get_ser(LedgerCols::BlockHash, &block_height.to_be_bytes())?
         {
             Some(b) => self.ledger_db.get_block(&b),
             None => Ok(None),
@@ -278,7 +278,7 @@ impl SakLedger {
 
         let latest_block_hash = match self
             .ledger_db
-            .get_ser::<BlockHash>(CFSenum::BlockHash, &latest_block_height.to_be_bytes())?
+            .get_ser::<BlockHash>(LedgerCols::BlockHash, &latest_block_height.to_be_bytes())?
         {
             Some(h) => h,
             None => {
@@ -293,7 +293,7 @@ impl SakLedger {
         // let latest_merkle_rt = self.ledger_db.get_block_merkle_rt(&latest_block_hash)?;
         let latest_merkle_rt = self
             .ledger_db
-            .get_ser(CFSenum::BlockMerkleRt, latest_block_hash.as_bytes())?;
+            .get_ser(LedgerCols::BlockMerkleRt, latest_block_hash.as_bytes())?;
 
         Ok(latest_merkle_rt)
     }
