@@ -1,7 +1,7 @@
 use crate::{LedgerCols, LedgerError, SakLedger};
 use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
-use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, Tx, TxCandidate, TxHash};
+use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, Tx, TxCandidate, TxHash};
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
@@ -42,28 +42,8 @@ impl SakLedger {
     }
 
     pub async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
-        // self.ledger_db.get_cm_idx_by_cm(cm)
         self.ledger_db.get_ser(LedgerCols::CMIdxByCM, cm)
     }
-
-    // pub async fn get_latest_block_hash(
-    //     &self,
-    // ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
-    //     let latest_block_height = match self.ledger_db.get_latest_block_height()? {
-    //         Some(h) => h,
-    //         None => return Ok(None),
-    //     };
-
-    //     let latest_block_hash = match self
-    //         .ledger_db
-    //         .get_block_hash_by_block_height(&latest_block_height)?
-    //     {
-    //         Some(block_hash) => block_hash.to_string(),
-    //         None => return Ok(None),
-    //     };
-
-    //     Ok(Some((latest_block_height, latest_block_hash)))
-    // }
 
     pub async fn get_latest_block_hash(
         &self,
@@ -225,20 +205,6 @@ impl SakLedger {
         Ok(block_hash_list)
     }
 
-    // pub async fn get_block_by_height(
-    //     &self,
-    //     block_height: &u128,
-    // ) -> Result<Option<Block>, LedgerError> {
-    //     if let Some(block_hash) = self
-    //         .ledger_db
-    //         .get_block_hash_by_block_height(block_height)?
-    //     {
-    //         return self.ledger_db.get_block(&block_hash);
-    //     } else {
-    //         return Ok(None);
-    //     }
-    // }
-
     pub async fn get_block_by_height(
         &self,
         block_height: &u128,
@@ -262,20 +228,6 @@ impl SakLedger {
             None => return Ok(None),
         };
 
-        // let latest_block_hash = match self
-        //     .ledger_db
-        //     .get_block_hash_by_block_height(&latest_block_height)?
-        // {
-        //     Some(h) => h,
-        //     None => {
-        //         return Err(format!(
-        //             "Block hash at height ({}) does not exist",
-        //             latest_block_height
-        //         )
-        //         .into())
-        //     }
-        // };
-
         let latest_block_hash = match self
             .ledger_db
             .get_ser::<BlockHash>(LedgerCols::BlockHash, &latest_block_height.to_be_bytes())?
@@ -290,18 +242,10 @@ impl SakLedger {
             }
         };
 
-        // let latest_merkle_rt = self.ledger_db.get_block_merkle_rt(&latest_block_hash)?;
         let latest_merkle_rt = self
             .ledger_db
             .get_ser(LedgerCols::BlockMerkleRt, latest_block_hash.as_bytes())?;
 
         Ok(latest_merkle_rt)
     }
-
-    // pub async fn get_ctr_state(
-    //     &self,
-    //     contract_addr: &CtrAddr,
-    // ) -> Result<Option<Storage>, MachineError> {
-    //     self.ledger_db.get_ctr_state(contract_addr)
-    // }
 }
