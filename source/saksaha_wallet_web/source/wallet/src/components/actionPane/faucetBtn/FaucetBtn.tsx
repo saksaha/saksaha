@@ -6,8 +6,6 @@ import * as styles from './FaucetBtn.css';
 
 
 const get_tx = async (tx_hash: String) => {
-  console.log("get tx");
-
   let axios: Saksaha = new Saksaha();
 
   const method = "get_tx";
@@ -27,8 +25,6 @@ const get_tx = async (tx_hash: String) => {
 }
 
 const send_mint_tx = async (new_coin_data: SendMintTxParam) => {
-  console.log("send mint tx");
-
   let axios: Saksaha = new Saksaha();
 
   const method = "send_mint_tx";
@@ -245,7 +241,6 @@ const click_fn = async (
     }
 
     let tx_hash = await send_mint_tx(dummy_send_mint_tx_data);
-    console.log("tx_hash: ", tx_hash);
 
     alert("Your coin is mining... (~5 secs)")
 
@@ -267,19 +262,17 @@ const click_fn = async (
       tx_hash: tx_hash,
     };
 
-    let aaaa: CoinManager = new CoinManager();
+    let new_coin_manager: CoinManager = new CoinManager();
 
     let origin_coin_manager = props.coin_manager();
 
     for (let i = 0; i < origin_coin_manager.coins.length; i++) {
-      aaaa.coins.push(origin_coin_manager.coins[i]);
+      new_coin_manager.coins.push(origin_coin_manager.coins[i]);
     }
 
-    aaaa.coins.push(coin_record);
+    new_coin_manager.coins.push(coin_record);
 
-    props.coin_manager_setter(aaaa);
-
-    console.log(props.coin_manager().coins.length);
+    props.coin_manager_setter(new_coin_manager);
   }
 }
 

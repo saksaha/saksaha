@@ -8,9 +8,6 @@ const ResultPane: Component<ResultPaneProps> = (props) => {
     return (
       <>
         <h3> coins</h3>
-        {
-          console.log("coin_manager: ", props.coin_manager.toString())
-        }
         <For each={props.coin_manager().coins}>{(coin, i) =>
           <div
             class={

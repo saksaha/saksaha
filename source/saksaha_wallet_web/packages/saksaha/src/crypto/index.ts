@@ -8,13 +8,12 @@ const fixed_xor = (xl: number[], xr: number[]): number[] => {
   return res;
 }
 
+// TODO impliment multiplcaition in galois field
 export const mimc = (xl: number[], xr: number[]): number[] => {
-  console.log("mimc");
   // let a = xl ^ ci
   // let b = a * a * a;
   // let c = b ^ xr
   // return c;
-
   const constants = ROUND_CONSTANTS;
 
   let a: any;
@@ -30,7 +29,6 @@ export const mimc = (xl: number[], xr: number[]): number[] => {
 }
 
 export const comm = (a: number[], b: number[], c: number[]) => {
-  console.log("comm");
   const r1 = mimc(b, c);
   const r2 = mimc(a, r1);
 
