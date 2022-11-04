@@ -1,5 +1,7 @@
 export { Saksaha } from './saksaha';
-export { CoinManager, DEV_LOCAL_1_SK } from './types';
+export { CoinManager } from './types';
+export { mimc } from './crypto';
+export * from './req';
 
 export type {
   Block,
