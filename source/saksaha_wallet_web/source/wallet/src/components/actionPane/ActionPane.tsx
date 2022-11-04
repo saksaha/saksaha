@@ -7,6 +7,7 @@ import ProofGenBtn from './proofGenBtn/ProofGenBtn';
 interface ActionPaneProps {
   coin_manager_setter: Setter<CoinManager>,//
   coin_manager: Accessor<CoinManager>,
+  wallet_addr: Accessor<string>,
   wallet_addr_setter: Setter<string>,//
   mrs_slots_setter: Setter<string[]>
 }
@@ -14,6 +15,7 @@ interface ActionPaneProps {
 const ActionPane: Component<ActionPaneProps> = (props) => {
   let coin_manager_setter: Setter<CoinManager> = props.coin_manager_setter;
   let coin_manager: Accessor<CoinManager> = props.coin_manager;
+  let wallet_addr: Accessor<string> = props.wallet_addr;
   let wallet_addr_setter: Setter<string> = props.wallet_addr_setter;
   // let mrs_slots_setter: Setter<string[]> = props.mrs_slots_setter;
 
@@ -22,7 +24,26 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
 
 
   const handle_log_in = (wallet_id: string) => {
-    let res = new CoinManager(wallet_id);
+    // localStorage
+    const key = wallet_id + ":" + "coin_manager";
+
+    let res: any;
+
+    if (!localStorage.getItem(key)) {
+      console.log("new id");
+
+      res = new CoinManager(wallet_id);
+
+      localStorage.setItem(key, JSON.stringify(res));
+
+    } else {
+      console.log("existed id");
+
+      let tmp_res = localStorage.getItem(key) as string;
+
+      res = JSON.parse(tmp_res);
+    }
+
 
     coin_manager_setter(res);
 
@@ -52,6 +73,7 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
               class={styles.input_btn}
               onClick={() => {
                 let wallet_address = walletAddrInput();
+
                 handle_log_in(wallet_address);
               }}
             >SEND</div>
@@ -74,6 +96,7 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
             <ProofGenBtn />
             <br />
             <FaucetBtn
+              wallet_addr={wallet_addr}
               coin_manager={coin_manager}
               coin_manager_setter={coin_manager_setter}
             />

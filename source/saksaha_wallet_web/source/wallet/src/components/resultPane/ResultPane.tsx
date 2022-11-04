@@ -5,13 +5,27 @@ import * as styles from './ResultPane.css';
 
 const ResultPane: Component<ResultPaneProps> = (props) => {
   const render_coin_manager = () => {
+    const wallet_addr = props.wallet_addr();
+
+    const postfix = ":" + "coin_manager";
+
+    const key = wallet_addr + postfix;
+
+    const res = localStorage.getItem(key);
+
+    const res2: CoinManager = JSON.parse(res!);
+
+    console.log("res: ", res2);
+
+    // <For each={props.coin_manager().coins}>{(coin, i) =>
     return (
       <>
         <h3> coins</h3>
+        {/* <For each={res2.coins}>{(coin, i) => */}
         <For each={props.coin_manager().coins}>{(coin, i) =>
           <div
             class={
-              props.selected_coin().cm == coin.cm ?
+              props.selected_coin().tx_hash == coin.tx_hash ?
                 styles.selected_coin_record : styles.coin_record
             }
             onClick={

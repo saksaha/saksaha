@@ -46,6 +46,13 @@ const click_fn = async (
       // wait until the tx be in a new block...
     }
 
+    let origin_coin_manager: CoinManager = props.coin_manager();
+
+    console.log("check ", typeof origin_coin_manager);
+
+    let new_coin_idx = origin_coin_manager.coins.length;
+
+
     const coin_record: CoinRecord = {
       addr_pk: encode_hex(dummy_new_coin.addr_pk),
       addr_sk: encode_hex(dummy_new_coin.addr_sk),
@@ -56,13 +63,11 @@ const click_fn = async (
       cm: encode_hex(dummy_new_coin.cm),
       coin_status: CoinStatus.Unused,
       cm_idx: "10",
-      coin_idx: props.coin_manager().coins.length.toString(),
+      coin_idx: new_coin_idx.toString(),
       tx_hash: tx_hash,
     };
 
     let new_coin_manager: CoinManager = new CoinManager();
-
-    let origin_coin_manager = props.coin_manager();
 
     for (let i = 0; i < origin_coin_manager.coins.length; i++) {
       new_coin_manager.coins.push(origin_coin_manager.coins[i]);
@@ -71,6 +76,8 @@ const click_fn = async (
     new_coin_manager.coins.push(coin_record);
 
     props.coin_manager_setter(new_coin_manager);
+
+    return new_coin_manager;
   }
 }
 
@@ -81,7 +88,11 @@ const FaucetBtn: Component<FaucetBtnProps> = (props) => {
     <>
       <input type="button" class={styles.faucet_btn} value="Faucet Button" onclick={
         async () => {
-          click_fn(props)
+          let coin_manager = await click_fn(props)
+
+          let key = props.wallet_addr() + ":" + "coin_manager";
+
+          localStorage.setItem(key, JSON.stringify(coin_manager));
         }
       } />
     </>
@@ -91,6 +102,7 @@ const FaucetBtn: Component<FaucetBtnProps> = (props) => {
 export default FaucetBtn;
 
 interface FaucetBtnProps {
+  wallet_addr: Accessor<string>
   coin_manager: Accessor<CoinManager>,
   coin_manager_setter: Setter<CoinManager>,//
 }

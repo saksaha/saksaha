@@ -41,6 +41,7 @@ const LandingPage: Component = () => {
         <ActionPane
           coin_manager_setter={setCoinManager}
           coin_manager={coinManager}
+          wallet_addr={walletAddress}
           wallet_addr_setter={setWalletAddress}
           mrs_slots_setter={setMrsSlots}
         />
