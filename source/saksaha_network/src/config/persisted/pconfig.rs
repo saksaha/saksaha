@@ -140,8 +140,11 @@ impl PConfig {
 
         if index_file_path.exists() {
             let mut pk = std::fs::read_to_string(&index_file_path)?;
-            let len = pk.len();
-            pk.truncate(len - 1);
+            let config_pk_len = pk.len();
+            let pk_len = public_key;
+            if config_pk_len > pk_len {
+                pk.truncate(pk_len);
+            }
 
             if &pk != public_key {
                 return Err(format!(

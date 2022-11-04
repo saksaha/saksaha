@@ -11,9 +11,28 @@
  * limitations under the License.
  */
 
+console.log(1)
+const wasm = import('./../pkg');
+
 import * as Comlink from 'comlink';
+import { threads } from 'wasm-feature-detect';
+// import init, { initThreadPool } from './../pkg/sak_proof_wasm.js';
+// await init();
+// await initThreadPool(navigator.hardware Concurrency);
+
+
+
+
+// let wasmPkg;
+// if (threads) {
+//     console.log("multi threads mode");
+//     wasmPkg = await import('./../pkg/sak_proof_wasm.js');
+//     await wasmPkg.default();
+//     await wasmPkg.initThreadPool(navigator.hardwareConcurrency)
+// }
 
 // const maxIterations = 1000;
+
 
 // const canvas = document.getElementById('canvas');
 // const { width, height } = canvas;
