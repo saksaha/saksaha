@@ -3,7 +3,7 @@ use chrono::offset::Utc;
 use chrono::DateTime;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, DBIteratorWithThreadMode, DBWithThreadMode,
-    IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
+    Direction, IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
 };
 use std::time::SystemTime;
 
@@ -124,21 +124,23 @@ impl MRSDB {
         Ok(())
     }
 
-    pub fn put(
+    pub fn put<T: Serialize>(
         &self,
         batch: &mut WriteBatch,
         column: CFSenum,
         key: &[u8],
-        value: &[u8],
+        value: &T,
     ) -> Result<(), MRSError> {
+        let data = serde_json::to_vec(value)?;
+
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
-        batch.put_cf(&cf, key, value);
+        batch.put_cf(&cf, key, data);
 
         Ok(())
     }
 
-    pub fn get_ser<T: Serialize + DeserializeOwned>(
+    pub fn get<T: Serialize + DeserializeOwned>(
         &self,
         column: CFSenum,
         key: &[u8],
@@ -162,5 +164,18 @@ impl MRSDB {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
         Ok(self.db.iterator_cf(&cf, IteratorMode::End))
+    }
+
+    pub fn iter_from(
+        &self,
+        column: CFSenum,
+        slotnum_idx: String,
+    ) -> Result<DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>, MRSError> {
+        let cf = self.make_cf_handle(&self.db, column.as_str())?;
+
+        Ok(self.db.iterator_cf(
+            &cf,
+            IteratorMode::From(slotnum_idx.as_bytes(), Direction::Reverse),
+        ))
     }
 }

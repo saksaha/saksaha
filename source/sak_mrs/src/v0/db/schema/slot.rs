@@ -4,12 +4,13 @@ use crate::{
     MRSError,
 };
 
-use sak_kv_db::WriteBatch;
+use sak_kv_db::{Direction, IteratorMode, WriteBatch};
+use sak_logger::warn;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
 
 impl MRSDB {
     pub fn get_data(&self, mrs_key: &String) -> Result<Option<MrsRecord>, MRSError> {
-        let mrs_entity: Option<MrsRecord> = self.get_ser(CFSenum::Record, mrs_key.as_bytes())?;
+        let mrs_entity: Option<MrsRecord> = self.get(CFSenum::Record, mrs_key.as_bytes())?;
 
         match mrs_entity {
             Some(m) => {
@@ -27,58 +28,103 @@ impl MRSDB {
         }
     }
 
-    pub fn get_latest_index(&self, slot_name) -> Result<Option<u128>, MRSError> {
-        let mut iter = self.iter(CFSenum::RecordKey)?;
+    pub fn get_latest_index(&self, curr_slot: &str) -> Result<Option<i32>, MRSError> {
+        let curr_slot_0 = format!("{}_{}", curr_slot, 0);
+        let next_slot_0 = {
+            let vec_split: Vec<_> = curr_slot.split(['s'].as_ref()).collect();
+            let i = vec_split[vec_split.len() - 1];
+            let slot_int = (i.parse::<i32>()?) + 1;
+            format!("s{}_{}", slot_int, 0)
+        };
+        println!("1 get_latest_idx - slotnum_idx:{}", next_slot_0);
 
-        let (idx_bytes, _idx) = match iter.next() {
-            Some(a) => a,
-            None => return Ok(None),
+        let mut iter = self.iter_from(CFSenum::RecordKey, next_slot_0.clone())?;
+
+        let is_curr_slot = match self.get(CFSenum::RecordKey, curr_slot_0.as_bytes())? {
+            Some(k) => {
+                let _: String = k;
+                true
+            }
+            None => false,
         };
 
-        let latest_idx = type_extension::convert_u8_slice_into_u128(&idx_bytes)?;
+        let is_next_slot = match self.get(CFSenum::RecordKey, next_slot_0.as_bytes())? {
+            Some(k) => {
+                let _: String = k;
+                true
+            }
+            None => false,
+        };
 
-        Ok(Some(latest_idx))
+        let result = if is_curr_slot {
+            match iter.next() {
+                Some((cm_idx, _cm)) => {
+                    println!("curr_slot exists, check next_slot");
+                    let slot_num = std::str::from_utf8(&cm_idx)?;
+
+                    if is_next_slot {
+                        match iter.next() {
+                            Some((cm_idx, _cm)) => {
+                                let slot_num = std::str::from_utf8(&cm_idx)?;
+                                println!("next slot found!!!!:{}", slot_num);
+                                let vec_split: Vec<_> = slot_num.split(['_'].as_ref()).collect();
+                                let i = vec_split[vec_split.len() - 1];
+                                let idx_int = i.parse::<i32>()? + 1;
+                                println!("next_slot exists, only read or update");
+                                idx_int
+                            }
+                            None => {
+                                warn!("next slot exists, but cannot get index");
+                                0
+                            }
+                        }
+                    } else {
+                        let vec_split: Vec<_> = slot_num.split(['_'].as_ref()).collect();
+                        let i = vec_split[vec_split.len() - 1];
+                        let idx_int = i.parse::<i32>()? + 1;
+                        println!("next slot empty, get the latest idx");
+                        idx_int
+                    }
+                }
+                None => {
+                    warn!("curr slot exists, but cannot get index");
+                    0
+                }
+            }
+        } else {
+            println!("curr slot empty, Possibly the first index");
+            0
+        };
+
+        Ok(Some(result - 1))
     }
 
     pub async fn put_data(&self, mrs_record: MrsRecord) -> Result<String, MRSError> {
         let mut batch = WriteBatch::default();
 
-        let slot = mrs_record.key.clone();
-        let slot_name = slot
-            .split("_")
-            .next()
-            .unwrap_or("failed to parse Record key");
-
+        let s = mrs_record.key.clone();
+        let slot = s.split("_").next().unwrap_or("failed to parse Record key");
+        println!("********** Put start! slot_name:{}", slot);
         let latest_idx = {
-            let latest_idx = match self.get_latest_index(slot_name)? {
+            let idx = match self.get_latest_index(slot)? {
                 Some(i) => i + 1,
                 None => {
                     println!("latest_idx does not exist. Possibly the first index");
                     0
                 }
             };
-
-            let slotnum = "slotnum_15";
-            let vec_split: Vec<_> = slotnum.split(['_'].as_ref()).collect();
-            let idx = {
-                let i = vec_split[vec_split.len() - 1];
-                let idx_int = (i.parse::<i32>()?) + 1;
-                format!("{}", idx_int)
-            };
-
-            let mut s = slot_name.to_string();
-            s.push_str(&idx);
-            s
+            println!("incremented index of slot:{}\n", idx);
+            format!("{}_{}", slot, idx)
         };
 
-        self.put_ser(
+        self.put(
             &mut batch,
             CFSenum::Record,
             mrs_record.key.as_bytes(),
             &mrs_record,
         )?;
 
-        self.put_ser(
+        self.put(
             &mut batch,
             CFSenum::RecordKey,
             latest_idx.as_bytes(),
