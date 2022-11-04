@@ -1,6 +1,6 @@
 import { CoinManager } from "saksaha";
-import { CoinRecord } from "saksaha/src/types/coin";
-import { Accessor, Component, createEffect, For, Setter } from "solid-js";
+import { CoinRecord } from "saksaha/src/types/coin_record";
+import { Accessor, Component, For, Setter } from "solid-js";
 import * as styles from './ResultPane.css';
 
 const ResultPane: Component<ResultPaneProps> = (props) => {

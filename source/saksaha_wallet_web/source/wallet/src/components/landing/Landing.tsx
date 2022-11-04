@@ -9,7 +9,7 @@ import ActionPane from "../actionPane/ActionPane";
 import ResultPane from '../resultPane/ResultPane';
 
 import { CoinManager } from 'saksaha';
-import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
+import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin_record';
 
 const LandingPage: Component = () => {
   const [walletAddress, setWalletAddress] = createSignal("");

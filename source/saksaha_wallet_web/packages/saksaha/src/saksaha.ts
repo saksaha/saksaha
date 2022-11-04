@@ -28,7 +28,6 @@ export class Saksaha {
   }
 
   async query(method: string, params?: Object) {
-
     let p = JSON.stringify(params);
     let params2 = Array.from(new TextEncoder().encode(p));
 

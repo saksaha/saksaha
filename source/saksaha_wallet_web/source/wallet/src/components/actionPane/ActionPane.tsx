@@ -1,5 +1,5 @@
 import { CoinManager } from 'saksaha';
-import { Component, createSignal, Setter, createEffect, Accessor } from 'solid-js';
+import { Component, createSignal, Setter, Accessor } from 'solid-js';
 import * as styles from './ActionPane.css';
 import FaucetBtn from './faucetBtn/FaucetBtn';
 import ProofGenBtn from './proofGenBtn/ProofGenBtn';

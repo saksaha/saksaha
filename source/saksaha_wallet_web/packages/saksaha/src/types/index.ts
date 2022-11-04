@@ -1,4 +1,4 @@
-import { CoinManager } from "./coin";
+import { CoinManager } from "./coin_manager";
 
 export interface Block {
   validator_sig: string;
