@@ -4,13 +4,14 @@ import * as styles from './ActionPane.css';
 import FaucetBtn from './faucetBtn/FaucetBtn';
 import ProofGenBtn from './proofGenBtn/ProofGenBtn';
 
-
-const ActionPane: Component<{
+interface ActionPaneProps {
   coin_manager_setter: Setter<CoinManager>,//
   coin_manager: Accessor<CoinManager>,
   wallet_addr_setter: Setter<string>,//
   mrs_slots_setter: Setter<string[]>
-}> = (props) => {
+}
+
+const ActionPane: Component<ActionPaneProps> = (props) => {
   let coin_manager_setter: Setter<CoinManager> = props.coin_manager_setter;
   let coin_manager: Accessor<CoinManager> = props.coin_manager;
   let wallet_addr_setter: Setter<string> = props.wallet_addr_setter;
@@ -31,10 +32,6 @@ const ActionPane: Component<{
 
     setLoginStatus(true);
   };
-
-  createEffect(() => {
-    console.log("[#ActionPane] coin manager:", coin_manager());
-  })
 
   return (
     <>

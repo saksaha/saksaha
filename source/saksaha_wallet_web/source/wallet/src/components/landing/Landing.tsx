@@ -12,7 +12,6 @@ import { CoinManager } from 'saksaha';
 import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
 
 const LandingPage: Component = () => {
-
   const [walletAddress, setWalletAddress] = createSignal("");
   const [coinManager, setCoinManager] = createSignal(new CoinManager());
   const [selectedCoin, setSelectedCoin] = createSignal<CoinRecord>({
@@ -33,11 +32,7 @@ const LandingPage: Component = () => {
 
   createEffect(() => {
     console.log("[#Landing] coin manager:", coinManager());
-
-    // console.log(walletAddress());
-
-    // console.log("current coin count: ", coinManager().coins.length);
-    // console.log("Selected Coin: " + selectedCoin().r);
+    console.log("Selected Coin: " + selectedCoin().cm);
   });
 
   return (

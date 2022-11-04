@@ -18,7 +18,6 @@ const get_proof = async (p: number[]) => {
 };
 
 const ProofGenBtn: Component = () => {
-
   return (
     <>
       {/* <input type="button" id="multiThread" value="Gen Proof" disabled /> */}

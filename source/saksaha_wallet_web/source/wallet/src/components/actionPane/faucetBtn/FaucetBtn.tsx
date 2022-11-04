@@ -7,9 +7,11 @@ import * as styles from './FaucetBtn.css';
 
 const get_tx = async (tx_hash: String) => {
   console.log("get tx");
+
   let axios: Saksaha = new Saksaha();
 
   const method = "get_tx";
+
   const params = {
     hash: tx_hash
   };
@@ -30,10 +32,10 @@ const send_mint_tx = async (new_coin_data: SendMintTxParam) => {
   let axios: Saksaha = new Saksaha();
 
   const method = "send_mint_tx";
+
   const params = new_coin_data;
 
   const res = await axios.query(method, params);
-
 
   return res;
 };
@@ -75,6 +77,7 @@ const convert_value_into_le_u8_32 = (value: number): number[] => {
 
   for (let i = 24; i < 32; i++) {
     value_u8_32[i] = (value % 256);
+
     value = Math.floor(value / 256);
   }
 
@@ -82,8 +85,11 @@ const convert_value_into_le_u8_32 = (value: number): number[] => {
 }
 const get_zero_u8_32 = (): number[] => {
   let zero_u8_32: number[] = [];
+
   for (let i = 0; i < 32; i++) {
+
     zero_u8_32[i] = 0x00;
+
   }
 
   return zero_u8_32;
@@ -219,14 +225,14 @@ const encode_hex = (arr: number[]): String => {
 
 
 const click_fn = async (
-  props: FBParam
+  props: FaucetBtnProps
 ) => {
   {
     const dummy_new_coin: Coin = get_dummy_new_coin_data();
     // const dummy_new_coin: Coin = get_new_coin_data(100);
 
     const dummy_send_mint_tx_data: SendMintTxParam = {
-      created_at: dummy_new_coin.created_at,
+      created_at: get_created_at(),
       data: [11],
       author_sig: "wallet_web_1",
       ctr_addr: 'Ok("null")',
@@ -242,6 +248,7 @@ const click_fn = async (
     console.log("tx_hash: ", tx_hash);
 
     alert("Your coin is mining... (~5 secs)")
+
     while (!await get_tx(tx_hash)) {
       // wait until the tx be in a new block...
     }
@@ -277,11 +284,7 @@ const click_fn = async (
 }
 
 
-const FaucetBtn: Component<FBParam> = (props) => {
-
-  createEffect(() => {
-    console.log("[#FaucetBtn] coin manager:", props.coin_manager());
-  })
+const FaucetBtn: Component<FaucetBtnProps> = (props) => {
 
   return (
     <>
@@ -321,7 +324,7 @@ interface SendMintTxParam {
   s: number[],
 }
 
-interface FBParam {
+interface FaucetBtnProps {
   coin_manager: Accessor<CoinManager>,
   coin_manager_setter: Setter<CoinManager>,//
 }
