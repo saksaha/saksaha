@@ -1,7 +1,7 @@
-use crate::{log, utils, CIError};
+use crate::{logln, utils, CIError};
 
 pub(crate) fn check_wasm_pack() -> Result<(), CIError> {
-    log!("check wasm pack");
+    logln!("check wasm pack");
 
     utils::find_command("wasm-pack").ok_or(format!(
         "wasm-pack is not found. You may have to install it.\n\

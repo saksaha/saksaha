@@ -3,22 +3,33 @@ mod scripts;
 mod tasks;
 mod utils;
 
+use std::process::ExitCode;
+
 use crate::{
     paths::Paths,
     scripts::{
         build, build_circuit_params, build_contracts, clean, dev, dev_evl_term, dev_proof_wasm,
         dev_wallet, test, wasm_pack_proof,
     },
+    utils::CI_LOGGER,
 };
 
 pub(crate) type CIError = Box<dyn std::error::Error + Send + Sync>;
 
-fn main() -> Result<(), CIError> {
-    validate_curr_dir()?;
+fn main() -> ExitCode {
+    if let Err(err) = validate_curr_dir() {
+        logln!("Error validating current directory, err: {}", err);
 
-    run_script()?;
+        return ExitCode::FAILURE;
+    }
 
-    Ok(())
+    if let Err(err) = run_script() {
+        logln!("Error executing script, err: {}", err);
+
+        return ExitCode::FAILURE;
+    }
+
+    return ExitCode::SUCCESS;
 }
 
 fn validate_curr_dir() -> Result<(), CIError> {
@@ -30,7 +41,7 @@ fn validate_curr_dir() -> Result<(), CIError> {
             .into_string()
             .expect("current dir must be stringified"),
         Err(_) => {
-            log!("Cannot get current working directory");
+            logln!("Cannot get current working directory");
 
             std::process::exit(1);
         }
@@ -39,7 +50,7 @@ fn validate_curr_dir() -> Result<(), CIError> {
     let project_root = match std::env::var("PROJECT_ROOT") {
         Ok(p) => p,
         Err(_) => {
-            log!(
+            logln!(
                 "PROJECT_ROOT is not defined. This is most likely due to \
                 that this binary has not been executed from the project root. \
                 Use `ci` script in the project. Exiting."
@@ -49,14 +60,14 @@ fn validate_curr_dir() -> Result<(), CIError> {
         }
     };
 
-    log!(
+    logln!(
         "CI is starting, project root: {}, current working directory: {}",
         project_root,
         curr_dir_str,
     );
 
     if project_root != curr_dir_str {
-        log!(
+        logln!(
             "Warning! You may be running this script not from the project \
             root with `ci` script"
         );
@@ -74,7 +85,7 @@ fn run_script() -> Result<(), CIError> {
         .nth(1)
         .expect("CI needs a second argument, the name of script to run");
 
-    log!("script name (2nd arg): {:?}", second_arg);
+    logln!("script name (2nd arg): {:?}", second_arg);
 
     match second_arg.as_str() {
         "dev" => {
