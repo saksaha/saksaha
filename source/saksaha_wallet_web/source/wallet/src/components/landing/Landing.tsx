@@ -7,11 +7,9 @@ import * as styles from './Landing.css';
 
 import ActionPane from "../actionPane/ActionPane";
 import ResultPane from '../resultPane/ResultPane';
-import ProofGenBtn from '../proofGenBtn/ProofGenBtn';
 
 import { CoinManager } from 'saksaha';
 import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin';
-import FaucetBtn from '../faucetBtn/FaucetBtn';
 
 const LandingPage: Component = () => {
 
@@ -34,8 +32,11 @@ const LandingPage: Component = () => {
   const [selectedMrsSlot, setSelectedMrsSlot] = createSignal("");
 
   createEffect(() => {
+    console.log("[#Landing] coin manager:", coinManager());
+
     // console.log(walletAddress());
-    // console.log(coinManager());
+
+    // console.log("current coin count: ", coinManager().coins.length);
     // console.log("Selected Coin: " + selectedCoin().r);
   });
 
@@ -44,12 +45,10 @@ const LandingPage: Component = () => {
       <div class={styles.left_pane}>
         <ActionPane
           coin_manager_setter={setCoinManager}
+          coin_manager={coinManager}
           wallet_addr_setter={setWalletAddress}
           mrs_slots_setter={setMrsSlots}
         />
-        <ProofGenBtn />
-        <br />
-        <FaucetBtn />
       </div>
       <div class={styles.right_pane}>
         <ResultPane

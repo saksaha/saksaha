@@ -1,4 +1,4 @@
-export const DEV_LOCAL_1_SK = "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7";
+const DEV_LOCAL_1_SK = "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7";
 
 export enum CoinStatus {
   Unconfirmed = "Unconfirmed ",
@@ -38,7 +38,7 @@ export class CoinManager {
         cm: "0x1f432fca960606195092e1f9a30adc7c5537e4eccadfdc7692b1892137c91bcb",
         coin_status: CoinStatus.Unused,
         cm_idx: "0",
-        coin_idx: "",
+        coin_idx: "0",
         tx_hash: "0x87b2f2ca4c9c22de99c3b4c550c2fd09906644aa735b823bcd0446921ddec498",
       };
 
@@ -52,14 +52,17 @@ export class CoinManager {
         cm: " 0x208bdfda89b9b5ebe1f362812778bc6b4234565a867b2c804f0c3f268b7e8cb7",
         coin_status: CoinStatus.Unused,
         cm_idx: "1",
-        coin_idx: "",
+        coin_idx: "1",
         tx_hash: "0x5fdc798f16ae272047631de0e2d925a083c39689cea69e5706a09224797fc99e",
       };
 
       coins.push(coin_record_1);
       coins.push(coin_record_2);
+    } else {
+      coins = [];
     }
 
     this.coins = coins;
   }
 };
+

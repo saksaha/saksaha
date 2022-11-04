@@ -21,7 +21,6 @@ const ProofGenBtn: Component = () => {
 
   return (
     <>
-      <h1> hello </h1>
       {/* <input type="button" id="multiThread" value="Gen Proof" disabled /> */}
       <input type="button" class={styles.proof_gen_btn} value="Proof Gen Btn" onclick={
         async () => {

@@ -28,7 +28,7 @@ export class Saksaha {
   }
 
   async query(method: string, params?: Object) {
-    console.log("axios req called, method: ", method);
+    console.log("axios req called, method:", method);
 
     let p = JSON.stringify(params);
     let params2 = Array.from(new TextEncoder().encode(p));

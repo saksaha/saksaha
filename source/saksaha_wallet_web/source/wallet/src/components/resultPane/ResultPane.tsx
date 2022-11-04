@@ -1,6 +1,6 @@
 import { CoinManager } from "saksaha";
 import { CoinRecord } from "saksaha/src/types/coin";
-import { Accessor, Component, For, Setter } from "solid-js";
+import { Accessor, Component, createEffect, For, Setter } from "solid-js";
 import * as styles from './ResultPane.css';
 
 const ResultPane: Component<{
@@ -13,9 +13,9 @@ const ResultPane: Component<{
 }> = (
   props) => {
     let wallet_addr: Accessor<string> = props.wallet_addr;
-    let coin_manager: Accessor<CoinManager> = props.coin_manager;
-    let selected_coin: Accessor<CoinRecord> = props.selected_coin;
-    let selected_coin_setter: Setter<CoinRecord> = props.selected_coin_setter;
+    // let coin_manager: Accessor<CoinManager> = props.coin_manager;
+    // let selected_coin: Accessor<CoinRecord> = props.selected_coin;
+    // let selected_coin_setter: Setter<CoinRecord> = props.selected_coin_setter;
     // let selected_mrs_slot: Accessor<string> = props.selected_mrs_slot;
     // let selected_mrs_slot_setter: Setter<string> = props.selected_mrs_slot_setter;
 
@@ -23,14 +23,14 @@ const ResultPane: Component<{
       return (
         <>
           <h3> coins</h3>
-          <For each={coin_manager().coins}>{(coin, i) =>
+          <For each={props.coin_manager().coins}>{(coin, i) =>
             <div
               class={
-                selected_coin().cm == coin.cm ?
+                props.selected_coin().cm == coin.cm ?
                   styles.selected_coin_record : styles.coin_record
               }
               onClick={
-                () => { selected_coin_setter(coin) }
+                () => { props.selected_coin_setter(coin) }
               }>
               coin [{i()}]: <br />
               {/* - addr_pk: {String(coin.addr_pk)} <br /> */}
@@ -58,6 +58,11 @@ const ResultPane: Component<{
         </>
       );
     }
+
+    createEffect(() => {
+      console.log("[#ResultPane] coin manager", props.coin_manager());
+
+    });
 
     return (
       <>
