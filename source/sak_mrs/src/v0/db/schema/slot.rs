@@ -29,6 +29,7 @@ impl MRSDB {
     }
 
     pub fn get_latest_index(&self, curr_slot: &str) -> Result<Option<i32>, MRSError> {
+        // curr_slot size = u64
         let curr_slot_0 = format!("{}_{}", curr_slot, 0);
         let next_slot_0 = {
             let vec_split: Vec<_> = curr_slot.split(['s'].as_ref()).collect();
