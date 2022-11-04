@@ -36,7 +36,6 @@ impl MRSDB {
             let slot_int = (i.parse::<i32>()?) + 1;
             format!("s{}_{}", slot_int, 0)
         };
-        println!("1 get_latest_idx - slotnum_idx:{}", next_slot_0);
 
         let mut iter = self.iter_from(CFSenum::RecordKey, next_slot_0.clone())?;
 
