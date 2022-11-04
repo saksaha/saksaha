@@ -1,7 +1,7 @@
-use crate::{log, paths::Paths, CIError};
+use crate::{logln, paths::Paths, CIError};
 
 pub(crate) fn clean_prebuild() -> Result<(), CIError> {
-    log!("Clean prebuild path");
+    logln!("Clean prebuild path");
 
     let prebuild_path = Paths::prebuild()?;
 
@@ -20,7 +20,7 @@ pub(crate) fn clean_prebuild() -> Result<(), CIError> {
 }
 
 pub(crate) fn clean_target() -> Result<(), CIError> {
-    log!("Clean target path");
+    logln!("Clean target path");
 
     let target_path = Paths::curr()?.join("target");
 
