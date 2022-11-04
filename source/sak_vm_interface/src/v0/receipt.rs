@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::VMInterfaceError;
 use sak_contract_std::{InvokeResult, Storage, ERROR_PLACEHOLDER};
 
@@ -9,8 +7,6 @@ pub enum FnType {
     Query,
     Execute,
 }
-
-pub struct Foo {}
 
 pub struct InvokeReceipt {
     pub gas_charged: usize,

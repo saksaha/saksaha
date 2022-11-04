@@ -3,17 +3,12 @@ use crate::Consensus;
 use crate::LedgerDB;
 use crate::LedgerError;
 use crate::SyncPool;
-use colored::Colorize;
-use sak_contract_std::ContractFn;
-use sak_contract_std::InvokeResult;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_types::BlockCandidate;
 use sak_vm_interface::ContractProcess;
-use sak_vm_interface::Foo;
-use sak_vm_interface::InvokeReceipt;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -29,7 +24,6 @@ pub struct SakLedger {
     pub hasher: MiMC,
     pub consensus: Box<dyn Consensus + Send + Sync>,
     pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
-    pub s: Arc<dyn Tr + Send + Sync>,
 }
 
 pub struct SakLedgerArgs {
@@ -39,25 +33,6 @@ pub struct SakLedgerArgs {
     pub block_sync_interval: Option<u64>,
     pub ledger_path: PathBuf,
     pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
-}
-
-#[async_trait::async_trait]
-pub trait Tr: Sync {
-    async fn a(&self);
-}
-
-struct S {}
-
-unsafe impl Send for S {}
-unsafe impl Sync for S {}
-
-#[async_trait::async_trait]
-impl Tr for S {
-    async fn a(&self)
-    where
-        Self: Sized,
-    {
-    }
 }
 
 impl SakLedger {
@@ -91,11 +66,6 @@ impl SakLedger {
 
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH as u32);
 
-        let s: Arc<dyn Tr + Send + Sync> = {
-            let s = S {};
-            Arc::new(s)
-        };
-
         let ledger = SakLedger {
             ledger_event_tx,
             ledger_db,
@@ -104,7 +74,6 @@ impl SakLedger {
             hasher,
             consensus,
             contract_processor,
-            s,
         };
 
         if let Some(bc) = genesis_block {
