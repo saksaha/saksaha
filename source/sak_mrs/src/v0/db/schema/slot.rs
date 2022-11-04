@@ -73,8 +73,7 @@ impl MRSDB {
                                 idx_int
                             }
                             None => {
-                                warn!("next slot exists, but cannot get index");
-                                0
+                                return Err("next slot exists, but cannot get index".into());
                             }
                         }
                     } else {
@@ -86,8 +85,7 @@ impl MRSDB {
                     }
                 }
                 None => {
-                    warn!("curr slot exists, but cannot get index");
-                    0
+                    return Err("curr slot exists, but cannot get index".into());
                 }
             }
         } else {
