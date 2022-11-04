@@ -1,6 +1,6 @@
-use crate::tasks;
 use crate::utils::Kommand;
 use crate::CIError;
+use crate::{tasks, vec_of_strings};
 use std::env::Args;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -13,9 +13,9 @@ pub(crate) fn run(args: Args) -> Result<(), CIError> {
 
     let program = "wasm-pack";
 
-    let cli_args: Vec<String> = args.map(|a| a.to_string()).collect();
+    let cli_args = args.collect();
 
-    let args_1: Vec<String> = ["build"].iter().map(|s| s.to_string()).collect();
+    let args_1 = vec_of_strings!["build"];
 
     let args = [args_1, cli_args].concat();
 

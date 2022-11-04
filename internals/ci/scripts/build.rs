@@ -1,17 +1,14 @@
 use crate::utils::Kommand;
-use crate::CIError;
+use crate::{vec_of_strings, CIError};
 use std::env::Args;
 use std::process::Stdio;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
     let program = "cargo";
 
-    let cli_args: Vec<String> = args.map(|a| a.to_string()).collect();
+    let cli_args = args.collect();
 
-    let args_1: Vec<String> = ["build", "--package", "saksaha_network", "--"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+    let args_1 = vec_of_strings!["build", "--package", "saksaha_network", "--"];
 
     let args = [args_1, cli_args].concat();
 

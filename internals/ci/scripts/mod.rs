@@ -6,6 +6,5 @@ pub(crate) mod dev;
 pub(crate) mod dev_evl_term;
 pub(crate) mod dev_proof_wasm;
 pub(crate) mod dev_wallet;
-pub(crate) mod expand;
 pub(crate) mod test;
 pub(crate) mod wasm_pack_proof;
