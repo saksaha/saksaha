@@ -1,22 +1,10 @@
-use crate::Consensus;
-use crate::ConsensusError;
 use crate::LedgerError;
 use crate::SakLedger;
 use sak_contract_std::ContractFn;
 use sak_contract_std::CtrRequest;
-use sak_contract_std::CtrRequestData;
-use sak_contract_std::InvokeResult;
-use sak_types::BlockCandidate;
-use sak_types::CtrAddr;
-use sak_types::TxCandidate;
 
 impl SakLedger {
-    pub async fn execute_ctr(
-        &self,
-        // ctr_addr: &CtrAddr,
-        // data: CtrRequestData,
-        req: CtrRequest,
-    ) -> Result<Vec<u8>, LedgerError> {
+    pub async fn execute_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(&req.ctr_addr)
@@ -36,12 +24,7 @@ impl SakLedger {
         Ok(result)
     }
 
-    pub async fn update_ctr(
-        &self,
-        // ctr_addr: &CtrAddr,
-        // data: CtrRequestData,
-        req: CtrRequest,
-    ) -> Result<Vec<u8>, LedgerError> {
+    pub async fn update_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(&req.ctr_addr)
