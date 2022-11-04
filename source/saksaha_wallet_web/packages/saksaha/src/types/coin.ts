@@ -1,65 +1,143 @@
-export const DEV_LOCAL_1_SK = "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7";
+import { comm, mimc } from "../crypto";
 
-export enum CoinStatus {
-  Unconfirmed = "Unconfirmed ",
-  Unused = "Unused",
-  Used = "Used",
-  Failed = "Failed",
+export interface Coin {
+  created_at: String,
+  addr_sk: number[],
+  addr_pk: number[],
+  rho: number[],
+  r: number[],
+  s: number[],
+  v: number[],
+  k: number[],
+  cm: Cm,
 };
 
-export type CoinRecord = {
-  addr_pk: String,
-  addr_sk: String,
-  rho: String,
-  r: String,
-  s: String,
-  v: String,
-  cm: String,
-  coin_status: CoinStatus,
-  cm_idx: String,
-  coin_idx: String,
-  tx_hash: String,
-};
+export type Cm = number[];
 
-export class CoinManager {
-  coins: CoinRecord[]
+const get_created_at = (): String => {
+  let today = new Date();
 
-  constructor(id?: String) {
-    let coins = new Array<CoinRecord>;
+  let year = today.getFullYear();
+  let month = ('0' + (today.getMonth() + 1)).slice(-2);
+  let day = ('0' + today.getDate()).slice(-2);
+  let dateString = year + '_' + month + '_' + day;
 
-    if (id == DEV_LOCAL_1_SK) {
-      let coin_record_1: CoinRecord = {
-        addr_pk: "0x65b4b8e3f33c9d4a5a3678715dbb56ca1613ad997f183d9e8762a5a8e020dd3b",
-        addr_sk: "0x14",
-        rho: "0x11",
-        r: "0x12",
-        s: "0x13",
-        v: "0x64",
-        cm: "0x1f432fca960606195092e1f9a30adc7c5537e4eccadfdc7692b1892137c91bcb",
-        coin_status: CoinStatus.Unused,
-        cm_idx: "0",
-        coin_idx: "",
-        tx_hash: "0x87b2f2ca4c9c22de99c3b4c550c2fd09906644aa735b823bcd0446921ddec498",
-      };
+  let hours = ('0' + today.getHours()).slice(-2);
+  let minutes = ('0' + today.getMinutes()).slice(-2);
+  let seconds = ('0' + today.getSeconds()).slice(-2);
+  let timeString = hours + ':' + minutes + ':' + seconds;
 
-      let coin_record_2: CoinRecord = {
-        addr_pk: "0x5554fdfb58f762cab6c219a492589a2666c62dd9af0bf65f66c5a7cf2319f4f2",
-        addr_sk: "0x24",
-        rho: "0x21",
-        r: "0x22",
-        s: "0x23",
-        v: "0x64",
-        cm: " 0x208bdfda89b9b5ebe1f362812778bc6b4234565a867b2c804f0c3f268b7e8cb7",
-        coin_status: CoinStatus.Unused,
-        cm_idx: "1",
-        coin_idx: "",
-        tx_hash: "0x5fdc798f16ae272047631de0e2d925a083c39689cea69e5706a09224797fc99e",
-      };
+  return dateString + "-" + timeString;
+}
 
-      coins.push(coin_record_1);
-      coins.push(coin_record_2);
-    }
+const get_zero_u8_32 = (): number[] => {
+  let zero_u8_32: number[] = [];
 
-    this.coins = coins;
+  for (let i = 0; i < 32; i++) {
+
+    zero_u8_32[i] = 0x00;
+
   }
-};
+
+  return zero_u8_32;
+}
+
+const convert_value_into_le_u8_32 = (value: number): number[] => {
+  let value_u8_32: number[] = [];
+
+  for (let i = 0; i < 24; i++) {
+    value_u8_32[i] = 0x00;
+  }
+
+  for (let i = 24; i < 32; i++) {
+    value_u8_32[i] = (value % 256);
+
+    value = Math.floor(value / 256);
+  }
+
+  return value_u8_32;
+}
+
+const gen_random_u8_32 = (): number[] => {
+  let b: number[] = [];
+
+  for (let i = 0; i < 32; i++) {
+    let rand_byte = Math.floor(Math.random() * 255);
+
+    b.push(rand_byte);
+  };
+
+  return b;
+}
+
+export const get_new_coin_data = (value: number): Coin => {
+  const created_at = get_created_at();
+  const addr_sk = gen_random_u8_32();
+  const addr_pk = mimc(addr_sk, get_zero_u8_32());
+  const rho = gen_random_u8_32();
+  const r = gen_random_u8_32();
+  const s = gen_random_u8_32();
+  const v = convert_value_into_le_u8_32(value);
+  const k = comm(r, addr_pk, rho);
+  const cm = comm(s, v, k);
+
+  const new_coin: Coin = {
+    created_at,
+    addr_sk,
+    addr_pk,
+    rho,
+    r,
+    s,
+    v,
+    k,
+    cm
+  };
+
+  return new_coin;
+}
+
+export const get_dummy_new_coin_data = (): Coin => {
+  const created_at = get_created_at();
+
+  const addr_sk = [
+    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+  ];
+
+  const addr_pk = mimc(addr_sk, get_zero_u8_32());
+
+  const rho = [
+    22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
+    22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
+  ];
+
+  const r = [
+    33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+    33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+  ];
+
+  const s = [
+    44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+    44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+  ];
+
+  const v = convert_value_into_le_u8_32(100);
+
+  const k = comm(r, addr_pk, rho);
+
+  const cm = comm(s, v, k);
+
+  const new_coin: Coin = {
+    created_at,
+    addr_sk,
+    addr_pk,
+    rho,
+    r,
+    s,
+    v,
+    k,
+    cm
+  };
+
+  return new_coin;
+}

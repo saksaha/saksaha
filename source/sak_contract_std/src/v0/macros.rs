@@ -80,8 +80,6 @@ macro_rules! define_ctr_fns {
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32, *mut u8, i32) {
-            HOST__log(22, 33);
-
             let request = $crate::parse_request!(request_ptr, request_len);
 
             let mrs = make_mrs_storage_param();
@@ -91,14 +89,19 @@ macro_rules! define_ctr_fns {
             let result: Result<$crate::InvokeResult, $crate::ContractError> =
                 execute(&ctx, request);
 
+            HOST__log(10, 10);
             let receipt = ctx.mrs.receipt();
             let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
             let receipt_ptr = receipt_bytes.as_mut_ptr();
             let receipt_len = receipt_bytes.len();
             std::mem::forget(receipt_bytes);
 
+            HOST__log(20, 20);
+
             let mut result: $crate::InvokeResult =
-                $crate::return_err_4!(result, "something failed");
+                $crate::return_err_4!(result, "something failed (ctr__execute)");
+            HOST__log(30, 30);
+
             let result_ptr = result.as_mut_ptr();
             let result_len = result.len();
             std::mem::forget(result);

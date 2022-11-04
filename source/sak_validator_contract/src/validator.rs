@@ -57,6 +57,13 @@ fn handle_get_validator(storage: Storage) -> Result<Vec<u8>, ContractError> {
 
     let ret = validator.to_owned().into_bytes();
 
+    // for wallet_web faucet test
+    // let ret = "045739d074b8722891c307e8e75c9607e0b55a80778\
+    //             b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+    //             e95590616fd382662a09653f2a966ff524989ae8c0f"
+    //     .as_bytes()
+    //     .to_vec();
+
     Ok(ret)
 }
 

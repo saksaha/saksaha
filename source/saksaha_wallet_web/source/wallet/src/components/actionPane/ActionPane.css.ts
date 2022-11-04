@@ -13,11 +13,12 @@ export const input_row = style({
   alignItems: "center",
   textAlign: "center",
   justifyContent: "space-between",
-  marginTop: "10px",
+  marginTop: "20px",
+  marginBottom: "20px",
 })
 
 export const input_single_field = style({
-  width: "80%",
+  minWidth: "80%",
   height: "50px",
   border: "1px solid black",
   borderRadius: "1px",
