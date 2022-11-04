@@ -1,8 +1,4 @@
-// pub(crate) mod keys {
-//     pub const SINGLETON: &[u8; 1] = &[0];
-// }
-
-pub(crate) mod cfs {
+pub(crate) mod col_labels {
     pub const TX_HASH_BY_CTR_ADDR: &str = "tx_hash_by_ctr_addr";
 
     pub const TX_HASH_BY_SN: &str = "tx_hash_by_sn";
