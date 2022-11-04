@@ -17,9 +17,9 @@ impl LedgerDB {
 
     pub fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
         let block_entity: Option<BlockEntity> =
-            self.get_ser(LedgerCols::BlockEntity, block_hash.as_bytes())?;
+            self.get(LedgerCols::BlockEntity, block_hash.as_bytes())?;
 
-        let block_merkle_rt = self.get_ser(LedgerCols::BlockMerkleRt, block_hash.as_bytes())?;
+        let block_merkle_rt = self.get(LedgerCols::BlockMerkleRt, block_hash.as_bytes())?;
 
         match (block_entity, block_merkle_rt) {
             (Some(b), Some(mr)) => {

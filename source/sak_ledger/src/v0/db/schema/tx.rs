@@ -18,7 +18,7 @@ impl LedgerDB {
 
     pub async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
         let tx_type = self
-            .get_ser(LedgerCols::TxType, tx_hash.as_bytes())?
+            .get(LedgerCols::TxType, tx_hash.as_bytes())?
             .ok_or(format!("Tx type does not exist, tx_hash: {}", tx_hash))?;
 
         let tx = match tx_type {
@@ -32,7 +32,7 @@ impl LedgerDB {
 
     fn get_mint_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let mint_tx_entity: MintTxEntity = self
-            .get_ser(LedgerCols::MintTxEntity, tx_hash.as_bytes())?
+            .get(LedgerCols::MintTxEntity, tx_hash.as_bytes())?
             .ok_or("MintTxEntity should exist")?;
 
         let tx_candidate = MintTxCandidate::new(
@@ -53,7 +53,7 @@ impl LedgerDB {
 
     fn get_pour_tx(&self, tx_hash: &String) -> Result<Tx, LedgerError> {
         let pour_tx_entity: PourTxEntity = self
-            .get_ser(LedgerCols::PourTxEntity, tx_hash.as_bytes())?
+            .get(LedgerCols::PourTxEntity, tx_hash.as_bytes())?
             .ok_or("PourTxEntity should exist")?;
 
         let tx_candidate = PourTxCandidate::new(

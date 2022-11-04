@@ -144,7 +144,7 @@ impl LedgerDB {
         Ok(())
     }
 
-    pub fn get_ser<T: Serialize + DeserializeOwned>(
+    pub fn get<T: Serialize + DeserializeOwned>(
         &self,
         column: LedgerCols,
         key: &[u8],

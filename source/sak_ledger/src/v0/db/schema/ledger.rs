@@ -18,7 +18,7 @@ impl LedgerDB {
     }
 
     pub(crate) fn get_merkle_node(&self, key: &String) -> Result<[u8; 32], LedgerError> {
-        match self.get_ser(LedgerCols::MerkleNode, key.as_bytes())? {
+        match self.get(LedgerCols::MerkleNode, key.as_bytes())? {
             Some(v) => Ok(v),
             None => {
                 let zero_value = {

@@ -8,11 +8,11 @@ impl LedgerDB {
         ctr_addr: &String,
     ) -> Result<Option<Vec<u8>>, LedgerError> {
         let tx_hash: TxHash = self
-            .get_ser(LedgerCols::TxHashByCtrAddr, ctr_addr.as_bytes())?
+            .get(LedgerCols::TxHashByCtrAddr, ctr_addr.as_bytes())?
             .ok_or("TxHashByCtrAddr should exist")?;
 
         let ctr_data = self
-            .get_ser(LedgerCols::Data, tx_hash.as_bytes())?
+            .get(LedgerCols::Data, tx_hash.as_bytes())?
             .ok_or("TxHashByCtrAddr should exist")?;
 
         Ok(Some(ctr_data))

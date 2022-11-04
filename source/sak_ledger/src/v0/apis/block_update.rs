@@ -213,7 +213,7 @@ impl SakLedger {
         } else {
             match self
                 .ledger_db
-                .get_ser::<Vec<u8>>(LedgerCols::EmptyValue, merkle_rt)
+                .get::<Vec<u8>>(LedgerCols::EmptyValue, merkle_rt)
             {
                 Ok(Some(_)) => true,
                 Ok(None) => false,
@@ -226,7 +226,7 @@ impl SakLedger {
         if sn == &DUMMY_SN {
             Ok(true)
         } else {
-            match self.ledger_db.get_ser::<TxHash>(LedgerCols::TxHashBySN, sn) {
+            match self.ledger_db.get::<TxHash>(LedgerCols::TxHashBySN, sn) {
                 Ok(Some(_)) => Err(format!("Serial numbers already exists, sns: {:?}", sn).into()),
                 Ok(None) => Ok(true),
                 Err(_) => {
