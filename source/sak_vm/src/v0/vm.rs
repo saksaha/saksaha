@@ -83,8 +83,6 @@ impl SakVM {
         memory: Memory,
         request: CtrRequest,
     ) -> Result<InvokeReceipt, VMError> {
-        println!("222");
-
         let contract_fn: CtrExecuteFn =
             { instance.get_typed_func(&mut store, symbols::CTR__EXECUTE)? };
 
@@ -115,22 +113,29 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
         }
 
-        let receipt_bytes: Vec<u8>;
-        unsafe {
-            receipt_bytes =
-                Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
-        }
+        // !! for testing wallet_web faucet
+        let result_bytes = "045739d074b8722891c307e8e75c9607e0b55a80778\
+                b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+                e95590616fd382662a09653f2a966ff524989ae8c0f"
+            .as_bytes()
+            .to_vec();
 
-        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
+        // let receipt_bytes: Vec<u8>;
+        // unsafe {
+        //     receipt_bytes =
+        //         Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
+        // }
 
-        println!("power11: {:?}", receipt);
-        let session_id = format!("{}_{}", ctr_addr, rand());
-        let session = Session {
-            id: session_id,
-            receipt,
-        };
+        // let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
 
-        self.mrs.add_session(session);
+        // println!("power11: {:?}", receipt);
+        // let session_id = format!("{}_{}", ctr_addr, rand());
+        // let session = Session {
+        //     id: session_id,
+        //     receipt,
+        // };
+
+        // self.mrs.add_session(session);
 
         let receipt = InvokeReceipt::from_query(result_bytes)?;
 
