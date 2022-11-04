@@ -1,4 +1,4 @@
-use crate::{log, CIError};
+use crate::{logln, CIError};
 use std::{
     env,
     path::{Path, PathBuf},

@@ -1,4 +1,4 @@
-use crate::{log, paths::Paths, CIError};
+use crate::{logln, paths::Paths, CIError};
 use chrono::Local;
 use colored::Colorize;
 use sak_crypto::{groth16, hasher::MiMC, Bls12, OsRng};
@@ -8,8 +8,8 @@ use sak_proof_types::{NewCoin, OldCoin};
 pub(crate) fn build_circuit_params() -> Result<(), CIError> {
     let start_time = Local::now();
 
-    log!("Build circuit params 2 to 2, this may take seconds to even minutes..!");
-    log!(
+    logln!("Build circuit params 2 to 2, this may take seconds to even minutes..!");
+    logln!(
         "Build circuit params, start time: {}",
         start_time.format("%H:%M:%S").to_string().yellow(),
     );
@@ -18,7 +18,7 @@ pub(crate) fn build_circuit_params() -> Result<(), CIError> {
 
     let end_time = Local::now();
 
-    log!(
+    logln!(
         "Success generating params 2 to 2, end time: {}",
         end_time.format("%H:%M:%S").to_string().yellow(),
     );
@@ -55,7 +55,7 @@ fn build_circuit_params_2_to_2() -> Result<(), CIError> {
 
     let file_path = path.join("circuit_params_2to2");
 
-    log!("Writing generated circuit params at {:?}", file_path);
+    logln!("Writing generated circuit params at {:?}", file_path);
 
     std::fs::write(file_path, v)?;
 
