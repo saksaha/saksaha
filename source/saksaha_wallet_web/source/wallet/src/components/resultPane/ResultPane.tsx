@@ -47,11 +47,6 @@ const ResultPane: Component<ResultPaneProps> = (props) => {
     );
   }
 
-  createEffect(() => {
-    console.log("[#ResultPane] coin manager", props.coin_manager());
-
-  });
-
   return (
     <>
       <h2>Saksaha Wallet</h2>
