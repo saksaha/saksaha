@@ -2,7 +2,7 @@ use crate::{
     request_type::{OPEN_CH, SEND_MSG},
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
-use sak_contract_derive::MRSStore;
+use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
     saksaha_contract, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
 };
@@ -20,7 +20,10 @@ pub struct SomeMRSStorage {
     pub channels: Dict<String>,
 }
 
-pub fn init() -> Result<Storage, ContractError> {
+#[derive(Debug, CtrStateStore)]
+pub struct SomeMRSCtrState {}
+
+pub fn init(ctx: &ContractCtx) -> Result<Storage, ContractError> {
     let evl_storage = EnvelopeStorage {
         open_ch_reqs: HashMap::new(),
         chats: HashMap::new(),

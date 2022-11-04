@@ -17,6 +17,17 @@ impl<T> List<T> {
         }
     }
 
+    pub fn init<B>(&self, data: B)
+    where
+        B: IntoIterator<Item = T>,
+    {
+        for (idx, d) in data.into_iter().enumerate() {
+            let key: String = format!("{}_{}", self._name, idx);
+
+            self.receipt.insert(key, d);
+        }
+    }
+
     pub fn get(&self, key: &String) -> Vec<u8> {
         let key: String = format!("{}_{}", self._name, key);
 

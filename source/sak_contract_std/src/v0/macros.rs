@@ -63,16 +63,22 @@ macro_rules! define_ctr_fns {
     () => {
         #[no_mangle]
         pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
-            let storage: Result<$crate::Storage, $crate::ContractError> = init();
+            let mrs = make_mrs_storage_param();
 
-            let mut storage = $crate::return_err_2!(storage);
+            let ctr_state = make_ctr_state_param();
 
-            let storage_ptr = storage.as_mut_ptr();
-            let storage_len = storage.len();
+            let ctx = ContractCtx { ctr_state, mrs };
 
-            std::mem::forget(storage);
+            let result: Result<$crate::Storage, $crate::ContractError> = init(&ctx);
 
-            (storage_ptr, storage_len as i32)
+            let mut result = $crate::return_err_2!(result);
+
+            let result_ptr = result.as_mut_ptr();
+            let result_len = result.len();
+
+            std::mem::forget(result);
+
+            (result_ptr, result_len as i32)
         }
 
         #[no_mangle]
@@ -84,7 +90,9 @@ macro_rules! define_ctr_fns {
 
             let mrs = make_mrs_storage_param();
 
-            let ctx = ContractCtx { mrs: mrs };
+            let ctr_state = make_ctr_state_param();
+
+            let ctx = ContractCtx { ctr_state, mrs };
 
             let result: Result<$crate::InvokeResult, $crate::ContractError> =
                 execute(&ctx, request);
@@ -123,7 +131,9 @@ macro_rules! define_ctr_fns {
 
             let mrs = make_mrs_storage_param();
 
-            let ctx = ContractCtx { mrs };
+            let ctr_state = make_ctr_state_param();
+
+            let ctx = ContractCtx { ctr_state, mrs };
 
             let result: Result<$crate::InvokeResult, $crate::ContractError> = update(ctx, request);
 
@@ -152,6 +162,7 @@ macro_rules! define_ctr_fns {
 macro_rules! define_contract_ctx {
     () => {
         pub struct ContractCtx {
+            ctr_state: _CTR_STATE,
             mrs: _MRS,
         }
 
