@@ -14,7 +14,7 @@ async fn test_mrs_auto_incremental_indexing() {
     // let mut slot_vec: Vec<String> = Vec::default();
     for i in record_key_vec {
         let tmp_mrs_entity = MrsRecord::new(i.to_string(), i.to_string(), [0].to_vec());
-        let _tmp_mrs_put_key = mrs.db.put_data(tmp_mrs_entity).await.unwrap();
+        let _tmp_mrs_put_key = mrs.db.put_record(tmp_mrs_entity).await.unwrap();
         // slot_vec.push(tmp_mrs_put_key);
     }
 

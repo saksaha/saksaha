@@ -9,7 +9,7 @@ use sak_logger::warn;
 use sak_types::{Block, BlockHash, BlockHeight, Tx};
 
 impl MRSDB {
-    pub fn get_data(&self, mrs_key: &String) -> Result<Option<MrsRecord>, MRSError> {
+    pub fn get_record(&self, mrs_key: &String) -> Result<Option<MrsRecord>, MRSError> {
         let mrs_entity: Option<MrsRecord> = self.get(CFSenum::Record, mrs_key.as_bytes())?;
 
         match mrs_entity {
@@ -99,7 +99,7 @@ impl MRSDB {
         Ok(Some(result - 1))
     }
 
-    pub async fn put_data(&self, mrs_record: MrsRecord) -> Result<String, MRSError> {
+    pub async fn put_record(&self, mrs_record: MrsRecord) -> Result<String, MRSError> {
         let mut batch = WriteBatch::default();
 
         let s = mrs_record.key.clone();
