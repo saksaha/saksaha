@@ -1,6 +1,8 @@
 import { threads } from 'wasm-feature-detect';
 import * as Comlink from 'comlink';
 
+console.log(1111111111111111);
+
 // Wrap wasm-bindgen exports (the `greet` function) to add time measurement.
 function wrapExports({ greet }: { greet: any }) {
   return async (int_arr: number[]) => {
@@ -27,7 +29,8 @@ async function initHandlers() {
       if (!(await threads())) return;
 
       const multiThread = await import(
-        '../../../pkg/sak_proof_wasm.js'
+        '../../../../../../../prebuild/sak_proof_wasm/sak_proof_wasm.js',
+        // '../../../pkg/sak_proof_wasm.js'
       );
 
       await multiThread.default();
