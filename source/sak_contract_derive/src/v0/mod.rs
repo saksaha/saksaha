@@ -33,7 +33,10 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
         impl #struct_name {
             fn new_as_contract_param() -> #struct_name {
                 let instance = #struct_name {#(
-                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(stringify!(#field_name).to_string()),
+                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(
+                        stringify!(#field_name).to_string(),
+                        sak_contract_std::HostStorage::MRS,
+                    ),
                 )*};
 
                 unsafe {
@@ -43,7 +46,7 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
                 return instance;
             }
 
-            pub fn receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+            pub fn get_receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
                 println!("receipt!!!");
 
                 let mut map = std::collections::HashMap::new();
@@ -70,6 +73,7 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
     };
 
     let field_name = fields.iter().map(|field| &field.ident);
+    let field_name2 = fields.iter().map(|field| &field.ident);
     let field_type = fields.iter().map(|field| &field.ty);
     let struct_name = &input.ident;
 
@@ -83,7 +87,10 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
         impl #struct_name {
             fn new_as_contract_param() -> #struct_name {
                 let instance = #struct_name {#(
-                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(stringify!(#field_name).to_string()),
+                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(
+                        stringify!(#field_name).to_string()
+                        sak_contract_std::HostStorage::CtrState,
+                    ),
                 )*};
 
                 unsafe {
@@ -91,6 +98,18 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
                 }
 
                 return instance;
+            }
+
+            pub fn get_receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+                println!("receipt!!!");
+
+                let mut map = std::collections::HashMap::new();
+
+                #(
+                    map.extend(self.#field_name2.receipt());
+                )*
+
+                map
             }
         }
     })

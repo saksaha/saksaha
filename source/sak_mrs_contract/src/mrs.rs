@@ -14,7 +14,7 @@ pub struct SomeMRSMRSStore {}
 #[derive(Debug, CtrStateStore)]
 pub struct SomeMRSCtrState {}
 
-pub fn init(ctx: &ContractCtx) -> Result<Storage, ContractError> {
+pub fn init(ctx: &mut ContractCtx) -> Result<Storage, ContractError> {
     let evl_storage = MutableRecordStorage {
         slots: vec![Slot::default()],
     };

@@ -14,34 +14,27 @@ saksaha_contract!(0.0.1);
 pub struct ValidatorMRSStorage {}
 
 #[derive(CtrStateStore, Debug)]
-pub struct ValidatorStorage {
+pub struct ValidatorCtrState {
     pub validators: List<String>,
 }
 
-pub fn init(ctx: &ContractCtx) -> Result<Vec<u8>, ContractError> {
-    ctx.ctr_state.validators.put_bulk(["1".to_string()]);
-    // let a = Vec::([1]);
+pub fn init(ctx: &mut ContractCtx) -> Result<Vec<u8>, ContractError> {
+    ctx.ctr_state
+        .validators
+        .init(["045739d074b8722891c307e8e75c9607e0b55a80778\
+                b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+                e95590616fd382662a09653f2a966ff524989ae8c0f"
+            .to_string()]);
 
-    // let storage = ValidatorStorage {
-    //     validators: vec![
-    //         // TODO public_key of 'dev_local_1' profile
-    //         // This should be inserted via a separate tx
-    //         "045739d074b8722891c307e8e75c9607e0b55a80778\
-    //             b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
-    //             e95590616fd382662a09653f2a966ff524989ae8c0f"
-    //             .to_string(),
-    //     ],
-    // };
-    // let v = serde_json::to_vec(&storage)?;
-
-    let v = vec![];
-
-    Ok(v)
+    Ok(vec![0])
 }
 
 pub fn execute(ctx: &ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
-    // let storage = vec![];
-    return Ok(vec![0]);
+    let receipt = ctx.ctr_state.validators.receipt();
+
+    let validator = receipt.get(key);
+
+    return Ok(validator);
 
     // let storage = ValidatorStorage {
     //     validators: vec!["045739d074b8722891c307e8e75c9607e0b55a80778\

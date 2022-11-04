@@ -328,11 +328,20 @@ impl SakLedger {
                     .contract_processor
                     .invoke(ctr_addr, &data, ContractFn::Init)?;
 
-                let storage = receipt
-                    .updated_storage
+                let updated_ctr_state = receipt
+                    .updated_ctr_state
                     .ok_or("Contract state needs to be initialized")?;
 
-                ctr_state_update.insert(ctr_addr.clone(), storage);
+                for entry in updated_ctr_state {
+                    let (field, value) = entry.to_owned();
+
+                    let key = format!("{}_{}", ctr_addr, field);
+
+                    ctr_state_update.insert(key.clone(), value.clone());
+
+                    println!("[! aaron] insert !!!");
+                    println!("[! aaron] key: {:?}, value: {:?}", key, value);
+                }
             }
 
             TxCtrOp::ContractCall => {

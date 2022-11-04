@@ -24,6 +24,8 @@ macro_rules! define_host_ffi {
                 param4: u32,
                 ptr_ret_len: *mut u32,
             ) -> i32;
+
+            // fn HOST__
         }
     };
 }
@@ -62,23 +64,34 @@ macro_rules! define_ctr_default_fns {
 macro_rules! define_ctr_fns {
     () => {
         #[no_mangle]
-        pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
+        pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32, *mut u8, i32) {
             let mrs = make_mrs_storage_param();
 
             let ctr_state = make_ctr_state_param();
 
-            let ctx = ContractCtx { ctr_state, mrs };
+            let mut ctx = ContractCtx { ctr_state, mrs };
 
-            let result: Result<$crate::Storage, $crate::ContractError> = init(&ctx);
+            let result: Result<$crate::Storage, $crate::ContractError> = init(&mut ctx);
 
-            let mut result = $crate::return_err_2!(result);
+            let mut result = $crate::return_err_4!(result, "error");
 
             let result_ptr = result.as_mut_ptr();
             let result_len = result.len();
 
             std::mem::forget(result);
 
-            (result_ptr, result_len as i32)
+            let receipt = ctx.ctr_state.get_receipt();
+            let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
+            let receipt_ptr = receipt_bytes.as_mut_ptr();
+            let receipt_len = receipt_bytes.len();
+            std::mem::forget(receipt_bytes);
+
+            return (
+                result_ptr,
+                result_len as i32,
+                receipt_ptr,
+                receipt_len as i32,
+            );
         }
 
         #[no_mangle]
@@ -98,7 +111,7 @@ macro_rules! define_ctr_fns {
                 execute(&ctx, request);
 
             HOST__log(10, 10);
-            let receipt = ctx.mrs.receipt();
+            let receipt = ctx.mrs.get_receipt();
             let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
             let receipt_ptr = receipt_bytes.as_mut_ptr();
             let receipt_len = receipt_bytes.len();

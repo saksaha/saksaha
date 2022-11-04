@@ -1,30 +1,40 @@
-use crate::{get_mrs_data_from_host, put_mrs_data_to_host};
+use crate::{get_mrs_data_from_host, HostStorage};
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct List<T> {
+pub struct List<T>
+where
+    T: AsRef<[u8]>,
+{
     _name: String,
+    _host_storage: HostStorage,
     receipt: HashMap<String, Vec<u8>>,
     phantom: Vec<T>,
 }
 
-impl<T> List<T> {
-    pub fn new(_name: String) -> Self {
+impl<T> List<T>
+where
+    T: AsRef<[u8]>,
+{
+    pub fn new(_name: String, _host_storage: HostStorage) -> Self {
         List {
             _name,
+            _host_storage,
             receipt: HashMap::new(),
             phantom: Vec::new(),
         }
     }
 
-    pub fn init<B>(&self, data: B)
+    pub fn init<B>(&mut self, data: B)
     where
         B: IntoIterator<Item = T>,
     {
         for (idx, d) in data.into_iter().enumerate() {
             let key: String = format!("{}_{}", self._name, idx);
 
-            self.receipt.insert(key, d);
+            let val = d.as_ref().to_vec();
+
+            self.receipt.insert(key, val);
         }
     }
 
@@ -36,15 +46,10 @@ impl<T> List<T> {
         data
     }
 
-    pub fn put(&self, value: &String) {
-        let key: String = format!("{}", self._name);
-
-        put_mrs_data_to_host(&key, value);
-    }
-
     pub fn push(&mut self, value: Vec<u8>) {
         //TO-DO: get latest idx of the stored List and update index
         let latest_idx_key = String::from("latest_idx");
+
         let latest_idx = get_mrs_data_from_host(&latest_idx_key);
 
         let latest_idx = 0;
