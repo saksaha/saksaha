@@ -1,4 +1,4 @@
-use crate::{get_mrs_data_from_host, HostStorage};
+use crate::{get_ctr_state_from_host, get_mrs_data_from_host, HostStorage};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -41,7 +41,10 @@ where
     pub fn get(&self, key: &String) -> Vec<u8> {
         let key: String = format!("{}_{}", self._name, key);
 
-        let data = get_mrs_data_from_host(&key);
+        let data = match self._host_storage {
+            HostStorage::MRS => get_mrs_data_from_host(&key),
+            HostStorage::CtrState => get_ctr_state_from_host(&key),
+        };
 
         data
     }

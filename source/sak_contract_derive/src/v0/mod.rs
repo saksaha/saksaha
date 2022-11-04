@@ -35,7 +35,7 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
                 let instance = #struct_name {#(
                     #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(
                         stringify!(#field_name).to_string(),
-                        sak_contract_std::HostStorage::MRS,
+                        sak_contract_std::HostStorage::MRS
                     ),
                 )*};
 
@@ -88,8 +88,8 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
             fn new_as_contract_param() -> #struct_name {
                 let instance = #struct_name {#(
                     #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(
-                        stringify!(#field_name).to_string()
-                        sak_contract_std::HostStorage::CtrState,
+                        stringify!(#field_name).to_string(),
+                        sak_contract_std::HostStorage::CtrState
                     ),
                 )*};
 

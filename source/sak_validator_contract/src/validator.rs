@@ -30,9 +30,8 @@ pub fn init(ctx: &mut ContractCtx) -> Result<Vec<u8>, ContractError> {
 }
 
 pub fn execute(ctx: &ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
-    let receipt = ctx.ctr_state.validators.receipt();
-
-    let validator = receipt.get(key);
+    let validator = ctx.ctr_state.validators.get(&"0".to_string());
+    // let validator = receipt.get(key);
 
     return Ok(validator);
 
