@@ -39,6 +39,7 @@ members = [
   "source/wasm_postprocess",
   "source/type_extension",
   "source/saksaha_rs",
+  "source/saksaha_sdk_web",
   "source/saksaha_wallet",
 
   # Contracts (independently compiled and processed)
