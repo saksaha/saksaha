@@ -35,10 +35,10 @@ impl GenesisBlock {
             validator_wasm,
             VALIDATOR_CTR_ADDR.to_string(),
         );
-        // let tx_deploy_envelope = sak_types::mock_mint_tc_deploying_contract(
-        //     envelope_wasm,
-        //     ENVELOPE_CTR_ADDR.to_string(),
-        // );
+        let tx_deploy_envelope = sak_types::mock_mint_tc_deploying_contract(
+            envelope_wasm,
+            ENVELOPE_CTR_ADDR.to_string(),
+        );
         // let tx_deploy_mrs =
         //     sak_types::mock_mint_tc_deploying_contract(mrs_wasm, MRS_CTR_ADDR.to_string());
 
@@ -51,7 +51,7 @@ impl GenesisBlock {
                 tx_mint_1,
                 tx_mint_2,
                 tx_deploy_validator,
-                // tx_deploy_envelope,
+                tx_deploy_envelope,
                 // tx_deploy_mrs,
                 tx_mint_3,
                 tx_mint_4,

@@ -51,9 +51,9 @@ pub fn get_ctr_state_from_host(key: &String) -> Vec<u8> {
 
         let data = Vec::from_raw_parts(ret_ptr as *mut u8, ret_len as usize, ret_len as usize);
 
-        for i in 0..data.len() {
-            HOST__log(data[i] as i32, 33333);
-        }
+        // for i in 0..data.len() {
+        //     HOST__log(data[i] as i32, 33333);
+        // }
 
         data
     }
