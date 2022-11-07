@@ -1,4 +1,4 @@
-use crate::{log, paths::Paths, utils::Kommand, CIError};
+use crate::{logln, paths::Paths, utils::Kommand, vec_of_strings, CIError};
 use sak_contract_std::symbols;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -36,7 +36,7 @@ pub(crate) fn naively_check_if_prebuild_has_done() -> Result<bool, CIError> {
 }
 
 pub(crate) fn build_3rd_party_contracts() -> Result<(), CIError> {
-    log!("build 3rd party contracts");
+    logln!("build 3rd party contracts");
 
     let externals_path = Paths::externals()?;
 
@@ -61,7 +61,7 @@ pub(crate) fn build_3rd_party_contracts() -> Result<(), CIError> {
 }
 
 pub(crate) fn build_system_contracts() -> Result<(), CIError> {
-    log!("build system contracts");
+    logln!("build system contracts");
 
     let source_path = Paths::source()?;
 
@@ -119,13 +119,13 @@ fn add_cargo_optimizing_flags(cmd: &mut Cmd) {
 
 fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
     if ctr.path.exists() {
-        let curr_path = Paths::curr()?;
+        let project_root = Paths::project_root()?;
 
         let program = "cargo";
 
-        let args = ["wasm"].iter().map(|s| s.to_string()).collect();
+        let args = vec_of_strings!["wasm"];
 
-        log!(
+        logln!(
             "building system contract, name: {}, path: {:?}",
             ctr.name,
             ctr.path,
@@ -141,7 +141,7 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
             .output()
             .expect("failed to run");
 
-        let wasm_path = curr_path
+        let wasm_path = project_root
             .join("target/wasm32-unknown-unknown/release")
             .join(format!("{}.wasm", ctr.name));
 
@@ -161,7 +161,7 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
 
 fn post_process_wasm(wasm_path: PathBuf) -> Result<PathBuf, CIError> {
     let multi_return_symbols = vec![
-        format!("{} i32 i32", symbols::CTR__INIT),
+        format!("{} i32 i32 i32 i32", symbols::CTR__INIT),
         format!("{} i32 i32 i32 i32", symbols::CTR__EXECUTE),
         format!("{} i32 i32 i32 i32", symbols::CTR__UPDATE),
     ];

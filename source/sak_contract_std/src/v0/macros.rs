@@ -17,13 +17,15 @@ macro_rules! define_host_ffi {
 
             fn HOST__get_mrs_data(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
 
-            fn HOST__put_mrs_data(
-                param1: *mut u8,
-                param2: u32,
-                param3: *mut u8,
-                param4: u32,
-                ptr_ret_len: *mut u32,
-            ) -> i32;
+            fn HOST__get_ctr_state(param1: *mut u8, param2: u32, ptr_ret_len: *mut u32) -> i32;
+
+            // fn HOST__put_mrs_data(
+            //     param1: *mut u8,
+            //     param2: u32,
+            //     param3: *mut u8,
+            //     param4: u32,
+            //     ptr_ret_len: *mut u32,
+            // ) -> i32;
         }
     };
 }
@@ -62,17 +64,34 @@ macro_rules! define_ctr_default_fns {
 macro_rules! define_ctr_fns {
     () => {
         #[no_mangle]
-        pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32) {
-            let storage: Result<$crate::Storage, $crate::ContractError> = init();
+        pub unsafe extern "C" fn CTR__init() -> (*mut u8, i32, *mut u8, i32) {
+            let mrs = make_mrs_storage_param();
 
-            let mut storage = $crate::return_err_2!(storage);
+            let ctr_state = make_ctr_state_param();
 
-            let storage_ptr = storage.as_mut_ptr();
-            let storage_len = storage.len();
+            let mut ctx = ContractCtx { ctr_state, mrs };
 
-            std::mem::forget(storage);
+            let result: Result<$crate::Storage, $crate::ContractError> = init(&mut ctx);
 
-            (storage_ptr, storage_len as i32)
+            let mut result = $crate::return_err_4!(result, "error");
+
+            let result_ptr = result.as_mut_ptr();
+            let result_len = result.len();
+
+            std::mem::forget(result);
+
+            let receipt = ctx.ctr_state.get_receipt();
+            let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
+            let receipt_ptr = receipt_bytes.as_mut_ptr();
+            let receipt_len = receipt_bytes.len();
+            std::mem::forget(receipt_bytes);
+
+            return (
+                result_ptr,
+                result_len as i32,
+                receipt_ptr,
+                receipt_len as i32,
+            );
         }
 
         #[no_mangle]
@@ -80,25 +99,30 @@ macro_rules! define_ctr_fns {
             request_ptr: *mut u8,
             request_len: usize,
         ) -> (*mut u8, i32, *mut u8, i32) {
-            HOST__log(22, 33);
-
             let request = $crate::parse_request!(request_ptr, request_len);
 
             let mrs = make_mrs_storage_param();
 
-            let ctx = ContractCtx { mrs: mrs };
+            let ctr_state = make_ctr_state_param();
+
+            let ctx = ContractCtx { ctr_state, mrs };
 
             let result: Result<$crate::InvokeResult, $crate::ContractError> =
                 execute(&ctx, request);
 
-            let receipt = ctx.mrs.receipt();
+            HOST__log(10, 10);
+            let receipt = ctx.mrs.get_receipt();
             let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
             let receipt_ptr = receipt_bytes.as_mut_ptr();
             let receipt_len = receipt_bytes.len();
             std::mem::forget(receipt_bytes);
 
+            HOST__log(20, 20);
+
             let mut result: $crate::InvokeResult =
-                $crate::return_err_4!(result, "something failed");
+                $crate::return_err_4!(result, "something failed (ctr__execute)");
+            HOST__log(30, 30);
+
             let result_ptr = result.as_mut_ptr();
             let result_len = result.len();
             std::mem::forget(result);
@@ -120,7 +144,9 @@ macro_rules! define_ctr_fns {
 
             let mrs = make_mrs_storage_param();
 
-            let ctx = ContractCtx { mrs };
+            let ctr_state = make_ctr_state_param();
+
+            let ctx = ContractCtx { ctr_state, mrs };
 
             let result: Result<$crate::InvokeResult, $crate::ContractError> = update(ctx, request);
 
@@ -149,6 +175,7 @@ macro_rules! define_ctr_fns {
 macro_rules! define_contract_ctx {
     () => {
         pub struct ContractCtx {
+            ctr_state: _CTR_STATE,
             mrs: _MRS,
         }
 

@@ -32,20 +32,21 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
 
         impl #struct_name {
             fn new_as_contract_param() -> #struct_name {
-                let a = #struct_name {#(
-                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(stringify!(#field_name).to_string()),
+                let instance = #struct_name {#(
+                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(
+                        stringify!(#field_name).to_string(),
+                        sak_contract_std::HostStorage::MRS
+                    ),
                 )*};
-
-                println!("a: {:?}", a);
 
                 unsafe {
                     HOST__log(1, 2);
                 }
 
-                return a;
+                return instance;
             }
 
-            pub fn receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+            pub fn get_receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
                 println!("receipt!!!");
 
                 let mut map = std::collections::HashMap::new();
@@ -72,27 +73,43 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
     };
 
     let field_name = fields.iter().map(|field| &field.ident);
+    let field_name2 = fields.iter().map(|field| &field.ident);
     let field_type = fields.iter().map(|field| &field.ty);
     let struct_name = &input.ident;
 
     TokenStream::from(quote! {
-        fn make_mrs_storage_param() -> #struct_name {
+        type _CTR_STATE = #struct_name;
+
+        fn make_ctr_state_param() -> #struct_name {
             #struct_name::new_as_contract_param()
         }
 
         impl #struct_name {
             fn new_as_contract_param() -> #struct_name {
-                let a = #struct_name {#(
-                    #field_name : #field_type::new(stringify!(#field_name).to_string()),
+                let instance = #struct_name {#(
+                    #field_name: <sak_contract_std::parse_generics!(#field_type)>::new(
+                        stringify!(#field_name).to_string(),
+                        sak_contract_std::HostStorage::CtrState
+                    ),
                 )*};
 
-                println!("a: {:?}", a);
-
                 unsafe {
-                    HOST__log(1, 2);
+                    HOST__log(2, 3);
                 }
 
-                return a;
+                return instance;
+            }
+
+            pub fn get_receipt(&self) -> std::collections::HashMap<String, Vec<u8>> {
+                println!("receipt!!!");
+
+                let mut map = std::collections::HashMap::new();
+
+                #(
+                    map.extend(self.#field_name2.receipt());
+                )*
+
+                map
             }
         }
     })

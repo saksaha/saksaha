@@ -19,7 +19,7 @@ pub struct SakVM {
 impl ContractProcess for SakVM {
     fn invoke(
         &self,
-        ctr_addr: &String,
+        _ctr_addr: &String,
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
@@ -33,7 +33,7 @@ impl ContractProcess for SakVM {
             ContractFn::Execute(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
 
-                self.invoke_execute(ctr_addr, instance, store, memory, request)
+                self.invoke_execute(instance, store, memory, request)
             }
             ContractFn::Update(request) => {
                 let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
@@ -62,29 +62,41 @@ impl SakVM {
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: CtrInitFn = { instance.get_typed_func(&mut store, symbols::CTR__INIT)? };
 
-        let (storage_ptr, storage_len) = contract_fn.call(&mut store, ())?;
+        let (result_ptr, result_len, receipt_ptr, receipt_len) =
+            contract_fn.call(&mut store, ())?;
 
-        let storage: Vec<u8>;
+        let result_bytes: Vec<u8>;
         unsafe {
-            storage =
-                Wasmtime::read_memory(&store, &memory, storage_ptr as u32, storage_len as u32)?;
+            result_bytes =
+                Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?;
         }
 
-        let receipt = InvokeReceipt::from_init()?;
+        let receipt_bytes: Vec<u8>;
+        unsafe {
+            receipt_bytes =
+                Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
+        }
 
-        Ok(receipt)
+        println!(
+            "[! aaron] result_bytes: {:?}",
+            String::from_utf8_lossy(&receipt_bytes)
+        );
+
+        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
+
+        let invoke_receipt = InvokeReceipt::from_init(Some(receipt))?;
+
+        Ok(invoke_receipt)
     }
 
     fn invoke_execute(
         &self,
-        ctr_addr: &String,
+        // ctr_addr: &String,
         instance: Instance,
         mut store: Store<InstanceState>,
         memory: Memory,
         request: CtrRequest,
     ) -> Result<InvokeReceipt, VMError> {
-        println!("222");
-
         let contract_fn: CtrExecuteFn =
             { instance.get_typed_func(&mut store, symbols::CTR__EXECUTE)? };
 
@@ -121,18 +133,24 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
         }
 
+        println!("[! aaron] result_bytes: {:02x?}", receipt_bytes);
+        println!(
+            "[! aaron] result_bytes: {:?}",
+            String::from_utf8_lossy(&receipt_bytes)
+        );
+
         let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
 
-        println!("power11: {:?}", receipt);
-        let session_id = format!("{}_{}", ctr_addr, rand());
-        let session = Session {
-            id: session_id,
-            receipt,
-        };
+        // println!("power11: {:?}", receipt);
+        // let session_id = format!("{}_{}", ctr_addr, rand());
+        // let session = Session {
+        //     id: session_id,
+        //     receipt,
+        // };
 
-        self.mrs.add_session(session);
+        // self.mrs.add_session(session);
 
-        let receipt = InvokeReceipt::from_query(result_bytes)?;
+        let receipt = InvokeReceipt::from_execute(result_bytes)?;
 
         Ok(receipt)
     }
@@ -180,7 +198,7 @@ impl SakVM {
             result = Wasmtime::read_memory(&store, &memory, result_ptr as u32, result_len as u32)?
         }
 
-        let receipt = InvokeReceipt::from_execute(result, storage)?;
+        let receipt = InvokeReceipt::from_update(result, storage)?;
 
         Ok(receipt)
     }

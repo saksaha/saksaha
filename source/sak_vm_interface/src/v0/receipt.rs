@@ -10,54 +10,58 @@ pub enum FnType {
     Execute,
 }
 
-pub struct Foo {}
-
 pub struct InvokeReceipt {
     pub gas_charged: usize,
     pub fn_type: FnType,
     pub result: InvokeResult,
-    pub updated_storage: Option<Vec<u8>>,
+    pub updated_ctr_state: Option<HashMap<String, Vec<u8>>>,
+    pub updated_mrs: Option<HashMap<String, Vec<u8>>>,
 }
 
 impl InvokeReceipt {
-    pub fn from_init() -> Result<InvokeReceipt, VMInterfaceError> {
-        let rpt = InvokeReceipt {
+    pub fn from_init(
+        updated_ctr_state: Option<HashMap<String, Vec<u8>>>,
+    ) -> Result<InvokeReceipt, VMInterfaceError> {
+        let receipt = InvokeReceipt {
             gas_charged: 0,
             fn_type: FnType::Init,
             result: vec![],
-            updated_storage: Some(vec![]),
+            updated_ctr_state,
+            updated_mrs: Some(HashMap::new()),
         };
 
-        Ok(rpt)
+        Ok(receipt)
     }
 
-    pub fn from_query(result: InvokeResult) -> Result<InvokeReceipt, VMInterfaceError> {
+    pub fn from_execute(result: InvokeResult) -> Result<InvokeReceipt, VMInterfaceError> {
         let res = try_parse_invoked(result)?;
 
-        let rpt = InvokeReceipt {
+        let receipt = InvokeReceipt {
             gas_charged: 0,
             fn_type: FnType::Query,
             result: res,
-            updated_storage: Some(vec![]),
+            updated_ctr_state: Some(HashMap::new()),
+            updated_mrs: Some(HashMap::new()),
         };
 
-        Ok(rpt)
+        Ok(receipt)
     }
 
-    pub fn from_execute(
+    pub fn from_update(
         result: InvokeResult,
         storage: Storage,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
         let res = try_parse_invoked(result)?;
 
-        let rpt = InvokeReceipt {
+        let receipt = InvokeReceipt {
             gas_charged: 0,
             fn_type: FnType::Execute,
             result: res,
-            updated_storage: Some(vec![]),
+            updated_ctr_state: Some(HashMap::new()),
+            updated_mrs: Some(HashMap::new()),
         };
 
-        Ok(rpt)
+        Ok(receipt)
     }
 }
 
