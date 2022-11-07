@@ -27,7 +27,8 @@ async function initHandlers() {
       if (!(await threads())) return;
 
       const multiThread = await import(
-        '../../../pkg/sak_proof_wasm.js'
+        '../../../../../../../prebuild/sak_proof_wasm/sak_proof_wasm.js',
+        // '../../../pkg/sak_proof_wasm.js'
       );
 
       await multiThread.default();

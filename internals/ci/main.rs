@@ -3,16 +3,15 @@ mod scripts;
 mod tasks;
 mod utils;
 
-use std::process::ExitCode;
-
 use crate::{
     paths::Paths,
     scripts::{
         build, build_circuit_params, build_contracts, clean, dev, dev_evl_term, dev_proof_wasm,
-        dev_wallet, test, wasm_pack_proof,
+        dev_wallet, dev_wallet_web, test, wasm_pack_proof,
     },
     utils::CI_LOGGER,
 };
+use std::process::ExitCode;
 
 pub(crate) type CIError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -105,6 +104,9 @@ fn run_script() -> Result<(), CIError> {
         }
         "dev_wallet" => {
             dev_wallet::run(args)?;
+        }
+        "dev_wallet_web" => {
+            dev_wallet_web::run(args)?;
         }
         "dev_proof_wasm" => {
             dev_proof_wasm::run(args)?;
