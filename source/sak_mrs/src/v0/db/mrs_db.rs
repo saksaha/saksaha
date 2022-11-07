@@ -1,9 +1,11 @@
 use super::columns::{self, CFSenum};
-
+use chrono::offset::Utc;
+use chrono::DateTime;
 use sak_kv_db::{
     BoundColumnFamily, ColumnFamilyDescriptor, DBIteratorWithThreadMode, DBWithThreadMode,
-    IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
+    Direction, IteratorMode, KeyValueDatabase, MultiThreaded, Options, WriteBatch, DB,
 };
+use std::time::SystemTime;
 
 use crate::MRSError;
 use sak_logger::info;
@@ -17,17 +19,31 @@ pub struct MRSDB {
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MrsEntity {
-    pub mrs_key: String,
-    pub mrs_value: String,
+pub struct MrsRecord {
+    pub key: String,
+    pub value: String,
     pub ib: Vec<u8>,
     pub timestamp: String,
-    pub idx: u32,
+    // pub idx: u32,
+}
+
+impl MrsRecord {
+    pub fn new(key: String, value: String, ib: Vec<u8>) -> Self {
+        let datetime: DateTime<Utc> = SystemTime::now().into();
+        let timestamp = datetime.to_string();
+        MrsRecord {
+            key,
+            value,
+            ib,
+            timestamp,
+        }
+    }
 }
 
 impl MRSDB {
     pub(crate) fn init(db_path: &PathBuf) -> Result<MRSDB, MRSError> {
         // pub(crate) fn init<P: AsRef<Path>>(db_path: P) -> Result<MRSDB, MRSError> {
+
         let mrs_db_path = {
             // let db_path = Self::get_db_path(app_prefix)?;
 
@@ -62,12 +78,15 @@ impl MRSDB {
 
     pub(crate) fn make_cf_descriptors() -> Vec<ColumnFamilyDescriptor> {
         vec![
-            ColumnFamilyDescriptor::new(CFSenum::MrsEntity.as_str(), Options::default()),
-            // ColumnFamilyDescriptor::new(CFSenum::MrsKey.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::Slot.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::Record.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::RecordIdx.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::RecordKey.as_str(), Options::default()),
+            ColumnFamilyDescriptor::new(CFSenum::Idx.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(CFSenum::MrsValue.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(CFSenum::IntegrityBits.as_str(), Options::default()),
             // ColumnFamilyDescriptor::new(CFSenum::Timestamp.as_str(), Options::default()),
-            // ColumnFamilyDescriptor::new(CFSenum::Idx.as_str(), Options::default()),
+
             // ColumnFamilyDescriptor::new(cfs::MRS_KEY, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::MRS_VALUE, Options::default()),
             // ColumnFamilyDescriptor::new(cfs::INTEGRITY_BITS, Options::default()),
@@ -105,21 +124,23 @@ impl MRSDB {
         Ok(())
     }
 
-    pub fn put(
+    pub fn put<T: Serialize>(
         &self,
         batch: &mut WriteBatch,
         column: CFSenum,
         key: &[u8],
-        value: &[u8],
+        value: &T,
     ) -> Result<(), MRSError> {
+        let data = serde_json::to_vec(value)?;
+
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
-        batch.put_cf(&cf, key, value);
+        batch.put_cf(&cf, key, data);
 
         Ok(())
     }
 
-    pub fn get_ser<T: Serialize + DeserializeOwned>(
+    pub fn get<T: Serialize + DeserializeOwned>(
         &self,
         column: CFSenum,
         key: &[u8],
@@ -143,5 +164,18 @@ impl MRSDB {
         let cf = self.make_cf_handle(&self.db, column.as_str())?;
 
         Ok(self.db.iterator_cf(&cf, IteratorMode::End))
+    }
+
+    pub fn iter_from(
+        &self,
+        column: CFSenum,
+        slotnum_idx: String,
+    ) -> Result<DBIteratorWithThreadMode<DBWithThreadMode<MultiThreaded>>, MRSError> {
+        let cf = self.make_cf_handle(&self.db, column.as_str())?;
+
+        Ok(self.db.iterator_cf(
+            &cf,
+            IteratorMode::From(slotnum_idx.as_bytes(), Direction::Reverse),
+        ))
     }
 }
