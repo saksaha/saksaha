@@ -58,7 +58,7 @@ impl MRSTestUtils {
         for slot_i in 0..3 {
             for field_i in ["aaa", "bbb", "ccc"] {
                 for i in 0..len {
-                    let temp_str = format!("s{}_{}_key{}", slot_i, field_i, i);
+                    let temp_str = format!("{}_{}_key{}", slot_i, field_i, i);
                     a.push(temp_str);
                 }
             }

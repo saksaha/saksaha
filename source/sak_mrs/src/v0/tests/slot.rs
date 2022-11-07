@@ -18,8 +18,8 @@ async fn test_mrs_auto_incremental_indexing() {
         // slot_vec.push(tmp_mrs_put_key);
     }
 
-    let s0_latest_idx: i32 = mrs.db.get_latest_index("s0").unwrap().unwrap();
+    let s0_latest_idx: u64 = mrs.db.get_latest_index(0).unwrap().unwrap();
 
-    println!("\n\ns0_latest_idx:{}", s0_latest_idx);
+    println!("s0_latest_idx:{}", s0_latest_idx);
     assert_eq!(8, s0_latest_idx);
 }
