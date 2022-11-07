@@ -44,7 +44,6 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
       res = JSON.parse(tmp_res);
     }
 
-
     coin_manager_setter(res);
 
     wallet_addr_setter(wallet_id);
