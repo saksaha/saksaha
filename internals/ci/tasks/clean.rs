@@ -22,7 +22,7 @@ pub(crate) fn clean_prebuild() -> Result<(), CIError> {
 pub(crate) fn clean_target() -> Result<(), CIError> {
     logln!("Clean target path");
 
-    let target_path = Paths::curr()?.join("target");
+    let target_path = Paths::project_root()?.join("target");
 
     if target_path.exists() {
         std::fs::remove_dir_all(target_path)?;

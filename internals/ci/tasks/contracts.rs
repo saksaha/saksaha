@@ -119,7 +119,7 @@ fn add_cargo_optimizing_flags(cmd: &mut Cmd) {
 
 fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
     if ctr.path.exists() {
-        let curr_path = Paths::curr()?;
+        let project_root = Paths::project_root()?;
 
         let program = "cargo";
 
@@ -141,7 +141,7 @@ fn build_contract(ctr: Contract) -> Result<PathBuf, CIError> {
             .output()
             .expect("failed to run");
 
-        let wasm_path = curr_path
+        let wasm_path = project_root
             .join("target/wasm32-unknown-unknown/release")
             .join(format!("{}.wasm", ctr.name));
 
