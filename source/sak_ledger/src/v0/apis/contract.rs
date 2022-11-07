@@ -39,10 +39,15 @@ impl SakLedger {
             .contract_processor
             .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
-        let state = receipt
-            .updated_storage
+        let _ctr_state_receipt = receipt
+            .updated_ctr_state
             .ok_or("State needs to be updated after execution")?;
 
-        Ok(state)
+        let _mrs_receipt = receipt
+            .updated_mrs
+            .ok_or("State needs to be updated after execution")?;
+
+        // Ok(state)
+        Ok(vec![222])
     }
 }

@@ -3,7 +3,7 @@ use sak_credential::CredentialProfile;
 use sak_logger::SakLogger;
 use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_store_interface::MRSAccessor;
-use sak_validator_contract::{AddValidatorParams, ValidatorStorage};
+use sak_validator_contract::AddValidatorParams;
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcess;
 use std::{collections::HashMap, sync::Arc};
@@ -64,13 +64,13 @@ fn get_test_validator() -> String {
     )
 }
 
-fn get_test_validator_state(validators: Vec<String>) -> Storage {
-    let validator_stage = ValidatorStorage { validators };
+// fn get_test_validator_state(validators: Vec<String>) -> Storage {
+//     let validator_stage = ValidatorStorage { validators };
 
-    let mut ret = Storage::with_capacity(10);
+//     let mut ret = Storage::with_capacity(10);
 
-    serde_json::to_vec(&validator_stage).unwrap()
-}
+//     serde_json::to_vec(&validator_stage).unwrap()
+// }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_call_ctr_validator_fn_init() {

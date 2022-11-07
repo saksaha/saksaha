@@ -22,7 +22,7 @@ pub trait MRSInterface {
 #[derive(Serialize, Deserialize)]
 pub struct PreflightResponse {
     pub request_id: usize,
-    pub data: usize,
+    pub data: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -1,17 +1,19 @@
-use crate::get_mrs_data_from_host;
+use crate::{get_ctr_state_from_host, get_mrs_data_from_host, HostStorage};
 use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Dict<T> {
     _name: String,
+    _host_storage: HostStorage,
     receipt: HashMap<String, Vec<u8>>,
     phantom: Vec<T>,
 }
 
 impl<T> Dict<T> {
-    pub fn new(_name: String) -> Self {
+    pub fn new(_name: String, _host_storage: HostStorage) -> Self {
         Dict {
             _name,
+            _host_storage,
             receipt: HashMap::<String, Vec<u8>>::new(),
             phantom: Vec::new(),
         }
@@ -20,7 +22,10 @@ impl<T> Dict<T> {
     pub fn get(&self, key: &String) -> Vec<u8> {
         let key: String = format!("{}_{}", self._name, key);
 
-        let data = get_mrs_data_from_host(&key);
+        let data = match self._host_storage {
+            HostStorage::MRS => get_mrs_data_from_host(&key),
+            HostStorage::CtrState => get_ctr_state_from_host(&key),
+        };
 
         data
     }

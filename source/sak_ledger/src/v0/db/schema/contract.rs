@@ -13,7 +13,7 @@ impl LedgerDB {
 
         let ctr_data = self
             .get(LedgerCols::Data, tx_hash.as_bytes())?
-            .ok_or("TxHashByCtrAddr should exist")?;
+            .ok_or("Data should exist")?;
 
         Ok(Some(ctr_data))
     }
