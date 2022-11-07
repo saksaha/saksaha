@@ -1,17 +1,15 @@
-use sak_types::CoinRecord;
-
 use crate::{Config, WalletError};
+use sak_types::CoinRecord;
 
 pub fn dev_local_1() -> Result<Config, WalletError> {
     let c = Config {
         public_key: Some(String::from(
             "045739d074b8722891c307e8e75c9607e0b55a80778\
-                b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
-                e95590616fd382662a09653f2a966ff524989ae8c0f",
+            b42ef5f4640d4949dbf3992f6083b729baef9e9545c4\
+            e95590616fd382662a09653f2a966ff524989ae8c0f",
         )),
         secret: Some(String::from(
-            "7297b903877a957748b74068d63d6d5661481975240\
-                99fc1df5cd9e8814c66c7",
+            "7297b903877a957748b74068d63d6d566148197524099fc1df5cd9e8814c66c7",
         )),
         coin_records: Some(vec![
             //
@@ -76,8 +74,7 @@ pub fn dev_local_2() -> Result<Config, WalletError> {
                 cd641f10c9a5f8c7c4d4a026db6f7b",
         )),
         secret: Some(String::from(
-            "224d0898389759f29ad5c9a6472b26fff86b6293889\
-                88eec457a88ce50e907a0",
+            "224d0898389759f29ad5c9a6472b26fff86b629388988eec457a88ce50e907a0",
         )),
         coin_records: Some(vec![
             //
