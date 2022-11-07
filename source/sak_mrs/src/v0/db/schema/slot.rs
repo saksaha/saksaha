@@ -29,12 +29,7 @@ impl MRSDB {
 
     pub fn get_latest_index(&self, curr_slot: u64) -> Result<Option<u64>, MRSError> {
         let curr_slot_0 = format!("{}_{}", curr_slot, 0);
-        let next_slot_0 = {
-            let slot_int = curr_slot + 1;
-            format!("{}_{}", slot_int, 0)
-        };
-
-        let mut iter = self.iter_from(CFSenum::RecordKey, next_slot_0.clone())?;
+        let next_slot_0 = format!("{}_{}", curr_slot + 1, 0);
 
         let is_curr_slot = match self.get(CFSenum::RecordKey, curr_slot_0.as_bytes())? {
             Some(k) => {
@@ -51,6 +46,8 @@ impl MRSDB {
             }
             None => false,
         };
+
+        let mut iter = self.iter_from(CFSenum::RecordKey, next_slot_0.clone())?;
 
         let latest_index = if is_curr_slot {
             match iter.next() {
