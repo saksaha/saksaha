@@ -1,5 +1,5 @@
 use super::session_store::SessionStore;
-use crate::v0::db::{MrsEntity, MRSDB};
+use crate::v0::db::{MrsRecord, MRSDB};
 use crate::MRSError;
 use async_trait::async_trait;
 

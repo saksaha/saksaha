@@ -11,12 +11,14 @@
 // }
 
 pub enum CFSenum {
-    MrsEntity = 0,
-    // MrsKey = 0,
+    Slot = 0,
+    Record = 1,
+    RecordIdx = 2,
+    RecordKey = 3,
+    Idx = 4,
     // MrsValue = 1,
     // IntegrityBits = 2,
     // Timestamp = 3,
-    // Idx = 4,
 
     // CMIdxByCM = 5,
     // BlockMerkleRt = 6,
@@ -33,12 +35,14 @@ pub enum CFSenum {
 impl CFSenum {
     pub fn as_str(&self) -> &'static str {
         match self {
-            CFSenum::MrsEntity => "mrs_entity"
-            // CFSenum::MrsKey => "mrs_key",
+            CFSenum::Slot => "slot",
+            CFSenum::Record => "record",
+            CFSenum::RecordIdx => "record_idx",
+            CFSenum::RecordKey => "record_key",
+            CFSenum::Idx => "idx",
             // CFSenum::MrsValue => "mrs_value",
             // CFSenum::IntegrityBits => "integrity_bits",
             // CFSenum::Timestamp => "timestamp",
-            // CFSenum::Idx => "idx",
         }
     }
 }
