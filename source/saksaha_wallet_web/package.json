@@ -2,7 +2,6 @@
   "name": "saksaha_wallet_web_root",
   "private": true,
   "workspaces": [
-    "source/*",
     "packages/*"
   ],
   "devDependencies": {
@@ -10,7 +9,6 @@
   },
   "scripts": {
     "bootstrap": "lerna bootstrap",
-    "build-deps": "cd externals/saksaha-js/packages/saksaha && yarn run build",
-    "dev": "cd source/wallet && yarn run dev"
+    "dev": "cd packages/wallet && yarn run dev"
   }
 }
