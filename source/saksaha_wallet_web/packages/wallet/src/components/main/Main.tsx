@@ -4,11 +4,10 @@ import { Routes, Route } from "@solidjs/router"
 import * as styles from './Main.css';
 import LandingPage from '@components/landing/Landing';
 
-
 const App: Component = () => {
   return (
     <div class={styles.main}>
-      <Routes>
+     <Routes>
         <Route path="/" component={LandingPage} />
       </Routes>
     </div>

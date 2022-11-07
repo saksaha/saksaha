@@ -6,35 +6,12 @@ static PATHS: OnceCell<Paths> = OnceCell::new();
 
 #[derive(Debug)]
 pub struct Paths {
-    prebuild: PathBuf,
-    externals: PathBuf,
-    source: PathBuf,
-    curr: PathBuf,
+    project_root: PathBuf,
 }
 
 impl Paths {
-    pub fn init(curr_dir: PathBuf) -> Result<(), CIError> {
-        let prebuild = curr_dir.join("source/prebuild");
-        if !prebuild.exists() {
-            return Err(format!("prebuild path does not exist").into());
-        }
-
-        let externals = curr_dir.join("externals");
-        if !externals.exists() {
-            return Err(format!("externals path does not exist").into());
-        }
-
-        let source = curr_dir.join("source");
-        if !source.exists() {
-            return Err(format!("source path does not exist").into());
-        }
-
-        let paths = Paths {
-            prebuild,
-            externals,
-            source,
-            curr: curr_dir,
-        };
+    pub fn init(project_root: PathBuf) -> Result<(), CIError> {
+        let paths = Paths { project_root };
 
         match PATHS.set(paths) {
             Ok(_) => (),
@@ -44,27 +21,42 @@ impl Paths {
         Ok(())
     }
 
-    pub fn curr() -> Result<&'static PathBuf, CIError> {
+    pub fn project_root() -> Result<PathBuf, CIError> {
         let paths = PATHS.get().ok_or("Paths should have been initialized")?;
 
-        Ok(&paths.curr)
+        Ok(paths.project_root.clone())
     }
 
-    pub fn source() -> Result<&'static PathBuf, CIError> {
+    pub fn source() -> Result<PathBuf, CIError> {
         let paths = PATHS.get().ok_or("Paths should have been initialized")?;
 
-        Ok(&paths.source)
+        let source = paths.project_root.join("source");
+        if !source.exists() {
+            return Err(format!("source path does not exist").into());
+        }
+
+        Ok(source)
     }
 
-    pub fn externals() -> Result<&'static PathBuf, CIError> {
+    pub fn externals() -> Result<PathBuf, CIError> {
         let paths = PATHS.get().ok_or("Paths should have been initialized")?;
 
-        Ok(&paths.externals)
+        let externals = paths.project_root.join("externals");
+        if !externals.exists() {
+            return Err(format!("externals path does not exist").into());
+        }
+
+        Ok(externals)
     }
 
-    pub fn prebuild() -> Result<&'static PathBuf, CIError> {
+    pub fn prebuild() -> Result<PathBuf, CIError> {
         let paths = PATHS.get().ok_or("Paths should have been initialized")?;
 
-        Ok(&paths.prebuild)
+        let prebuild = paths.project_root.join("source/prebuild");
+        if !prebuild.exists() {
+            return Err(format!("prebuild path does not exist").into());
+        }
+
+        Ok(prebuild)
     }
 }
