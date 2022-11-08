@@ -8,7 +8,7 @@ export const send_pour_tx = async (new_coin_data: SendPourTxParam) => {
 
   const params = new_coin_data;
 
-  const res = await axios.query(method, params);
+  const res = await axios.send_tx(method, params);
 
   return res;
 };

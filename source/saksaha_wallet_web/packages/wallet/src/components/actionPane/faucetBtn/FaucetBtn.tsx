@@ -1,5 +1,5 @@
 import { CoinManager, get_tx, SendMintTxParam, send_mint_tx } from "saksaha";
-import { SendPourTxParam, send_pour_tx } from "saksaha";
+
 import { Coin, get_dummy_new_coin_data } from "saksaha/src/types/coin";
 import { CoinRecord, CoinStatus } from "saksaha/src/types/coin_record";
 import { Accessor, Component, Setter } from "solid-js";

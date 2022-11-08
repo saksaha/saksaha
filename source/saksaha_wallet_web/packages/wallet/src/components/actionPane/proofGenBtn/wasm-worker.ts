@@ -8,13 +8,13 @@ function wrapExports({ greet }: { greet: any }) {
 
     const start = performance.now();
 
-    const greet_result = greet(int_arr);
+    const proof = greet(int_arr);
 
     const time = performance.now() - start;
 
     return {
       // Little perf boost to transfer data to the main thread w/o copying.
-      greet_result: Comlink.transfer(greet_result, [greet_result.buffer]),
+      proof: Comlink.transfer(proof, [proof.buffer]),
       time
     };
   };
@@ -48,7 +48,7 @@ export interface WasmHandler {
     multiThread: (
       int_arr: number[]
     ) => {
-      greet_result: any;
+      proof: any;
       time: number;
     }
   }>
