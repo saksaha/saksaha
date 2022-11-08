@@ -47,9 +47,34 @@ export class Saksaha {
           throw new Error("power");
         }
       }).catch((err) => {
-        console.log('axios fail', err.response.data);
+        console.log('axios fail', err.response.data, params2);
       });
   }
+
+  async send_tx(method: string, params?: Object) {
+    let p = JSON.stringify(params);
+    let params2 = Array.from(new TextEncoder().encode(p));
+
+    const data = {
+      jsonrpc: '2.0',
+      method,
+      params: params2,
+      id: "1231",
+    };
+
+    return this.axios.post('', data)
+      .then((res) => {
+        console.log('axios success', res.data);
+        if (res.data.result) {
+          return res.data.result;
+        } else {
+          throw new Error("power");
+        }
+      }).catch((err) => {
+        console.log('axios fail', err.response.data, params2);
+      });
+  }
+
 }
 
 export default Saksaha;
