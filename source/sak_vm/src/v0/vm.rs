@@ -75,7 +75,7 @@ impl SakVM {
         }
 
         println!(
-            "[! aaron] result_bytes: {:?}",
+            "[! aaron init] result_bytes: {:?}",
             String::from_utf8_lossy(&receipt_bytes)
         );
 
@@ -96,6 +96,8 @@ impl SakVM {
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: CtrExecuteFn =
             { instance.get_typed_func(&mut store, symbols::CTR__EXECUTE)? };
+
+        println!("noah 1111111 request: {:?}", request);
 
         let (request_bytes, request_len) = {
             let str = serde_json::to_value(request)?.to_string();
@@ -130,9 +132,9 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
         }
 
-        println!("[! aaron] result_bytes: {:02x?}", receipt_bytes);
+        println!("[! aaron execute] result_bytes: {:02x?}", receipt_bytes);
         println!(
-            "[! aaron] result_bytes: {:?}",
+            "[! aaron execute] result_bytes: {:?}",
             String::from_utf8_lossy(&receipt_bytes)
         );
 

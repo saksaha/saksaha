@@ -26,7 +26,7 @@ fn get_test_mrs_state(slots: Vec<Slot>) -> Storage {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
+async fn test_call_ctr_mrs_fn_execute_rent() {
     let mrs_db_path = {
         let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
         config_dir.join("test").join("mrs")
@@ -54,11 +54,11 @@ async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
     let (request, storage) = {
         let req_type = String::from(request_type::RESERVE);
 
-        let reserve_slot_params = ReserveSlotParams {
+        let rent_params = ReserveSlotParams {
             public_key: get_mock_public_key(),
         };
 
-        let args = serde_json::to_vec(&reserve_slot_params).unwrap();
+        let args = serde_json::to_vec(&rent_params).unwrap();
 
         let request = CtrRequest {
             ctr_addr: "ctr_addr".to_string(),

@@ -8,7 +8,7 @@ where
 {
     _name: String,
     _host_storage: HostStorage,
-    receipt: HashMap<String, Vec<u8>>,
+    data: HashMap<String, Vec<u8>>,
     phantom: Vec<T>,
 }
 
@@ -20,7 +20,7 @@ where
         List {
             _name,
             _host_storage,
-            receipt: HashMap::new(),
+            data: HashMap::new(),
             phantom: Vec::new(),
         }
     }
@@ -34,7 +34,7 @@ where
 
             let val = d.as_ref().to_vec();
 
-            self.receipt.insert(key, val);
+            self.data.insert(key, val);
         }
     }
 
@@ -55,14 +55,18 @@ where
 
         let latest_idx = get_mrs_data_from_host(&latest_idx_key);
 
-        let latest_idx = 0;
+        let latest_idx = String::from_utf8(latest_idx).unwrap_or(String::from("0"));
 
         let key: String = format!("{}_{}", self._name, latest_idx);
 
-        self.receipt.insert(key, value);
+        self.data.insert(key, value);
     }
 
-    pub fn receipt(&self) -> HashMap<String, Vec<u8>> {
-        self.receipt.clone()
+    pub fn get_receipt(&self) -> HashMap<String, Vec<u8>> {
+        self.data.clone()
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
     }
 }

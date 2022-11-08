@@ -45,7 +45,7 @@ async fn test_call_contract() {
         let req = CtrRequestData {
             req_type: "get_validator".to_string(),
             args: vec![],
-            ctr_call_type: CtrCallType::Query,
+            ctr_call_type: CtrCallType::Execute,
         };
 
         let call_ctr_req = QueryCtrRequest { ctr_addr, req };
@@ -90,4 +90,85 @@ async fn test_call_contract() {
     );
 
     assert_eq!(expected_validator.as_bytes(), query_result);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_call_mrs_contract() {
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        ..
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
+
+    let client = Client::new();
+
+    tokio::spawn(async move { rpc.run().await });
+
+    let genesis_block = GenesisBlock::create().unwrap();
+    let mrs_ctr_addr = genesis_block.get_mrs_ctr_addr();
+
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/call_contract",
+            rpc_socket_addr.port()
+        );
+
+        u.parse().expect("URI should be made")
+    };
+
+    let body = {
+        let ctr_addr = mrs_ctr_addr;
+        let req = CtrRequestData {
+            req_type: "get_slot".to_string(),
+            args: vec![],
+            ctr_call_type: CtrCallType::Execute,
+        };
+
+        let call_ctr_req = QueryCtrRequest { ctr_addr, req };
+
+        let params = serde_json::to_string(&call_ctr_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "query_ctr".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        println!("request body str (for debugging): {}", str);
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response = serde_json::from_slice::<JsonResponse<QueryCtrResponse>>(&b).unwrap();
+
+    // println!("json_reponse: {:?}", json_response);
+    let query_ctr_response = json_response.result.unwrap();
+    let query_result = query_ctr_response.result;
+
+    println!(
+        "query_result (from rpc response) : {:?}",
+        std::str::from_utf8(&query_result).unwrap()
+    );
+
+    // assert_eq!(expected_validator.as_bytes(), query_result);
 }

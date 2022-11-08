@@ -7,7 +7,6 @@ use sak_vm_interface::wasmtime::{
     Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
 };
 use sak_vm_interface::InstanceState;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 pub(crate) struct Wasmtime {}

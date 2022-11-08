@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum CtrCallType {
-    Query,
+    // Query,
     Execute,
+    Update,
 }
 
 pub type RequestArgs = Vec<u8>;

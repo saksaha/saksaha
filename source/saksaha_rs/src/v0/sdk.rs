@@ -169,7 +169,7 @@ pub async fn query_ctr(
         let req = CtrRequestData {
             req_type: req_type.clone(),
             args,
-            ctr_call_type: CtrCallType::Query,
+            ctr_call_type: CtrCallType::Execute,
         };
 
         let send_req = QueryCtrRequest { ctr_addr, req };

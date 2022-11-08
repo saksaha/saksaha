@@ -111,7 +111,7 @@ macro_rules! define_ctr_fns {
                 execute(&ctx, request);
 
             HOST__log(10, 10);
-            let receipt = ctx.mrs.get_receipt();
+            let receipt = ctx.ctr_state.get_receipt();
             let mut receipt_bytes = serde_json::to_vec(&receipt).unwrap();
             let receipt_ptr = receipt_bytes.as_mut_ptr();
             let receipt_len = receipt_bytes.len();

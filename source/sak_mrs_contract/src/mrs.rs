@@ -1,7 +1,10 @@
-use crate::{request_type::RESERVE, MutableRecordStorage, ReserveSlotParams, Slot};
+use crate::{
+    request_type::{GET_SLOT, RESERVE},
+    ReserveSlotParams, Slot,
+};
 use sak_contract_derive::{CtrStateStore, MRSStore};
 use sak_contract_std::{
-    saksaha_contract, ContractError, CtrRequest, InvokeResult, RequestArgs, Storage,
+    saksaha_contract, ContractError, CtrRequest, InvokeResult, List, RequestArgs, Storage,
 };
 
 const SLOT_CAPACITY: usize = 64;
@@ -12,54 +15,62 @@ saksaha_contract!(0.0.1);
 pub struct SomeMRSMRSStore {}
 
 #[derive(Debug, CtrStateStore)]
-pub struct SomeMRSCtrState {}
+pub struct SomeMRSCtrState {
+    pub slots: List<String>,
+}
 
 pub fn init(ctx: &mut ContractCtx) -> Result<Storage, ContractError> {
-    let evl_storage = MutableRecordStorage {
-        slots: vec![Slot::default()],
-    };
-
-    let v = serde_json::to_vec(&evl_storage)?;
-
-    Ok(v)
-}
-
-pub fn execute(ctx: &ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
-    // let storage = vec![];
-
-    match request.req_type.as_ref() {
-        "unimplemented" => {
-            unimplemented!()
-        }
-        _ => Err(("Wrong request type has been found in query").into()),
-    }
-}
-
-pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<InvokeResult, ContractError> {
-    let mut storage = vec![];
-    match request.req_type.as_ref() {
-        RESERVE => reserve_slot(&mut storage, request.args),
-        _ => Err(("Wrong request type has been found in execution").into()),
-    }
-}
-
-fn reserve_slot(storage: &mut Storage, args: RequestArgs) -> Result<InvokeResult, ContractError> {
-    let mut mrs: MutableRecordStorage = serde_json::from_slice(storage)?;
-    let reserve_slot_params: ReserveSlotParams = serde_json::from_slice(&args)?;
-
-    let next_slot_number = mrs.slots.len() + 1;
+    let next_slot_number = ctx.ctr_state.slots.len() + 1;
 
     let new_slot = Slot::new(
-        reserve_slot_params.public_key,
+        String::from("Initial public key"),
         String::from("Current Time"),
         next_slot_number,
     );
 
-    mrs.slots.push(new_slot);
+    ctx.ctr_state.slots.push(serde_json::to_vec(&new_slot)?);
 
-    *storage = serde_json::to_vec(&mrs)?;
-
-    Ok(vec![])
+    Ok(next_slot_number.to_be_bytes().to_vec())
 }
 
-fn get_empty_slot_idx() {}
+pub fn execute(ctx: &ContractCtx, request: CtrRequest) -> Result<Vec<u8>, ContractError> {
+    match request.req_type.as_ref() {
+        GET_SLOT => get_slot(ctx),
+        _ => Err(format!(
+            "Wrong request type has been found in query : {:?}",
+            request.req_type,
+        )
+        .into()),
+    }
+}
+
+pub fn update(ctx: ContractCtx, request: CtrRequest) -> Result<InvokeResult, ContractError> {
+    match request.req_type.as_ref() {
+        RESERVE => rent(ctx, request.args),
+        _ => Err(("Wrong request type has been found in execution").into()),
+    }
+}
+
+fn rent(mut ctx: ContractCtx, args: RequestArgs) -> Result<InvokeResult, ContractError> {
+    let rent_params: ReserveSlotParams = serde_json::from_slice(&args)?;
+
+    let next_slot_number = ctx.ctr_state.slots.len() + 1;
+
+    let new_slot = Slot::new(
+        rent_params.public_key,
+        String::from("Current Time"),
+        next_slot_number,
+    );
+
+    ctx.ctr_state.slots.push(serde_json::to_vec(&new_slot)?);
+
+    Ok(next_slot_number.to_be_bytes().to_vec())
+}
+
+fn get_slot(ctx: &ContractCtx) -> Result<InvokeResult, ContractError> {
+    let last_idx = ctx.ctr_state.slots.len();
+
+    let slot = ctx.ctr_state.slots.get(&last_idx.to_string());
+
+    Ok(slot)
+}

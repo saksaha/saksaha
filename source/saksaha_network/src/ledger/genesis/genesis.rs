@@ -1,19 +1,19 @@
 use crate::SaksahaError;
-use sak_types::{BlockCandidate, TxCandidate};
+use sak_types::BlockCandidate;
 
 pub(crate) const VALIDATOR_SIG: &str = "validator_sig";
 
-pub(crate) const VALIDATOR_CTR_ADDR: &'static str = "validator_contract_addr";
+pub(crate) const VALIDATOR_CTR_ADDR: &str = "validator_contract_addr";
 
 pub(crate) const VALIDATOR: &[u8] =
     include_bytes!("../../../../prebuild/sak_validator_contract.postprocess.wasm");
 
-pub(crate) const ENVELOPE_CTR_ADDR: &'static str = "envelope_contract_addr";
+pub(crate) const ENVELOPE_CTR_ADDR: &str = "envelope_contract_addr";
 
 pub(crate) const ENVELOPE: &[u8] =
     include_bytes!("../../../../prebuild/envelope_contract.postprocess.wasm");
 
-pub(crate) const MRS_CTR_ADDR: &'static str = "mrs_addr";
+pub(crate) const MRS_CTR_ADDR: &str = "mrs_contract_addr";
 
 pub(crate) const MRS: &[u8] =
     include_bytes!("../../../../prebuild/sak_mrs_contract.postprocess.wasm");
@@ -39,8 +39,8 @@ impl GenesisBlock {
             envelope_wasm,
             ENVELOPE_CTR_ADDR.to_string(),
         );
-        // let tx_deploy_mrs =
-        //     sak_types::mock_mint_tc_deploying_contract(mrs_wasm, MRS_CTR_ADDR.to_string());
+        let tx_deploy_mrs =
+            sak_types::mock_mint_tc_deploying_contract(mrs_wasm, MRS_CTR_ADDR.to_string());
 
         let tx_mint_3 = sak_types::mock_mint_tc_5();
         let tx_mint_4 = sak_types::mock_mint_tc_6();
@@ -52,7 +52,7 @@ impl GenesisBlock {
                 tx_mint_2,
                 tx_deploy_validator,
                 tx_deploy_envelope,
-                // tx_deploy_mrs,
+                tx_deploy_mrs,
                 tx_mint_3,
                 tx_mint_4,
             ],

@@ -23,7 +23,7 @@ impl Consensus for Pos {
             ctr_addr: self.validator_ctr_addr.to_string(),
             req_type: "get_validator".to_string(),
             args: vec![],
-            ctr_call_type: CtrCallType::Query,
+            ctr_call_type: CtrCallType::Execute,
         };
 
         let validator = match dist_ledger

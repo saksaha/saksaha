@@ -348,13 +348,15 @@ impl SakLedger {
                 let req = CtrRequest::parse(ctr_addr, data)?;
 
                 match req.ctr_call_type {
-                    CtrCallType::Query => {
+                    CtrCallType::Execute => {
                         warn!(
                             "Tx may contain contract 'execute' request, \
                             but not 'query'"
                         );
                     }
-                    CtrCallType::Execute => {
+                    CtrCallType::Update => {
+                        println!("111 1111");
+
                         let new_state = match ctr_state_update.get(ctr_addr) {
                             Some(_) => {
                                 let ctr_wasm = self
@@ -363,8 +365,8 @@ impl SakLedger {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                // let ctr_fn = ContractFn::Execute(req);
-                                let ctr_fn = ContractFn::Update(req);
+                                let ctr_fn = ContractFn::Execute(req);
+                                // let ctr_fn = ContractFn::Update(req);
 
                                 let receipt = self
                                     .contract_processor

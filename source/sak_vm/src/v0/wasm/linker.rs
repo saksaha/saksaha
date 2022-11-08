@@ -144,8 +144,9 @@ pub(crate) fn make_linker(
             };
 
             // arg == {field}_{key}
-            let key: String = format!("{}_{}", "validator_contract_addr", arg);
+            // let key: String = format!("{}_{}", "validator_contract_addr", arg);
 
+            let key = arg.clone();
             println!("test key: {:?}", key);
 
             // ctr_state init
@@ -181,30 +182,35 @@ pub(crate) fn make_linker(
             //     }
             // };
 
-            let data_bytes = vec![
-                48, 52, 53, 55, 51, 57, 100, 48, 55, 52, 98, 56, 55, 50, 50, 56, 57, 49, 99, 51,
-                48, 55, 101, 56, 101, 55, 53, 99, 57, 54, 48, 55, 101, 48, 98, 53, 53, 97, 56, 48,
-                55, 55, 56, 98, 52, 50, 101, 102, 53, 102, 52, 54, 52, 48, 100, 52, 57, 52, 57,
-                100, 98, 102, 51, 57, 57, 50, 102, 54, 48, 56, 51, 98, 55, 50, 57, 98, 97, 101,
-                102, 57, 101, 57, 53, 52, 53, 99, 52, 101, 57, 53, 53, 57, 48, 54, 49, 54, 102,
-                100, 51, 56, 50, 54, 54, 50, 97, 48, 57, 54, 53, 51, 102, 50, 97, 57, 54, 54, 102,
-                102, 53, 50, 52, 57, 56, 57, 97, 101, 56, 99, 48, 102,
-            ];
+            // let data_bytes = vec![
+            //     48, 52, 53, 55, 51, 57, 100, 48, 55, 52, 98, 56, 55, 50, 50, 56, 57, 49, 99, 51,
+            //     48, 55, 101, 56, 101, 55, 53, 99, 57, 54, 48, 55, 101, 48, 98, 53, 53, 97, 56, 48,
+            //     55, 55, 56, 98, 52, 50, 101, 102, 53, 102, 52, 54, 52, 48, 100, 52, 57, 52, 57,
+            //     100, 98, 102, 51, 57, 57, 50, 102, 54, 48, 56, 51, 98, 55, 50, 57, 98, 97, 101,
+            //     102, 57, 101, 57, 53, 52, 53, 99, 52, 101, 57, 53, 53, 57, 48, 54, 49, 54, 102,
+            //     100, 51, 56, 50, 54, 54, 50, 97, 48, 57, 54, 53, 51, 102, 50, 97, 57, 54, 54, 102,
+            //     102, 53, 50, 52, 57, 56, 57, 97, 101, 56, 99, 48, 102,
+            // ];
 
-            let data_len = data_bytes.len() as u32;
-            let data_len_bytes = data_len.to_be_bytes();
-            let data_len_ptr = data_len_bytes.as_ptr();
+            // let data_len = data_bytes.len() as u32;
+            // let data_len_bytes = data_len.to_be_bytes();
+            // let data_len_ptr = data_len_bytes.as_ptr();
 
-            unsafe {
-                let raw = memory.data_ptr(&caller).offset(ptr_ret_len as isize);
-                raw.copy_from(data_len_ptr, size_of::<u32>());
-            }
+            // unsafe {
+            //     let raw = memory.data_ptr(&caller).offset(ptr_ret_len as isize);
+            //     raw.copy_from(data_len_ptr, size_of::<u32>());
+            // }
 
-            println!(
-                "get_ctr_state_data(): data: {:?}, len: {}, getting memoy allocation",
-                &String::from_utf8(data_bytes.clone()),
-                &data_bytes.len(),
-            );
+            // println!(
+            //     "get_ctr_state_data(): data: {:?}, len: {}, getting memoy allocation",
+            //     &String::from_utf8(data_bytes.clone()),
+            //     &data_bytes.len(),
+            // );
+
+            let a = mrs_get
+                .get_mrs_data(&key)
+                .unwrap_or(Some("Fail".to_string()));
+            println!("real mrs data!!: {:?}", a);
 
             let alloc = caller
                 .get_export(symbols::CTR__ALLOC)
