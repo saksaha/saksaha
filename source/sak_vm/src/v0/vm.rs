@@ -1,9 +1,6 @@
 use super::wasm::Wasmtime;
 use crate::VMError;
-use async_trait::async_trait;
 use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
-use sak_crypto::rand;
-use sak_logger::{error, info};
 use sak_store_interface::{MRSAccessor, Session};
 use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
 use sak_vm_interface::{
@@ -139,7 +136,7 @@ impl SakVM {
             String::from_utf8_lossy(&receipt_bytes)
         );
 
-        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
+        // let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
 
         // println!("power11: {:?}", receipt);
         // let session_id = format!("{}_{}", ctr_addr, rand());

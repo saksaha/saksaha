@@ -326,7 +326,7 @@ impl SakLedger {
             TxCtrOp::ContractDeploy => {
                 let receipt = self
                     .contract_processor
-                    .invoke(ctr_addr, &data, ContractFn::Init)?;
+                    .invoke(ctr_addr, data, ContractFn::Init)?;
 
                 let updated_ctr_state = receipt
                     .updated_ctr_state
@@ -363,23 +363,20 @@ impl SakLedger {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                let ctr_fn = ContractFn::Execute(req);
+                                // let ctr_fn = ContractFn::Execute(req);
+                                let ctr_fn = ContractFn::Update(req);
 
-                                // let receipt = self
-                                //     .contract_processor
-                                //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
-                                //     .await?;
+                                let receipt = self
+                                    .contract_processor
+                                    .invoke(ctr_addr, &ctr_wasm, ctr_fn)?;
 
-                                // receipt.updated_storage.ok_or("State needs to be updated")?
-                                vec![]
+                                receipt.result
+                                // receipt
+                                //     .updated_ctr_state
+                                //     .ok_or("State needs to be updated")?
+                                // vec![]
                             }
-                            None => {
-                                self.execute_ctr(
-                                    // ctr_addr,
-                                    req,
-                                )
-                                .await?
-                            }
+                            None => self.execute_ctr(req).await?,
                         };
 
                         let maybe_error_placehorder = match &new_state.get(0..6) {
@@ -388,6 +385,8 @@ impl SakLedger {
                                 return Err("new_state should be bigger than 6-byte".into());
                             }
                         };
+
+                        // let key = format!("{}_{}", ctr_addr, new_state);
 
                         if maybe_error_placehorder != ERROR_PLACEHOLDER {
                             ctr_state_update.insert(ctr_addr.clone(), new_state.clone());
