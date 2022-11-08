@@ -1,4 +1,4 @@
-import { CoinManager } from 'saksaha';
+import { CoinManager } from '../../../../../../saksaha_sdk_web/src';
 import { Component, createSignal, Setter, Accessor } from 'solid-js';
 import * as styles from './ActionPane.css';
 import FaucetBtn from './faucetBtn/FaucetBtn';

@@ -1,7 +1,7 @@
-import { CoinManager, get_tx, SendMintTxParam, send_mint_tx } from "saksaha";
+import { CoinManager, get_tx, SendMintTxParam, send_mint_tx } from "../../../../../../../saksaha_sdk_web/src";
 
-import { Coin, get_dummy_new_coin_data } from "saksaha/src/types/coin";
-import { CoinRecord, CoinStatus } from "saksaha/src/types/coin_record";
+import { Coin, get_dummy_new_coin_data } from "../../../../../../../saksaha_sdk_web/src/types/coin";
+import { CoinRecord, CoinStatus } from "../../../../../../../saksaha_sdk_web/src/types/coin_record";
 import { Accessor, Component, Setter } from "solid-js";
 import * as styles from './FaucetBtn.css';
 
