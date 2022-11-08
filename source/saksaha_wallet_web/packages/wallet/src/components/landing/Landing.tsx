@@ -8,8 +8,8 @@ import * as styles from './Landing.css';
 import ActionPane from "../actionPane/ActionPane";
 import ResultPane from '../resultPane/ResultPane';
 
-import { CoinManager } from 'saksaha';
-import { CoinRecord, CoinStatus } from 'saksaha/src/types/coin_record';
+import { CoinManager } from '../../../../../../saksaha_sdk_web/src';
+import { CoinRecord, CoinStatus } from '../../../../../../saksaha_sdk_web/src/types/coin_record';
 
 const LandingPage: Component = () => {
   const [walletAddress, setWalletAddress] = createSignal("");

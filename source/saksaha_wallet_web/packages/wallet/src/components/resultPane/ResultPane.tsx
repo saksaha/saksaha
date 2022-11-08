@@ -1,5 +1,5 @@
-import { CoinManager } from "saksaha";
-import { CoinRecord } from "saksaha/src/types/coin_record";
+import { CoinManager } from "../../../../../../saksaha_sdk_web/src";
+import { CoinRecord } from "../../../../../../saksaha_sdk_web/src/types/coin_record";
 import { Accessor, Component, For, Setter } from "solid-js";
 import * as styles from './ResultPane.css';
 
