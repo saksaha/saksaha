@@ -1,7 +1,7 @@
 use super::wasm::Wasmtime;
 use crate::VMError;
 use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
-use sak_store_interface::{MRSAccessor, Session};
+use sak_store_interface::{LedgerAccessor, MRSAccessor, Session};
 use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
 use sak_vm_interface::{
     ContractProcess, CtrExecuteFn, CtrInitFn, InstanceState, InvokeReceipt, VMInterfaceError,
@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 pub struct SakVM {
     mrs: Arc<MRSAccessor>,
+    ledger: Arc<LedgerAccessor>,
 }
 
 impl ContractProcess for SakVM {
@@ -46,8 +47,8 @@ impl ContractProcess for SakVM {
 }
 
 impl SakVM {
-    pub fn init(mrs: Arc<MRSAccessor>) -> Result<Self, String> {
-        let vm = SakVM { mrs };
+    pub fn init(mrs: Arc<MRSAccessor>, ledger: Arc<LedgerAccessor>) -> Result<Self, String> {
+        let vm = SakVM { mrs, ledger };
         Ok(vm)
     }
 

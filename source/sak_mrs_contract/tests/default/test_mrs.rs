@@ -1,4 +1,5 @@
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
+use sak_ledger::SakLedgerArgs;
 use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_mrs_contract::request_type;
 use sak_mrs_contract::{MutableRecordStorage, ReserveSlotParams, Slot};
@@ -38,6 +39,20 @@ async fn test_call_ctr_mrs_fn_execute_rent() {
         let m = SakMRS::init(mrs_args).await.unwrap();
         let m = Box::new(m) as MRSAccessor;
         Arc::new(m)
+    };
+
+    let sak_ledger_args = SakLedgerArgs {
+        tx_sync_interval: None,
+        genesis_block: None,
+        block_sync_interval: None,
+        consensus: pos,
+        ledger_path,
+    };
+
+    let ledger = {
+        let l = SakLedger::init(sak_ledger_args).await.unwrap();
+
+        Arc::new(Box::new(l))
     };
 
     let vm: ContractProcessor = {

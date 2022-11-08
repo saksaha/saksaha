@@ -17,6 +17,7 @@ type_extension = { path = "../type_extension" }
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
 sak_crypto = { path = "../sak_crypto" }
+sak_ledger = { path = "../sak_ledger" }
 sak_vm = { path = "../sak_vm" }
 sak_vm_interface = { path = "../sak_vm_interface" }
 sak_mrs = { path = "../sak_mrs" }

@@ -3,7 +3,7 @@ use crate::{mock_pos, SakMachine, SakMachineArgs, SakMachineTestUtils};
 use sak_credential::{Credential as SakCredential, CredentialProfile};
 use sak_ledger::{ConsensusResolver, SakLedger, SakLedgerArgs};
 use sak_mrs::{SakMRS, SakMRSArgs};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_types::BlockCandidate;
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
@@ -32,33 +32,33 @@ pub async fn mock_machine(block: BlockCandidate) -> SakMachine {
         Arc::new(Box::new(m))
     };
 
-    let vm: ContractProcessor = {
-        let v = SakVM::init(mrs.clone()).unwrap();
-        Box::new(v)
-    };
-
     let sak_ledger_args = SakLedgerArgs {
         tx_sync_interval: None,
         genesis_block: None,
         block_sync_interval: None,
         consensus: pos,
         ledger_path,
-        contract_processor: vm,
+        // contract_processor: vm,
     };
 
-    let ledger = {
+    let ledger: Arc<LedgerAccessor> = {
         let l = SakLedger::init(sak_ledger_args).await.unwrap();
 
-        l
+        Arc::new(Box::new(l))
     };
 
-    let dist_ledger_args = SakMachineArgs { ledger, mrs };
+    let vm: ContractProcessor = {
+        let v = SakVM::init(mrs.clone(), ledger.clone()).unwrap();
+        Box::new(v)
+    };
 
-    let dist_ledger = SakMachine::init(dist_ledger_args)
+    let machine_args = SakMachineArgs { ledger, mrs };
+
+    let machine = SakMachine::init(machine_args)
         .await
         .expect("Blockchain should be initialized");
 
-    dist_ledger
+    machine
 }
 
 pub async fn mock_machine_1() -> SakMachine {
@@ -87,24 +87,24 @@ pub async fn mock_machine_1() -> SakMachine {
         Arc::new(Box::new(m))
     };
 
-    let vm: ContractProcessor = {
-        let v = SakVM::init(mrs.clone()).unwrap();
-        Box::new(v)
-    };
-
     let sak_ledger_args = SakLedgerArgs {
         tx_sync_interval: None,
         genesis_block: None,
         block_sync_interval: None,
         consensus: pos,
         ledger_path,
-        contract_processor: vm,
+        // contract_processor: vm
     };
 
-    let ledger = {
+    let ledger: Arc<LedgerAccessor> = {
         let l = SakLedger::init(sak_ledger_args).await.unwrap();
 
-        l
+        Arc::new(Box::new(l))
+    };
+
+    let vm: ContractProcessor = {
+        let v = SakVM::init(mrs.clone(), ledger.clone()).unwrap();
+        Box::new(v)
     };
 
     let dist_ledger_args = SakMachineArgs { ledger, mrs };

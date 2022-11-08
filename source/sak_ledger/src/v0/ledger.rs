@@ -7,6 +7,7 @@ use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
+use sak_store_interface::{LedgerInterface, LedgerInterfaceError};
 use sak_types::BlockCandidate;
 use sak_vm_interface::ContractProcess;
 use std::path::PathBuf;
@@ -23,7 +24,7 @@ pub struct SakLedger {
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
     pub consensus: Box<dyn Consensus + Send + Sync>,
-    pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
+    pub contract_processor: Option<Box<dyn ContractProcess + Send + Sync>>,
 }
 
 pub struct SakLedgerArgs {
@@ -32,7 +33,7 @@ pub struct SakLedgerArgs {
     pub consensus: Box<dyn Consensus + Send + Sync>,
     pub block_sync_interval: Option<u64>,
     pub ledger_path: PathBuf,
-    pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
+    // pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
 }
 
 impl SakLedger {
@@ -43,7 +44,7 @@ impl SakLedger {
             consensus,
             block_sync_interval,
             ledger_path,
-            contract_processor,
+            // contract_processor,
         } = ledger_args;
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
@@ -73,7 +74,7 @@ impl SakLedger {
             merkle_tree,
             hasher,
             consensus,
-            contract_processor,
+            contract_processor: None,
         };
 
         if let Some(bc) = genesis_block {
@@ -92,5 +93,15 @@ impl SakLedger {
         );
 
         Ok(ledger)
+    }
+
+    pub fn run(mut self, contract_processor: Box<dyn ContractProcess + Send + Sync>) {
+        self.contract_processor = Some(contract_processor);
+    }
+}
+
+impl LedgerInterface for SakLedger {
+    fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerInterfaceError> {
+        Ok(Some(vec![0]))
     }
 }
