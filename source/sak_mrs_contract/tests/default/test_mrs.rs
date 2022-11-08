@@ -1,9 +1,9 @@
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
-use sak_ledger::SakLedgerArgs;
+use sak_ledger::{mock_pos, ConsensusResolver, SakLedger, SakLedgerArgs};
 use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_mrs_contract::request_type;
 use sak_mrs_contract::{MutableRecordStorage, ReserveSlotParams, Slot};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::collections::HashMap;
@@ -33,6 +33,11 @@ async fn test_call_ctr_mrs_fn_execute_rent() {
         config_dir.join("test").join("mrs")
     };
 
+    let ledger_path = {
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("ledger")
+    };
+
     let mrs = {
         let mrs_args = SakMRSArgs { mrs_db_path };
 
@@ -40,6 +45,8 @@ async fn test_call_ctr_mrs_fn_execute_rent() {
         let m = Box::new(m) as MRSAccessor;
         Arc::new(m)
     };
+
+    let pos: ConsensusResolver = mock_pos();
 
     let sak_ledger_args = SakLedgerArgs {
         tx_sync_interval: None,
@@ -49,14 +56,14 @@ async fn test_call_ctr_mrs_fn_execute_rent() {
         ledger_path,
     };
 
-    let ledger = {
+    let ledger: Arc<LedgerAccessor> = {
         let l = SakLedger::init(sak_ledger_args).await.unwrap();
 
         Arc::new(Box::new(l))
     };
 
     let vm: ContractProcessor = {
-        let v = SakVM::init(mrs.clone()).expect("VM should be initiated");
+        let v = SakVM::init(mrs.clone(), ledger.clone()).expect("VM should be initiated");
         Box::new(v)
     };
 

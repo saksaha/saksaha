@@ -15,6 +15,6 @@ impl Consensus for MockPos {
     }
 }
 
-pub(crate) fn mock_pos() -> Box<MockPos> {
+pub fn mock_pos() -> Box<MockPos> {
     Box::new(MockPos {})
 }

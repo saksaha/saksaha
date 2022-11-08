@@ -24,3 +24,5 @@ sak_mrs = { path = "../sak_mrs" }
 sak_store_interface = { path = "../sak_store_interface" }
 sak_dir = { path = "../sak_dir" }
 tokio = { version = "1.21.2", features = ["full"] }
+async-trait = "0.1.58"
+sak_types = { path = "../sak_types" }
