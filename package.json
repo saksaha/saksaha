@@ -1,0 +1,15 @@
+{
+  "name": "saksaha-root",
+  "private": true,
+  "workspaces": [
+    "source/saksaha_sdk_web",
+    "source/saksaha_wallet_web/packages/wallet"
+  ],
+  "devDependencies": {
+    "lerna": "^5.5.2"
+  },
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "dev": "cd source/saksaha_wallet_web && yarn run dev"
+  }
+}

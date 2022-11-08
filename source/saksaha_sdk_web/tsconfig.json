@@ -1,0 +1,7 @@
+{
+  "include": ["."],
+  "exclude": ["dist", "build", "node_modules"],
+  "compilerOptions": {
+    "lib": ["es2015", "dom"]
+  }
+}
