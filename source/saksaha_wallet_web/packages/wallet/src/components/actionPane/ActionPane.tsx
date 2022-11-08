@@ -2,8 +2,7 @@ import { CoinManager } from '../../../../../../saksaha_sdk_web/src';
 import { Component, createSignal, Setter, Accessor } from 'solid-js';
 import * as styles from './ActionPane.css';
 import FaucetBtn from './faucetBtn/FaucetBtn';
-import SendTxBtn from './proofGenBtn/SendTxBtn';
-import ProofGenBtn from './proofGenBtn/ProofGenBtn';
+import SendTxBtn from './sendTxBtn/SendTxBtn';
 
 interface ActionPaneProps {
   coin_manager_setter: Setter<CoinManager>,//
@@ -93,8 +92,6 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
       {
         loginStatus() ?
           <>
-            <ProofGenBtn />
-            <br />
             <SendTxBtn />
             <br />
             <FaucetBtn
