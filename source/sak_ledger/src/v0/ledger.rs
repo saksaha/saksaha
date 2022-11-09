@@ -5,7 +5,6 @@ use crate::SyncPool;
 use async_trait::async_trait;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
-use sak_kv_db::WriteBatch;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_store_interface::LedgerInterface;

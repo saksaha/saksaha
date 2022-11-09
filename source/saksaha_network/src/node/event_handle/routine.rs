@@ -1,8 +1,8 @@
 use crate::node::{event_handle, task::NodeTask};
-use sak_ledger::DistLedgerEvent;
 use sak_logger::{debug, error, warn};
 use sak_machine::SakMachine;
 use sak_task_queue::TaskQueue;
+use sak_types::DistLedgerEvent;
 use std::sync::Arc;
 use tokio::sync::broadcast::Receiver;
 

@@ -1,11 +1,9 @@
 use async_trait::async_trait;
-use sak_contract_std::{CtrCallType, CtrRequest, CtrRequestData};
 use sak_ledger::SakLedger;
 use sak_ledger::{Consensus, ConsensusError};
-use sak_machine::SakMachine;
 use sak_p2p_id::Identity;
-use sak_types::{BlockCandidate, TxCandidate};
-use std::{collections::HashMap, sync::Arc};
+use sak_types::{BlockCandidate, CtrCallType, CtrRequest, TxCandidate};
+use std::sync::Arc;
 
 pub struct Pos {
     pub validator_ctr_addr: String,
@@ -26,13 +24,7 @@ impl Consensus for Pos {
             ctr_call_type: CtrCallType::Execute,
         };
 
-        let validator = match dist_ledger
-            .execute_ctr(
-                // &self.validator_ctr_addr,
-                request,
-            )
-            .await
-        {
+        let validator = match dist_ledger._execute_ctr(request).await {
             Ok(v) => v,
             Err(err) => {
                 return Err(format!("Error retrieving a validator, err: {}", err).into());

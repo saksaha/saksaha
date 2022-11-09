@@ -160,7 +160,8 @@ pub(crate) fn make_linker(
             //     .unwrap_or(Some("Fail".to_string()));
             // println!("real ctr_state data!!: {:?}", a);
 
-            let ctr_state = ledger_get.get_ctr_state(&key).unwrap().unwrap();
+            let ctr_state = ledger_get.get_ctr_state().unwrap().unwrap();
+            // let ctr_state = ledger_get.get_ctr_state(&key).unwrap().unwrap();
 
             println!("get_ctr_state_data(): arg: {}", arg);
 
