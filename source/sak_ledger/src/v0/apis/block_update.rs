@@ -1,25 +1,26 @@
 use crate::{CtrStateUpdate, LedgerCols, LedgerError, MerkleUpdate, SakLedger};
 use colored::Colorize;
-use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
+use sak_contract_std::{ContractFn, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_testing::DUMMY_SN;
 use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
+use sak_store_interface::LedgerInterface;
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp,
-    TxHash,
+    Block, BlockCandidate, CmIdx, CtrCallType, CtrRequest, MintTxCandidate, PourTxCandidate, Sn,
+    Tx, TxCandidate, TxCtrOp, TxHash,
 };
 
 impl SakLedger {
-    pub async fn insert_genesis_block(
+    pub async fn _insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
     ) -> Result<Option<String>, LedgerError> {
         let persisted_gen_block_hash = if let Some(b) = match self.get_block_by_height(&0).await {
             Ok(b) => b,
-            Err(err) => return Err(err.into()),
+            Err(err) => return Err(err),
         } {
             let block_hash = b.get_block_hash().to_string();
 
@@ -42,7 +43,7 @@ impl SakLedger {
         Ok(persisted_gen_block_hash)
     }
 
-    pub async fn write_block(
+    pub async fn _write_block(
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
@@ -166,7 +167,7 @@ impl SakLedger {
         Ok(Some(block_hash))
     }
 
-    pub async fn write_blocks(
+    pub async fn _write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
     ) -> Result<Vec<String>, LedgerError> {
@@ -205,7 +206,7 @@ impl SakLedger {
         Ok(block_hashes)
     }
 
-    pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+    pub(crate) fn _verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
         let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
 
         if merkle_rt == &dummy_merkle_rt {
@@ -222,7 +223,7 @@ impl SakLedger {
         }
     }
 
-    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+    pub(crate) fn _verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
         if sn == &DUMMY_SN {
             Ok(true)
         } else {
@@ -236,7 +237,7 @@ impl SakLedger {
         }
     }
 
-    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
+    pub(crate) fn _verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
         let hasher = MiMC::new();
 
         let mut public_inputs = vec![];
@@ -275,7 +276,7 @@ impl SakLedger {
         Ok(verification_result)
     }
 
-    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
+    pub(crate) fn _filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
         bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
             TxCandidate::Mint(_tc) => {
                 return true;
@@ -315,7 +316,7 @@ impl SakLedger {
         Ok(())
     }
 
-    async fn process_ctr_state_update(
+    pub(crate) async fn _process_ctr_state_update(
         &self,
         ctr_addr: &String,
         data: &[u8],
@@ -357,8 +358,6 @@ impl SakLedger {
                         );
                     }
                     CtrCallType::Update => {
-                        println!("111 1111");
-
                         let new_state = match ctr_state_update.get(ctr_addr) {
                             Some(_) => {
                                 let ctr_wasm = self
@@ -408,7 +407,7 @@ impl SakLedger {
         Ok(())
     }
 
-    async fn handle_mint_tx_candidate(
+    pub(crate) async fn _handle_mint_tx_candidate(
         &self,
         tc: &MintTxCandidate,
         ctr_state_update: &mut CtrStateUpdate,
@@ -429,7 +428,7 @@ impl SakLedger {
         Ok(cm_count)
     }
 
-    async fn handle_pour_tx_candidate(
+    pub(crate) async fn _handle_pour_tx_candidate(
         &self,
         tc: &PourTxCandidate,
         ctr_state_update: &mut CtrStateUpdate,
@@ -450,7 +449,7 @@ impl SakLedger {
         Ok(cm_count)
     }
 
-    async fn process_merkle_update(
+    pub(crate) async fn _process_merkle_update(
         &self,
         merkle_update: &mut MerkleUpdate,
         cms: &Vec<[u8; 32]>,

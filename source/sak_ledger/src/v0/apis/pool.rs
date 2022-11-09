@@ -3,7 +3,7 @@ use sak_logger::warn;
 use sak_types::{BlockCandidate, TxCandidate};
 
 impl SakLedger {
-    pub async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
+    pub async fn _insert_into_pool(&self, tx_candidates: Vec<TxCandidate>) {
         for tx in tx_candidates.into_iter() {
             println!("insert into pool, tx: {}", tx.get_tx_hash());
 
@@ -13,19 +13,21 @@ impl SakLedger {
         }
     }
 
-    pub async fn tx_pool_contains(&self, tx_hash: &String) -> bool {
+    pub async fn _tx_pool_contains(&self, tx_hash: &String) -> bool {
         self.sync_pool.contains_tx(tx_hash).await
     }
 
-    pub async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
+    pub async fn _get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String> {
         self.sync_pool.get_tx_pool_diff(tx_hashes).await
     }
 
-    pub async fn get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate> {
+    pub async fn _get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate> {
         self.sync_pool.get_txs(tx_hashes).await
     }
 
-    pub(crate) async fn make_block_candidate(&self) -> Result<Option<BlockCandidate>, LedgerError> {
+    pub(crate) async fn _make_block_candidate(
+        &self,
+    ) -> Result<Option<BlockCandidate>, LedgerError> {
         let tx_candidates = self.sync_pool.get_all_txs().await?;
 
         if tx_candidates.is_empty() {

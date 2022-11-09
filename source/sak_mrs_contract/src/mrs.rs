@@ -3,9 +3,8 @@ use crate::{
     ReserveSlotParams, Slot,
 };
 use sak_contract_derive::{CtrStateStore, MRSStore};
-use sak_contract_std::{
-    saksaha_contract, ContractError, CtrRequest, InvokeResult, List, RequestArgs, Storage,
-};
+use sak_contract_std::{saksaha_contract, ContractError, InvokeResult, List, Storage};
+use sak_types::{CtrRequest, RequestArgs};
 
 const SLOT_CAPACITY: usize = 64;
 

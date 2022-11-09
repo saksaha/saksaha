@@ -1,10 +1,11 @@
 use async_trait::async_trait;
 use sak_types::{
-    Block, BlockCandidate, BlockHash, BlockHeight, Cm, CmIdx, PourTxCandidate, Sn, Tx, TxCandidate,
-    TxCtrOp, TxHash,
+    Block, BlockCandidate, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, CtrRequest, DistLedgerEvent,
+    MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp, TxHash,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
+use tokio::sync::broadcast::Sender;
 
 pub type MRSInterfaceError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -25,6 +26,7 @@ pub trait MRSInterface {
 
 #[async_trait]
 pub trait LedgerInterface {
+    fn get_ledger_event_tx(&self) -> &Arc<Sender<DistLedgerEvent>>;
     fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerInterfaceError>;
     async fn get_blocks(
         &self,
@@ -38,6 +40,7 @@ pub trait LedgerInterface {
     ) -> Result<Vec<([u8; 32], bool)>, LedgerInterfaceError>;
     async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerInterfaceError>;
     async fn get_latest_block_hash(
+        &self,
     ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerInterfaceError>;
     async fn send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, LedgerInterfaceError>;
     async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerInterfaceError>;
@@ -75,28 +78,39 @@ pub trait LedgerInterface {
         ctr_addr: &String,
         data: &[u8],
         tx_ctr_op: TxCtrOp,
-        ctr_state_update: &mut CtrStateUpdate,
+        ctr_state_update: &mut HashMap<CtrAddr, Vec<u8>>,
     ) -> Result<(), LedgerInterfaceError>;
     async fn handle_mint_tx_candidate(
         &self,
         tc: &MintTxCandidate,
-        ctr_state_update: &mut CtrStateUpdate,
-        merkle_update: &mut MerkleUpdate,
+        ctr_state_update: &mut HashMap<CtrAddr, Vec<u8>>,
+        merkle_update: &mut HashMap<String, [u8; 32]>,
         next_cm_idx: CmIdx,
     ) -> Result<u128, LedgerInterfaceError>;
     async fn handle_pour_tx_candidate(
         &self,
         tc: &PourTxCandidate,
-        ctr_state_update: &mut CtrStateUpdate,
-        merkle_update: &mut MerkleUpdate,
+        ctr_state_update: &mut HashMap<CtrAddr, Vec<u8>>,
+        merkle_update: &mut HashMap<String, [u8; 32]>,
         next_cm_idx: CmIdx,
     ) -> Result<u128, LedgerInterfaceError>;
     async fn process_merkle_update(
         &self,
-        merkle_update: &mut MerkleUpdate,
+        merkle_update: &mut HashMap<String, [u8; 32]>,
         cms: &Vec<[u8; 32]>,
         next_cm_idx: CmIdx,
     ) -> Result<u128, LedgerInterfaceError>;
+
+    async fn execute_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerInterfaceError>;
+
+    async fn update_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerInterfaceError>;
+
+    async fn insert_into_pool(&self, tx_candidates: Vec<TxCandidate>);
+    async fn tx_pool_contains(&self, tx_hash: &String) -> bool;
+    async fn get_tx_pool_diff(&self, tx_hashes: Vec<String>) -> Vec<String>;
+    async fn get_txs_from_pool(&self, tx_hashes: Vec<String>) -> Vec<TxCandidate>;
+
+    async fn make_block_candidate(&self) -> Result<Option<BlockCandidate>, LedgerInterfaceError>;
 }
 
 #[derive(Serialize, Deserialize)]

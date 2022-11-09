@@ -1,6 +1,5 @@
-use crate::DistLedgerEvent;
 use sak_logger::{debug, warn};
-use sak_types::{Block, BlockHash, BlockHeight, TxCandidate, TxCtrOp, TxHash};
+use sak_types::{Block, BlockHash, BlockHeight, DistLedgerEvent, TxCandidate, TxCtrOp, TxHash};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,

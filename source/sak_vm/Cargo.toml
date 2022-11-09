@@ -12,6 +12,7 @@ sak_logger = { path = "../sak_logger" }
 sak_mrs = { path = "../sak_mrs" }
 sak_dir = { path = "../sak_dir" }
 sak_crypto = { path = "../sak_crypto" }
+sak_types = { path = "../sak_types" }
 sak_store_interface = { path = "../sak_store_interface" }
 chrono = "0.4"
 serde = { version = "1.0.130", features = ["derive"] }
