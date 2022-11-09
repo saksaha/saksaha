@@ -12,6 +12,7 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
+use sak_ledger::{SakLedger, SakLedgerArgs};
 use sak_logger::SakLogger;
 use sak_logger::{debug, error, info, warn};
 use sak_machine::SakMachine;
@@ -179,10 +180,25 @@ impl Routine {
             Arc::new(Box::new(m))
         };
 
-        // let vm: ContractProcessor = {
-        //     let v = SakVM::init(mrs.clone())?;
-        //     Box::new(v)
-        // };
+        let sak_ledger_args = SakLedgerArgs {
+            tx_sync_interval: config.blockchain.tx_sync_interval,
+            genesis_block: None,
+            block_sync_interval: config.blockchain.block_sync_interval,
+            consensus: pos,
+            ledger_path,
+            // contract_processor: vm,
+        };
+
+        let ledger: Arc<LedgerAccessor> = {
+            let l = SakLedger::init(sak_ledger_args).await.unwrap();
+
+            Arc::new(Box::new(l))
+        };
+
+        let vm: ContractProcessor = {
+            let v = SakVM::init(mrs.clone())?;
+            Box::new(v)
+        };
 
         let ledger = {
             let l = Ledger::init(
