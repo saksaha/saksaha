@@ -100,8 +100,8 @@ impl SakLedger {
     }
 }
 
-impl LedgerInterface for SakLedger {
-    fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerInterfaceError> {
-        Ok(Some(vec![0]))
-    }
-}
+// impl LedgerInterface for SakLedger {
+//     fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerInterfaceError> {
+//         Ok(Some(vec![0]))
+//     }
+// }

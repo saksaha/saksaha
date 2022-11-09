@@ -54,7 +54,7 @@ impl Ledger {
             consensus,
             block_sync_interval,
             ledger_path,
-            contract_processor,
+            // contract_processor,
         };
 
         let sak_ledger = SakLedger::init(dist_ledger_args).await?;
