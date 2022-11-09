@@ -1,7 +1,7 @@
 use crate::{v0::wasm::Wasmtime, VMError};
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
-use sak_store_interface::{MRSAccessor, PreflightResponse};
+use sak_store_interface::{LedgerAccessor, MRSAccessor, PreflightResponse};
 use sak_vm_interface::wasmtime::{
     Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
 };
@@ -18,10 +18,15 @@ pub struct Data {
 pub(crate) fn make_linker(
     engine: Engine,
     mrs: &Arc<MRSAccessor>,
+    ledger: &Arc<LedgerAccessor>,
 ) -> Result<Linker<InstanceState>, VMError> {
     let mut linker = Linker::new(&engine);
+
     let mrs_get = mrs.clone();
     let mrs_put = mrs.clone();
+
+    let ledger_get = ledger.clone();
+    let ledger_pet = ledger.clone();
 
     linker.func_wrap(
         "host",
@@ -154,6 +159,8 @@ pub(crate) fn make_linker(
             //     .get_ctr_state_data(&key)
             //     .unwrap_or(Some("Fail".to_string()));
             // println!("real ctr_state data!!: {:?}", a);
+
+            let ctr_state = ledger_get.get_ctr_state(&key).unwrap().unwrap();
 
             println!("get_ctr_state_data(): arg: {}", arg);
 

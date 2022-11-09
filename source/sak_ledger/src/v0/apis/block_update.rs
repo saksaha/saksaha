@@ -341,9 +341,6 @@ impl SakLedger {
                     let key = format!("{}_{}", ctr_addr, field);
 
                     ctr_state_update.insert(key.clone(), value.clone());
-
-                    println!("[! aaron] insert !!!");
-                    println!("[! aaron] key: {:?}, value: {:?}", key, value);
                 }
             }
 
@@ -353,8 +350,8 @@ impl SakLedger {
                 match req.ctr_call_type {
                     CtrCallType::Execute => {
                         warn!(
-                            "Tx may contain contract 'execute' request, \
-                            but not 'query'"
+                            "Tx may contain contract 'update' request, \
+                            but not 'execute'"
                         );
                     }
                     CtrCallType::Update => {
@@ -394,6 +391,7 @@ impl SakLedger {
                         // let key = format!("{}_{}", ctr_addr, new_state);
 
                         if maybe_error_placehorder != ERROR_PLACEHOLDER {
+                            // new_state is the `receipt` from invoked contract
                             ctr_state_update.insert(ctr_addr.clone(), new_state.clone());
                         }
                     }

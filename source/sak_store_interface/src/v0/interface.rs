@@ -24,6 +24,16 @@ pub trait MRSInterface {
     fn add_session(&self, session: Session);
 }
 
+// TEMP
+type Storage = Vec<u8>;
+
+type CtrStateUpdate = HashMap<CtrAddr, Storage>;
+
+type MerkleUpdate = HashMap<MerkleNodeLoc, [u8; 32]>;
+
+type MerkleNodeLoc = String;
+// TEMP
+
 #[async_trait]
 pub trait LedgerInterface {
     fn get_ledger_event_tx(&self) -> &Arc<Sender<DistLedgerEvent>>;

@@ -25,17 +25,20 @@ impl ContractProcess for SakVM {
         println!("333");
         let res = match ctr_fn {
             ContractFn::Init => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_init(instance, store, memory)
             }
             ContractFn::Execute(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_execute(instance, store, memory, request)
             }
             ContractFn::Update(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_update(instance, store, memory, request)
             }
@@ -207,8 +210,9 @@ impl SakVM {
     fn init_module(
         contract_wasm: impl AsRef<[u8]>,
         mrs: &Arc<MRSAccessor>,
+        ledger: &Arc<LedgerAccessor>,
     ) -> Result<(Instance, Store<InstanceState>, Memory), VMError> {
-        let (instance, mut store) = match Wasmtime::make_instance(contract_wasm, mrs) {
+        let (instance, mut store) = match Wasmtime::make_instance(contract_wasm, mrs, ledger) {
             Ok(r) => r,
             Err(err) => {
                 return Err(format!("Error creating an instance, err: {}", err).into());
