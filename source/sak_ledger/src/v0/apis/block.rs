@@ -1,5 +1,4 @@
 use crate::{LedgerCols, LedgerError, SakLedger};
-use async_trait::async_trait;
 use sak_crypto::MerkleTree;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_store_interface::LedgerInterface;
@@ -7,21 +6,23 @@ use sak_types::{Block, BlockHash, BlockHeight, Cm, CmIdx, Tx, TxCandidate, TxHas
 
 const GET_BLOCK_HASH_LIST_DEFAULT_SIZE: u128 = 10;
 
-#[async_trait]
-impl LedgerInterface for SakLedger {
-    async fn get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
+impl SakLedger {
+    pub async fn _get_blocks(&self, block_hashes: Vec<&String>) -> Result<Vec<Block>, LedgerError> {
         self.ledger_db.get_blocks(block_hashes).await
     }
 
-    async fn get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
+    pub async fn _get_txs(&self, tx_hashes: &Vec<String>) -> Result<Vec<Tx>, LedgerError> {
         self.ledger_db.get_txs(tx_hashes).await
     }
 
-    async fn get_merkle_node(&self, location: &String) -> Result<[u8; 32], LedgerError> {
+    pub async fn _get_merkle_node(&self, location: &String) -> Result<[u8; 32], LedgerError> {
         self.ledger_db.get_merkle_node(location)
     }
 
-    async fn get_auth_path(&self, cm_idx: &u128) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
+    pub async fn _get_auth_path(
+        &self,
+        cm_idx: &u128,
+    ) -> Result<Vec<([u8; 32], bool)>, LedgerError> {
         let merkle_tree = MerkleTree::new(CM_TREE_DEPTH);
 
         let auth_path_idx = merkle_tree.generate_auth_paths(cm_idx.to_owned());
@@ -44,11 +45,13 @@ impl LedgerInterface for SakLedger {
         Ok(ret)
     }
 
-    async fn get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
+    pub async fn _get_cm_idx_by_cm(&self, cm: &Cm) -> Result<Option<CmIdx>, LedgerError> {
         self.ledger_db.get(LedgerCols::CMIdxByCM, cm)
     }
 
-    async fn get_latest_block_hash(&self) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
+    pub async fn _get_latest_block_hash(
+        &self,
+    ) -> Result<Option<(BlockHeight, BlockHash)>, LedgerError> {
         let latest_block_height = match self.ledger_db.get_latest_block_height()? {
             Some(h) => h,
             None => return Ok(None),
@@ -65,7 +68,7 @@ impl LedgerInterface for SakLedger {
         Ok(Some((latest_block_height, latest_block_hash)))
     }
 
-    async fn send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, LedgerError> {
+    pub async fn _send_tx(&self, tx_candidate: TxCandidate) -> Result<TxHash, LedgerError> {
         let tx_hash = match tx_candidate.clone() {
             TxCandidate::Mint(_) => self.sync_pool.insert_tx(tx_candidate).await?,
             TxCandidate::Pour(tc) => {
@@ -103,15 +106,15 @@ impl LedgerInterface for SakLedger {
         Ok(tx_hash)
     }
 
-    async fn get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
+    pub async fn _get_tx(&self, tx_hash: &String) -> Result<Option<Tx>, LedgerError> {
         self.ledger_db.get_tx(tx_hash).await
     }
 
-    fn get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
+    pub fn _get_block(&self, block_hash: &String) -> Result<Option<Block>, LedgerError> {
         self.ledger_db.get_block(block_hash)
     }
 
-    async fn get_block_list(
+    pub async fn _get_block_list(
         &self,
         offset: Option<u128>,
         limit: Option<u128>,
@@ -179,7 +182,7 @@ impl LedgerInterface for SakLedger {
         Ok(block_list)
     }
 
-    async fn get_all_blocks(&self) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
+    pub async fn _get_all_blocks(&self) -> Result<Vec<(BlockHeight, BlockHash)>, LedgerError> {
         let latest_bh = match self.get_latest_block_height()? {
             Some(bh) => bh,
             None => return Err(format!("Cannot find latest block height").into()),
@@ -206,7 +209,10 @@ impl LedgerInterface for SakLedger {
         Ok(block_hash_list)
     }
 
-    async fn get_block_by_height(&self, block_height: &u128) -> Result<Option<Block>, LedgerError> {
+    pub async fn _get_block_by_height(
+        &self,
+        block_height: &u128,
+    ) -> Result<Option<Block>, LedgerError> {
         match self
             .ledger_db
             .get(LedgerCols::BlockHash, &block_height.to_be_bytes())?
@@ -216,11 +222,11 @@ impl LedgerInterface for SakLedger {
         }
     }
 
-    fn get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
+    pub fn _get_latest_block_height(&self) -> Result<Option<u128>, LedgerError> {
         self.ledger_db.get_latest_block_height()
     }
 
-    async fn get_latest_block_merkle_rt(&self) -> Result<Option<[u8; 32]>, LedgerError> {
+    pub async fn _get_latest_block_merkle_rt(&self) -> Result<Option<[u8; 32]>, LedgerError> {
         let latest_block_height = match self.ledger_db.get_latest_block_height()? {
             Some(h) => h,
             None => return Ok(None),
@@ -247,7 +253,7 @@ impl LedgerInterface for SakLedger {
         Ok(latest_merkle_rt)
     }
 
-    fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerError> {
+    pub fn _get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerError> {
         Ok(Some(vec![0]))
     }
 }

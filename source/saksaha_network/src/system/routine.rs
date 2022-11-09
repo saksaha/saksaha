@@ -18,7 +18,7 @@ use sak_machine::SakMachine;
 use sak_machine::SakMachineArgs;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use sak_store_interface::{MRSAccessor, MRSInterface};
+use sak_store_interface::{LedgerAccessor, MRSAccessor, MRSInterface};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
@@ -179,10 +179,10 @@ impl Routine {
             Arc::new(Box::new(m))
         };
 
-        let vm: ContractProcessor = {
-            let v = SakVM::init(mrs.clone())?;
-            Box::new(v)
-        };
+        // let vm: ContractProcessor = {
+        //     let v = SakVM::init(mrs.clone())?;
+        //     Box::new(v)
+        // };
 
         let ledger = {
             let l = Ledger::init(
@@ -191,7 +191,7 @@ impl Routine {
                 None,
                 config.blockchain.block_sync_interval,
                 identity.clone(),
-                vm,
+                // vm,
             )
             .await?;
 

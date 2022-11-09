@@ -1,8 +1,9 @@
 use super::wasm::Wasmtime;
 use crate::VMError;
-use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
-use sak_store_interface::{LedgerAccessor, MRSAccessor, Session};
-use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
+use sak_contract_std::{symbols, ContractFn};
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
+use sak_types::CtrRequest;
+use sak_vm_interface::wasmtime::{Instance, Memory, Store};
 use sak_vm_interface::{
     ContractProcess, CtrExecuteFn, CtrInitFn, InstanceState, InvokeReceipt, VMInterfaceError,
 };

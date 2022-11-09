@@ -1,7 +1,6 @@
 use crate::Conn;
 use crate::Transport;
 use crate::{handshake::*, Msg, PingMsg};
-use futures::{SinkExt, StreamExt};
 use sak_logger::SakLogger;
 use sak_logger::{debug, info, warn};
 use sak_p2p_id::Identity;

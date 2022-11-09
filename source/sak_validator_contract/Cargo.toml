@@ -24,3 +24,4 @@ sak_mrs = { path = "../sak_mrs" }
 sak_store_interface = { path = "../sak_store_interface" }
 sak_credential = { path = "../sak_credential" }
 sak_vm_interface = { path = "../sak_vm_interface" }
+sak_types = { path = "../sak_types" }

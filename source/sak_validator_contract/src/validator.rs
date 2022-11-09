@@ -1,8 +1,6 @@
-use crate::AddValidatorParams;
 use sak_contract_derive::{CtrStateStore, MRSStore};
-use sak_contract_std::{
-    saksaha_contract, ContractError, CtrRequest, Dict, List, RequestArgs, Storage,
-};
+use sak_contract_std::{saksaha_contract, ContractError, List};
+use sak_types::CtrRequest;
 
 const PUB_KEY_LEN: usize = 130;
 
