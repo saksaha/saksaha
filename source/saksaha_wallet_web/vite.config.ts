@@ -40,13 +40,11 @@ export default () => {
     },
     build: {
       target: "esnext",
+      sourcemap: false,
     },
     worker: {
       format: "es",
-      plugins: [
-        wasm(),
-        topLevelAwait(),
-      ],
-    }
+      plugins: [wasm(), topLevelAwait()],
+    },
   });
 };

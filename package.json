@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": [
     "source/saksaha_sdk_web",
-    "source/saksaha_wallet_web/packages/wallet"
+    "source/saksaha_wallet_web"
   ],
   "devDependencies": {
     "lerna": "^5.5.2"
