@@ -49,6 +49,7 @@ chrono = "0.4"
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
+sak_mrs_contract = { path = "../sak_mrs_contract" }
 
 [[bin]]
 name = "sak"

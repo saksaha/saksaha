@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use sak_types::{
-    Block, BlockCandidate, BlockHash, BlockHeight, Cm, CmIdx, PourTxCandidate, Sn, Tx, TxCandidate,
-    TxCtrOp, TxHash,
+    Block, BlockCandidate, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, MintTxCandidate,
+    PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp, TxHash,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -22,6 +22,16 @@ pub trait MRSInterface {
     // async fn get_session(&self, session_id: String) -> Session;
     fn add_session(&self, session: Session);
 }
+
+// TEMP
+type Storage = Vec<u8>;
+
+type CtrStateUpdate = HashMap<CtrAddr, Storage>;
+
+type MerkleUpdate = HashMap<MerkleNodeLoc, [u8; 32]>;
+
+type MerkleNodeLoc = String;
+// TEMP
 
 #[async_trait]
 pub trait LedgerInterface {

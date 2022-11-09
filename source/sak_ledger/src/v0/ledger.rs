@@ -5,6 +5,7 @@ use crate::LedgerError;
 use crate::SyncPool;
 use sak_crypto::hasher::MiMC;
 use sak_crypto::MerkleTree;
+use sak_kv_db::WriteBatch;
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_logger::info;
 use sak_store_interface::{LedgerInterface, LedgerInterfaceError};
@@ -100,8 +101,30 @@ impl SakLedger {
     }
 }
 
+impl LedgerInterface for SakLedger {
+    fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerInterfaceError> {
+        Ok(Some(vec![0]))
+    }
+}
 // impl LedgerInterface for SakLedger {
-//     fn get_ctr_state(&self) -> Result<Option<Vec<u8>>, LedgerInterfaceError> {
-//         Ok(Some(vec![0]))
+//     fn get_ctr_state(&self, key: &String) -> Result<Option<Vec<u8>>, LedgerInterfaceError> {
+//         let ctr_state: Vec<u8> = self
+//             .ledger_db
+//             .get(crate::LedgerCols::CtrState, &key.as_bytes().to_vec())?
+//             .ok_or("ctr_state should be exist")?;
+
+//         Ok(Some(ctr_state))
+//     }
+
+//     fn put_ctr_state(&self, key: &String, value: &String) -> Result<(), LedgerInterfaceError> {
+//         let mut batch = WriteBatch::default();
+
+//         let key = key.as_bytes().to_vec();
+//         let value = value.as_bytes().to_vec();
+
+//         self.ledger_db
+//             .put(&mut batch, crate::LedgerCols::CtrState, &key, &value)?;
+
+//         Ok(())
 //     }
 // }

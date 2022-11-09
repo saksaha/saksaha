@@ -203,16 +203,12 @@ use sak_types::{BlockCandidate, Tx, TxCandidate};
 // }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_rpc_reqeust_correct_send_pour_tx() {
+async fn test_rpc_request_correct_send_pour_tx() {
     let test_credential_1 = CredentialProfile::test_1();
 
     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
-    let tc_dummy = if let TxCandidate::Pour(c) = sak_types::mock_pour_tc_random() {
-        c
-    } else {
-        panic!("mock tx candidate should be pour tx candidate");
-    };
+    let tc_dummy = TxCandidate::Pour(c) = sak_types::mock_pour_tc_random().unwrap();
 
     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
@@ -510,6 +506,7 @@ async fn test_rpc_reqeust_call_mrs_contract() {
         machine,
     } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
+    // run rpc server
     tokio::spawn(async move { rpc.run().await });
 
     let client = Client::new();
@@ -523,12 +520,22 @@ async fn test_rpc_reqeust_call_mrs_contract() {
     };
 
     let genesis_block = GenesisBlock::create().unwrap();
+
     let mrs_ctr_addr = genesis_block.get_mrs_ctr_addr();
 
     let body = {
+        // the data of pour tx should be a `CtrRequestData`
+        let data = CtrRequestData {
+            req_type: "reserve".to_string(),
+            args: vec![11, 22],
+            ctr_call_type: CtrCallType::Update,
+        };
+
+        let data = serde_json::to_vec(&data).unwrap();
+
         let send_req = SendPourTxRequest::new(
             tc_dummy.created_at,
-            tc_dummy.data,
+            data,
             tc_dummy.author_sig,
             Some(mrs_ctr_addr),
             tc_dummy.pi,
@@ -536,15 +543,6 @@ async fn test_rpc_reqeust_call_mrs_contract() {
             tc_dummy.cms,
             tc_dummy.merkle_rts,
         );
-
-        // let ctr_addr = mrs_ctr_addr;
-        // let req = CtrRequestData {
-        //     req_type: "reserve".to_string(),
-        //     args: vec![],
-        //     ctr_call_type: CtrCallType::Update,
-        // };
-
-        // let send_req = QueryCtrRequest { ctr_addr, req };
 
         let params = serde_json::to_string(&send_req)
             .unwrap()
@@ -580,11 +578,11 @@ async fn test_rpc_reqeust_call_mrs_contract() {
 
     assert_eq!(expected_tc_hash, result_hash);
 
-    let is_contain = machine
-        .ledger
-        // .dist_ledger
-        .tx_pool_contains(&expected_tc_hash)
-        .await;
+    // let is_contain = machine
+    //     .ledger
+    //     // .dist_ledger
+    //     .tx_pool_contains(&expected_tc_hash)
+    //     .await;
 
-    assert!(is_contain);
+    // assert!(is_contain);
 }
