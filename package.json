@@ -9,7 +9,6 @@
     "lerna": "^5.5.2"
   },
   "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "dev": "cd source/saksaha_wallet_web && yarn run dev"
+    "bootstrap": "lerna bootstrap"
   }
 }

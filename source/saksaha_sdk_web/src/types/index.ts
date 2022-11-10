@@ -1,4 +1,5 @@
 import { CoinManager } from "./coin_manager";
+import { CoinRecord } from "./coin_record";
 
 export interface Block {
   validator_sig: string;
@@ -9,16 +10,13 @@ export interface Block {
   merkle_rt: number[];
   block_cm_count: number;
   block_hash: string;
-};
+}
 
 export interface JsonResponse<T> {
   jsonrpc: string;
   error: Object;
   result: T;
   id: string;
-};
+}
 
-
-export {
-  CoinManager,
-};
+export { CoinManager, CoinRecord };
