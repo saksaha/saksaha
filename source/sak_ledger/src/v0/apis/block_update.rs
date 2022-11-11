@@ -363,8 +363,7 @@ impl SakLedger {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                let ctr_fn = ContractFn::Execute(req);
-                                // let ctr_fn = ContractFn::Update(req);
+                                let ctr_fn = ContractFn::Update(req);
 
                                 let receipt = self
                                     .contract_processor
@@ -372,7 +371,7 @@ impl SakLedger {
                                     .ok_or("contract_processor should be present")?
                                     .invoke(ctr_addr, &ctr_wasm, ctr_fn)?;
 
-                                receipt.result.clone()
+                                receipt.result
                                 // receipt
                                 //     .updated_ctr_state
                                 //     .ok_or("State needs to be updated")?
