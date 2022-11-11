@@ -14,7 +14,6 @@ serde_bytes = "0.11.6"
 sak_types = { path = "../sak_types" }
 tokio = { version = "1.21.2", features = ["full"] }
 
-
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }
 

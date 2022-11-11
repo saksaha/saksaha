@@ -22,7 +22,6 @@ impl ContractProcess for SakVM {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
-        println!("333");
         let res = match ctr_fn {
             ContractFn::Init => {
                 let (instance, store, memory) =
@@ -53,6 +52,7 @@ impl ContractProcess for SakVM {
 impl SakVM {
     pub fn init(mrs: Arc<MRSAccessor>, ledger: Arc<LedgerAccessor>) -> Result<Self, String> {
         let vm = SakVM { mrs, ledger };
+
         Ok(vm)
     }
 

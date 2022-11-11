@@ -1,4 +1,4 @@
-use crate::{InstanceState, InvokeReceipt, VMInterfaceError};
+use crate::{InvokeReceipt, VMInterfaceError};
 use sak_contract_std::ContractFn;
 
 pub type ContractProcessor = Box<dyn ContractProcess + Send + Sync>;

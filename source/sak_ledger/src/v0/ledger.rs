@@ -97,7 +97,7 @@ impl SakLedger {
         Ok(ledger)
     }
 
-    pub fn run(mut self, contract_processor: Box<dyn ContractProcess + Send + Sync>) {
+    pub fn _run(mut self, contract_processor: Box<dyn ContractProcess + Send + Sync>) {
         self.contract_processor = Some(contract_processor);
     }
 }

@@ -309,7 +309,7 @@ impl SakLedger {
                     }
                 };
 
-                return true;
+                true
             }
         });
 

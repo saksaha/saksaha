@@ -1,8 +1,5 @@
 use super::{consensus::Pos, genesis::GenesisBlock};
-use crate::{
-    fs::{self, SaksahaFS},
-    SaksahaError,
-};
+use crate::{fs::SaksahaFS, SaksahaError};
 use sak_ledger::{Consensus, SakLedger, SakLedgerArgs};
 use sak_p2p_id::Identity;
 use std::sync::Arc;
