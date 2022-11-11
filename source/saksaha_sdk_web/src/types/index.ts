@@ -1,6 +1,3 @@
-import { CoinManager } from "./coin_manager";
-import { CoinRecord } from "./coin_record";
-
 export interface Block {
   validator_sig: string;
   tx_hashes: string[];
@@ -18,5 +15,3 @@ export interface JsonResponse<T> {
   result: T;
   id: string;
 }
-
-export { CoinManager, CoinRecord };

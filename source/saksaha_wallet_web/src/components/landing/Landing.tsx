@@ -10,6 +10,7 @@ import { CoinManager } from "saksaha";
 // import { CoinRecord, CoinStatus } from "saksaha";
 
 const LandingPage: Component = () => {
+  console.log(11, CoinManager);
   // const [walletAddress, setWalletAddress] = createSignal("");
   // const [coinManager, setCoinManager] = createSignal(new CoinManager());
   // const [selectedCoin, setSelectedCoin] = createSignal<CoinRecord>({

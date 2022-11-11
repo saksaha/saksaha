@@ -1,19 +1,16 @@
-import { SendPourTxParam, send_pour_tx } from "../../../../../../../saksaha_sdk_web/src";
+import { SendPourTxParam, send_pour_tx } from "saksaha";
 import { Component } from "solid-js";
-import * as styles from './SendTxBtn.css';
-import * as Comlink from 'comlink';
+import * as styles from "./SendTxBtn.css";
+import * as Comlink from "comlink";
 import { WasmHandler } from "./wasm-worker";
-import { Coin, get_dummy_new_coin_data } from "../../../../../../../saksaha_sdk_web/src/types/coin";
+import { Coin, get_dummy_new_coin_data } from "saksaha";
 
-
-let worker = new Worker(new URL('./wasm-worker.ts', import.meta.url), {
-  type: 'module'
+let worker = new Worker(new URL("./wasm-worker.ts", import.meta.url), {
+  type: "module",
 });
 
-
 const get_proof = async (p: number[]) => {
-  let a =
-    await Comlink.wrap<Comlink.Remote<WasmHandler>>(worker).handlers;
+  let a = await Comlink.wrap<Comlink.Remote<WasmHandler>>(worker).handlers;
 
   let { proof, time } = await a.multiThread(p);
 
@@ -23,18 +20,19 @@ const get_proof = async (p: number[]) => {
 const SendTxBtn: Component = () => {
   return (
     <>
-      <input type="button" class={styles.send_tx_btn} value="Send Tx Btn" onclick={
-        async () => {
-          console.log('send tx btn clicked');
+      <input
+        type="button"
+        class={styles.send_tx_btn}
+        value="Send Tx Btn"
+        onclick={async () => {
+          console.log("send tx btn clicked");
 
           const dummy_new_coin: Coin = get_dummy_new_coin_data();
 
           const int_arr = [11, 22];
           const dummy_u8_32 = [
-            55, 55, 55, 55, 55, 55, 55, 55,
-            55, 55, 55, 55, 55, 55, 55, 55,
-            55, 55, 55, 55, 55, 55, 55, 55,
-            55, 55, 55, 55, 55, 55, 55, 55,
+            55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55,
+            55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55,
           ];
 
           console.log("[+] gen proof starts....wait plz");
@@ -54,7 +52,7 @@ const SendTxBtn: Component = () => {
             sns: [dummy_u8_32, dummy_u8_32],
             cms: [dummy_u8_32, dummy_u8_32],
             merkle_rts: [dummy_u8_32, dummy_u8_32],
-          }
+          };
 
           console.log("[+] gen proof end!");
 
@@ -62,12 +60,11 @@ const SendTxBtn: Component = () => {
 
           let tx_hash = await send_pour_tx(dummy_send_pour_tx_data);
 
-          console.log("time:  ", time, 'ms');
+          console.log("time:  ", time, "ms");
 
-          console.log('send tx finished');
-
-        }
-      } />
+          console.log("send tx finished");
+        }}
+      />
     </>
   );
 };

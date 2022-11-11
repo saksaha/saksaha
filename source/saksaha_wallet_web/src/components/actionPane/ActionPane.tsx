@@ -1,15 +1,15 @@
-import { CoinManager } from '../../../../../../saksaha_sdk_web/src';
-import { Component, createSignal, Setter, Accessor } from 'solid-js';
-import * as styles from './ActionPane.css';
-import FaucetBtn from './faucetBtn/FaucetBtn';
-import SendTxBtn from './sendTxBtn/SendTxBtn';
+import { CoinManager } from "saksaha";
+import { Component, createSignal, Setter, Accessor } from "solid-js";
+import * as styles from "./ActionPane.css";
+import FaucetBtn from "./faucetBtn/FaucetBtn";
+import SendTxBtn from "./sendTxBtn/SendTxBtn";
 
 interface ActionPaneProps {
-  coin_manager_setter: Setter<CoinManager>,//
-  coin_manager: Accessor<CoinManager>,
-  wallet_addr: Accessor<string>,
-  wallet_addr_setter: Setter<string>,//
-  mrs_slots_setter: Setter<string[]>
+  coin_manager_setter: Setter<CoinManager>; //
+  coin_manager: Accessor<CoinManager>;
+  wallet_addr: Accessor<string>;
+  wallet_addr_setter: Setter<string>; //
+  mrs_slots_setter: Setter<string[]>;
 }
 
 const ActionPane: Component<ActionPaneProps> = (props) => {
@@ -21,7 +21,6 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
 
   const [walletAddrInput, setWalletAddrInput] = createSignal("");
   const [loginStatus, setLoginStatus] = createSignal(false);
-
 
   const handle_log_in = (wallet_id: string) => {
     // localStorage
@@ -35,7 +34,6 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
       res = new CoinManager(wallet_id);
 
       localStorage.setItem(key, JSON.stringify(res));
-
     } else {
       console.log("existed id");
 
@@ -60,48 +58,42 @@ const ActionPane: Component<ActionPaneProps> = (props) => {
           class={styles.input_single_field}
           placeholder={styles.InputWalletString}
           onChange={(e) => setWalletAddrInput(e.currentTarget.value)}
-          disabled={
-            loginStatus() ? true : false
-          }
+          disabled={loginStatus() ? true : false}
         />
 
-        {
-          loginStatus() ?
-            null :
-            <div
-              class={styles.input_btn}
-              onClick={() => {
-                let wallet_address = walletAddrInput();
+        {loginStatus() ? null : (
+          <div
+            class={styles.input_btn}
+            onClick={() => {
+              let wallet_address = walletAddrInput();
 
-                handle_log_in(wallet_address);
-              }}
-            >SEND</div>
-        }
-      </div >
-      {
-        loginStatus() ?
-          <div class={styles.input_row}>
-            <input
-              class={styles.input_single_field}
-              placeholder={styles.InputData}
-            />
-            <div class={styles.input_btn}>SEND</div>
+              handle_log_in(wallet_address);
+            }}
+          >
+            SEND
           </div>
-          : null
-      }
-      {
-        loginStatus() ?
-          <>
-            <SendTxBtn />
-            <br />
-            <FaucetBtn
-              wallet_addr={wallet_addr}
-              coin_manager={coin_manager}
-              coin_manager_setter={coin_manager_setter}
-            />
-          </>
-          : null
-      }
+        )}
+      </div>
+      {loginStatus() ? (
+        <div class={styles.input_row}>
+          <input
+            class={styles.input_single_field}
+            placeholder={styles.InputData}
+          />
+          <div class={styles.input_btn}>SEND</div>
+        </div>
+      ) : null}
+      {loginStatus() ? (
+        <>
+          <SendTxBtn />
+          <br />
+          <FaucetBtn
+            wallet_addr={wallet_addr}
+            coin_manager={coin_manager}
+            coin_manager_setter={coin_manager_setter}
+          />
+        </>
+      ) : null}
     </>
   );
 };

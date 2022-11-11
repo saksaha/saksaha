@@ -7,7 +7,7 @@ export default {
   plugins: [
     replace({
       // setting "include" is important for performance
-      include: ["src/logger.js"],
+      include: ["src/"],
       "process.env.NODE_ENV": '"development"',
     }),
   ],

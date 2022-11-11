@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "build": "rollup -c rollup.config.mjs --bundleConfigAsCjs",
+    "vite": "vite",
+    "build-vite": "vite build",
+    "build-rollup": "rollup -c rollup.config.mjs --bundleConfigAsCjs",
     "start": "web-dev-server --node-resolve --open --watch"
   },
   "source": "src/index.tsx",

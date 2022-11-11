@@ -1,16 +1,9 @@
 {
-  "include": [
-    "."
-  ],
-  "exclude": [
-    "dist",
-    "build",
-    "node_modules"
-  ],
+  "include": ["."],
+  "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
-    "lib": [
-      "es2015",
-      "dom"
-    ]
+    "lib": ["es2015", "dom"],
+    "target": "ESNext",
+    "module": "ESNext"
   }
 }
