@@ -16,15 +16,7 @@ base64ct = { version = "1.5.0", features = ["alloc"] }
 hkdf = "0.12.3"
 aes-gcm-siv = "0.10.3"
 jni = "0.5.2"
-# bellman = "0.11.1"
-# ff = "0.11"
-# bls12_381 = "0.6.0"
-# sha2 = "0.10.1"
-# rand_core = "0.6.3"
-# rand = "0.8.4"
-# pairing = "0.21.0"
-
-bellman = { version = "0.13.1", features = ["multicore"] }
+bellman = { version = "0.13.1" }
 bls12_381 = "0.7"
 ff = "0.12"
 sha2 = "0.10.1"

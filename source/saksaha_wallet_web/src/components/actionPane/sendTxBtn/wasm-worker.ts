@@ -52,5 +52,5 @@ export interface WasmHandler {
 }
 
 Comlink.expose({
-  handlers: await initHandlers(),
+  handlers: initHandlers(),
 });
