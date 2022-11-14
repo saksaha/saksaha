@@ -1,7 +1,7 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 import "./index.css";
-import Main from "@components/main/Main";
+import Main from "./components/main/Main";
 import { Router } from "@solidjs/router";
 
 render(

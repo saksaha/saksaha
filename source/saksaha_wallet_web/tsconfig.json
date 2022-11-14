@@ -15,5 +15,5 @@
       "@components/*": ["./src/components/*"]
     }
   },
-  "include": ["src", "rollup.config.ts"]
+  "include": ["src"]
 }

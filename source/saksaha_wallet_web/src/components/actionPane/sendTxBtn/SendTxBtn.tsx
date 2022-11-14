@@ -1,11 +1,12 @@
 import { SendPourTxParam, send_pour_tx } from "saksaha";
 import { Component } from "solid-js";
-import * as styles from "./SendTxBtn.css";
 import * as Comlink from "comlink";
-import { WasmHandler } from "./wasm-worker";
 import { Coin, get_dummy_new_coin_data } from "saksaha";
 
-let worker = new Worker(new URL("./wasm-worker.ts", import.meta.url), {
+import * as styles from "./SendTxBtn.css";
+import { WasmHandler } from "../../../wasm-worker";
+
+let worker = new Worker(new URL("../../../wasm-worker.ts", import.meta.url), {
   type: "module",
 });
 

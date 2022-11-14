@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { style } from "@vanilla-extract/css";
 
 export const coin_record = style({
   border: "3px solid green",
@@ -13,8 +13,8 @@ export const coin_record = style({
 
   ":hover": {
     border: "3px solid red",
-    background: "gainsboro"
-  }
+    background: "gainsboro",
+  },
 });
 
 export const selected_coin_record = style({
@@ -38,7 +38,6 @@ export const result = style({
   display: "flex",
   flexDirection: "row",
   alignItems: "center",
-
 });
 
 export const result_coin_pane = style({
@@ -47,7 +46,6 @@ export const result_coin_pane = style({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-
 });
 
 export const result_mrs_slot_pane = style({
@@ -71,8 +69,8 @@ export const mrs_slot = style({
 
   ":hover": {
     border: "3px solid red",
-    background: "gainsboro"
-  }
+    background: "gainsboro",
+  },
 });
 
 export const selected_mrs_slot = style({

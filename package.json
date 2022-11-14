@@ -6,7 +6,10 @@
     "source/saksaha_wallet_web"
   ],
   "devDependencies": {
-    "lerna": "^5.5.2"
+    "@parcel/transformer-typescript-types": "2.8.0",
+    "lerna": "^5.5.2",
+    "process": "^0.11.10",
+    "typescript": ">=3.0.0"
   },
   "scripts": {
     "bootstrap": "lerna bootstrap"
