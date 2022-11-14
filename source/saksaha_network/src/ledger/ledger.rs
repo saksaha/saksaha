@@ -16,7 +16,7 @@ impl Ledger {
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
         identity: Arc<Identity>,
-        contract_processor: Arc<ContractProcessor>,
+        contract_processor: Option<Arc<ContractProcessor>>,
     ) -> Result<SakLedger, SaksahaError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {

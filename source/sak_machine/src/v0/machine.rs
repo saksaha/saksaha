@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
 use crate::MachineError;
-use sak_ledger::SakLedger;
-use sak_mrs::SakMRS;
 use sak_store_interface::{LedgerAccessor, MRSAccessor};
 
 pub struct SakMachine {

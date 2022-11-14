@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 pub struct SakVM {
     mrs: Arc<MRSAccessor>,
-    ledger: Option<Arc<LedgerAccessor>>,
+    ledger: Arc<LedgerAccessor>,
 }
 
 impl ContractProcess for SakVM {
@@ -22,24 +22,24 @@ impl ContractProcess for SakVM {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
-        let ledger = self.ledger.clone().unwrap();
+        // let ledger = self.ledger.clone().unwrap();
 
         let res = match ctr_fn {
             ContractFn::Init => {
                 let (instance, store, memory) =
-                    Self::init_module(contract_wasm, &self.mrs, &ledger)?;
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_init(instance, store, memory)
             }
             ContractFn::Execute(request) => {
                 let (instance, store, memory) =
-                    Self::init_module(contract_wasm, &self.mrs, &ledger)?;
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_execute(instance, store, memory, request)
             }
             ContractFn::Update(request) => {
                 let (instance, store, memory) =
-                    Self::init_module(contract_wasm, &self.mrs, &ledger)?;
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_update(instance, store, memory, request)
             }
@@ -48,29 +48,20 @@ impl ContractProcess for SakVM {
         res
     }
 
-    fn run(&self, ledger: Option<Arc<LedgerAccessor>>) {
+    fn run(&mut self, ledger: Arc<LedgerAccessor>) {
         self._run(ledger);
     }
 }
 
 impl SakVM {
-    pub fn init(
-        mrs: Arc<MRSAccessor>,
-        ledger: Option<Arc<LedgerAccessor>>,
-    ) -> Result<Self, String> {
+    pub fn init(mrs: Arc<MRSAccessor>, ledger: Arc<LedgerAccessor>) -> Result<Self, String> {
         let vm = SakVM { mrs, ledger };
 
         Ok(vm)
     }
 
-    pub fn _run(&self, ledger: Option<Arc<LedgerAccessor>>) {
-        // let ledger_mut = self.get_mut();
-        // let ledger_mut = self.ledger;
-        // self.ledger = ledger;
-    }
-
-    pub fn get_mut(&mut self) -> &mut Option<Arc<LedgerAccessor>> {
-        &mut self.ledger
+    pub fn _run(&mut self, ledger: Arc<LedgerAccessor>) {
+        self.ledger = ledger;
     }
 
     fn invoke_init(

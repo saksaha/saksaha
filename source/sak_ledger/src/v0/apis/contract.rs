@@ -18,8 +18,8 @@ impl SakLedger {
 
         let receipt = self
             .contract_processor
-            // .as_ref()
-            // .ok_or("contract_processor should be present")?
+            .as_ref()
+            .ok_or("contract_processor should be present")?
             .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
         let result = receipt.result;
@@ -40,9 +40,11 @@ impl SakLedger {
 
         let receipt = self
             .contract_processor
+            .as_ref()
+            .ok_or("contract_processor should be present")?
             .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
         // let receipt = self
-        //     .contract_processor
+        //     .contract_processor.lock().await
         //     .as_ref()
         //     .ok_or("contract_processor should be present")?
         //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;

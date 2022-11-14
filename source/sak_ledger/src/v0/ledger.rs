@@ -15,7 +15,10 @@ use sak_types::{
 use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
-use tokio::sync::broadcast::{self, Sender};
+use tokio::sync::{
+    broadcast::{self, Sender},
+    Mutex,
+};
 
 const BLOCKCHAIN_EVENT_QUEUE_CAPACITY: usize = 32;
 
@@ -26,7 +29,8 @@ pub struct SakLedger {
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
     pub consensus: Box<dyn Consensus + Send + Sync>,
-    pub contract_processor: Arc<ContractProcessor>,
+    pub contract_processor: Option<Arc<ContractProcessor>>,
+    // pub contract_processor: Arc<Mutex<ContractProcessor>>,
     // pub contract_processor: Option<Box<dyn ContractProcess + Send + Sync>>,
 }
 
@@ -36,7 +40,8 @@ pub struct SakLedgerArgs {
     pub consensus: Box<dyn Consensus + Send + Sync>,
     pub block_sync_interval: Option<u64>,
     pub ledger_path: PathBuf,
-    pub contract_processor: Arc<ContractProcessor>,
+    pub contract_processor: Option<Arc<ContractProcessor>>,
+    // pub contract_processor: Arc<Mutex<ContractProcessor>>,
 }
 
 impl SakLedger {
@@ -99,7 +104,7 @@ impl SakLedger {
     }
 
     // pub fn _run(mut self, contract_processor: Box<dyn ContractProcess + Send + Sync>) {
-    //     self.contract_processor = Some(contract_processor);
+    //     self.contract_processor.lock().await = Some(contract_processor);
     // }
 }
 

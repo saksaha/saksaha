@@ -22,5 +22,5 @@ pub trait ContractProcess {
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError>;
 
-    fn run(&self, ledger: Option<Arc<LedgerAccessor>>);
+    fn run(&mut self, ledger: Arc<LedgerAccessor>);
 }

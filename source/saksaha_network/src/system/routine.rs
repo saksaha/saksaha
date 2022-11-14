@@ -22,6 +22,7 @@ use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
@@ -179,11 +180,11 @@ impl Routine {
             Arc::new(Box::new(m))
         };
 
-        let mut vm: Arc<ContractProcessor> = {
-            let v = SakVM::init(mrs.clone(), None)?;
+        // let vm: Arc<Mutex<ContractProcessor>> = {
+        //     let v = SakVM::init(mrs.clone(), None)?;
 
-            Arc::new(Box::new(v))
-        };
+        //     Arc::new(Mutex::new(Box::new(v)))
+        // };
 
         let ledger: Arc<LedgerAccessor> = {
             let l = Ledger::init(
@@ -192,14 +193,24 @@ impl Routine {
                 None,
                 config.blockchain.block_sync_interval,
                 identity.clone(),
-                vm.clone(),
+                None,
+                // vm.clone(),
             )
             .await?;
 
             Arc::new(Box::new(l))
         };
 
-        vm.run(Some(ledger.clone()));
+        info!("here");
+
+        let vm: Arc<ContractProcessor> = {
+            let v = SakVM::init(mrs.clone(), ledger.clone())?;
+
+            Arc::new(Box::new(v))
+        };
+
+        // let mut vm_lock = vm.lock().await;
+        // vm_lock.run(Some(ledger.clone()));
 
         // let vm = SakVM::init(mrs.clone(), ledger.clone())?;
 

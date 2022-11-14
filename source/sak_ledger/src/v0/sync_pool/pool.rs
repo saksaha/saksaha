@@ -130,7 +130,7 @@ impl SyncPool {
                 TxCtrOp::ContractDeploy => {
                     let maybe_wasm = tc.get_data();
                     // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-                    // if !self.contract_processor.is_valid_wasm(maybe_wasm) {
+                    // if !self.contract_processor.lock().await.is_valid_wasm(maybe_wasm) {
                     //     return Err("Not valid wasm data".to_string());
                     // }
                 }
