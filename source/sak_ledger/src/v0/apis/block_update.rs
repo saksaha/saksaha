@@ -325,10 +325,14 @@ impl SakLedger {
     ) -> Result<(), LedgerError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
+                // let receipt = self
+                //     .contract_processor
+                //     .as_ref()
+                //     .ok_or("contract_processor should be present")?
+                //     .invoke(ctr_addr, data, ContractFn::Init)?;
+
                 let receipt = self
                     .contract_processor
-                    .as_ref()
-                    .ok_or("contract_processor should be present")?
                     .invoke(ctr_addr, data, ContractFn::Init)?;
 
                 let updated_ctr_state = receipt
@@ -367,9 +371,12 @@ impl SakLedger {
 
                                 let receipt = self
                                     .contract_processor
-                                    .as_ref()
-                                    .ok_or("contract_processor should be present")?
                                     .invoke(ctr_addr, &ctr_wasm, ctr_fn)?;
+                                // let receipt = self
+                                //     .contract_processor
+                                //     .as_ref()
+                                //     .ok_or("contract_processor should be present")?
+                                //     .invoke(ctr_addr, &ctr_wasm, ctr_fn)?;
 
                                 receipt.result
                                 // receipt

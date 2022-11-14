@@ -2,6 +2,7 @@ use super::{consensus::Pos, genesis::GenesisBlock};
 use crate::{fs::SaksahaFS, SaksahaError};
 use sak_ledger::{Consensus, SakLedger, SakLedgerArgs};
 use sak_p2p_id::Identity;
+use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 
 pub(crate) struct Ledger {
@@ -15,7 +16,7 @@ impl Ledger {
         genesis_block: Option<GenesisBlock>,
         block_sync_interval: Option<u64>,
         identity: Arc<Identity>,
-        // contract_processor: ContractProcessor,
+        contract_processor: Arc<ContractProcessor>,
     ) -> Result<SakLedger, SaksahaError> {
         let (gen_block_candidate, consensus) = {
             let genesis_block = match genesis_block {
@@ -48,7 +49,7 @@ impl Ledger {
             consensus,
             block_sync_interval,
             ledger_path,
-            // contract_processor,
+            contract_processor,
         };
 
         let sak_ledger = SakLedger::init(dist_ledger_args).await?;

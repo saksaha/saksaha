@@ -3,9 +3,8 @@ use crate::{
     EnvelopeStorage, GetChListParams, GetMsgParams, OpenChParams, SendMsgParams,
 };
 use sak_contract_derive::{CtrStateStore, MRSStore};
-use sak_contract_std::{
-    saksaha_contract, ContractError, CtrRequest, Dict, InvokeResult, List, RequestArgs, Storage,
-};
+use sak_contract_std::{saksaha_contract, ContractError, Dict, InvokeResult, List, Storage};
+use sak_types::{CtrRequest, RequestArgs};
 use std::collections::HashMap;
 
 pub const STORAGE_CAP: usize = 100;

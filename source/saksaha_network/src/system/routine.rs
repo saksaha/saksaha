@@ -12,17 +12,16 @@ use crate::rpc::RPC;
 use crate::system::SystemHandle;
 use crate::PConfig;
 use colored::Colorize;
-use sak_ledger::{Consensus, SakLedger, SakLedgerArgs};
 use sak_logger::SakLogger;
 use sak_logger::{debug, error, info, warn};
 use sak_machine::SakMachine;
 use sak_machine::SakMachineArgs;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use sak_store_interface::{LedgerAccessor, MRSAccessor, MRSInterface};
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
-use std::{borrow::BorrowMut, sync::Arc};
+use std::sync::Arc;
 
 pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
@@ -180,44 +179,32 @@ impl Routine {
             Arc::new(Box::new(m))
         };
 
-        // let ledger: Arc<LedgerAccessor> = {
-        //     let l = Ledger::init(
-        //         &config.p2p.public_key_str,
-        //         config.blockchain.tx_sync_interval,
-        //         None,
-        //         config.blockchain.block_sync_interval,
-        //         identity.clone(),
-        //         // vm,
-        //     )
-        //     .await?;
+        let mut vm: Arc<ContractProcessor> = {
+            let v = SakVM::init(mrs.clone(), None)?;
 
-        //     Arc::new(Box::new(l))
-        // };
-        let mut ledger = Ledger::init(
-            &config.p2p.public_key_str,
-            config.blockchain.tx_sync_interval,
-            None,
-            config.blockchain.block_sync_interval,
-            identity.clone(),
-            // vm,
-        )
-        .await?;
-
-        let ledger_accessor: Arc<LedgerAccessor> = Arc::new(Box::new(ledger));
-
-        let vm: ContractProcessor = {
-            let v = SakVM::init(mrs.clone(), ledger_accessor.clone())?;
-
-            Box::new(v)
+            Arc::new(Box::new(v))
         };
 
-        ledger.contract_processor = Some(vm);
+        let ledger: Arc<LedgerAccessor> = {
+            let l = Ledger::init(
+                &config.p2p.public_key_str,
+                config.blockchain.tx_sync_interval,
+                None,
+                config.blockchain.block_sync_interval,
+                identity.clone(),
+                vm.clone(),
+            )
+            .await?;
+
+            Arc::new(Box::new(l))
+        };
+
+        vm.run(Some(ledger.clone()));
+
+        // let vm = SakVM::init(mrs.clone(), ledger.clone())?;
 
         let machine = {
-            let machine_args = SakMachineArgs {
-                ledger: ledger_accessor,
-                mrs,
-            };
+            let machine_args = SakMachineArgs { ledger, mrs };
 
             let m = SakMachine::init(machine_args).await?;
 

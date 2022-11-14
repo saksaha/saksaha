@@ -12,7 +12,7 @@ use sak_types::{
     Block, BlockCandidate, BlockHash, BlockHeight, Cm, CmIdx, CtrAddr, CtrRequest, DistLedgerEvent,
     MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp, TxHash,
 };
-use sak_vm_interface::ContractProcess;
+use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
 use std::{collections::HashMap, path::PathBuf};
 use tokio::sync::broadcast::{self, Sender};
@@ -26,7 +26,8 @@ pub struct SakLedger {
     pub merkle_tree: MerkleTree,
     pub hasher: MiMC,
     pub consensus: Box<dyn Consensus + Send + Sync>,
-    pub contract_processor: Option<Box<dyn ContractProcess + Send + Sync>>,
+    pub contract_processor: Arc<ContractProcessor>,
+    // pub contract_processor: Option<Box<dyn ContractProcess + Send + Sync>>,
 }
 
 pub struct SakLedgerArgs {
@@ -35,18 +36,18 @@ pub struct SakLedgerArgs {
     pub consensus: Box<dyn Consensus + Send + Sync>,
     pub block_sync_interval: Option<u64>,
     pub ledger_path: PathBuf,
-    // pub contract_processor: Box<dyn ContractProcess + Send + Sync>,
+    pub contract_processor: Arc<ContractProcessor>,
 }
 
 impl SakLedger {
-    pub async fn init(ledger_args: SakLedgerArgs) -> Result<Self, LedgerError> {
+    pub async fn init(ledger_args: SakLedgerArgs) -> Result<SakLedger, LedgerError> {
         let SakLedgerArgs {
             tx_sync_interval,
             genesis_block,
             consensus,
             block_sync_interval,
             ledger_path,
-            // contract_processor,
+            contract_processor,
         } = ledger_args;
 
         let ledger_db = LedgerDB::init(&ledger_path).await?;
@@ -76,7 +77,7 @@ impl SakLedger {
             merkle_tree,
             hasher,
             consensus,
-            contract_processor: None,
+            contract_processor,
         };
 
         if let Some(bc) = genesis_block {
@@ -97,9 +98,9 @@ impl SakLedger {
         Ok(ledger)
     }
 
-    pub fn _run(mut self, contract_processor: Box<dyn ContractProcess + Send + Sync>) {
-        self.contract_processor = Some(contract_processor);
-    }
+    // pub fn _run(mut self, contract_processor: Box<dyn ContractProcess + Send + Sync>) {
+    //     self.contract_processor = Some(contract_processor);
+    // }
 }
 
 impl SakLedger {
