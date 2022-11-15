@@ -3,7 +3,7 @@ import { WasmHandler } from "./wasm-worker";
 
 console.log(555);
 
-let worker = new Worker(new URL("../src/wasm-worker.ts", import.meta.url), {
+let worker = new Worker(new URL("./wasm-worker.ts", import.meta.url), {
   type: "module",
 });
 

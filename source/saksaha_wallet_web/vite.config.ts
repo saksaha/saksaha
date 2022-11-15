@@ -40,4 +40,7 @@ export default defineConfig({
   //   format: "es",
   //   plugins: [wasm(), topLevelAwait()],
   // },
+  optimizeDeps: {
+    exclude: ["/dist/proof.js"],
+  },
 });

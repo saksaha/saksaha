@@ -7,9 +7,9 @@ import LandingPage from "@components/landing/Landing";
 const App: Component = () => {
   return (
     <div class={styles.wrapper}>
-      <Routes>
-        <Route path="/" component={LandingPage} />
-      </Routes>
+      {/* <Routes> */}
+      {/*   <Route path="/" component={LandingPage} /> */}
+      {/* </Routes> */}
     </div>
   );
 };
