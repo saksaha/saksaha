@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 pub(crate) fn run(args: Args) -> Result<(), CIError> {
-    tasks::check_wasm_pack()?;
+    tasks::check_yarn()?;
 
     tasks::build_sak_proof_wasm(args)?;
 

@@ -4,11 +4,13 @@
   "scripts": {
     "clean": "rimraf ./dist/**/*",
     "dev": "cd example && yarn run dev",
-    "build:wasm-mt": "cross-env RUSTFLAGS=\"-C target-feature=+atomics,+bulk-memory,+mutable-globals\" rustup run nightly wasm-pack build --target web --out-dir pkg-parallel -- --features parallel -Z build-std=panic_abort,std",
-    "build": "clean && yarn run build:wasm-mt && webpack build",
-    "webpack": "webpack build"
+    "build:wasm-mt": "cross-env RUSTFLAGS=\"-C target-feature=+atomics,+bulk-memory,+mutable-globals\" rustup run nightly wasm-pack build --target web --out-dir pkg-parallel -- --manifest-path ./Cargo.toml -Z build-std=panic_abort,std",
+    "build": "yarn run clean && yarn run build:wasm-mt && webpack build",
+    "webpack": "node ./webpack.js",
+    "example": "cd example && yarn dev"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "rimraf": "^3.0.2",
     "ts-loader": "^9.4.1",
     "typescript": "^4.8.4",

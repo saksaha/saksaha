@@ -19,11 +19,11 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "proof.js",
-    library: "proof",
   },
   plugins: [
     new webpack.optimize.LimitChunkCountPlugin({
       maxChunks: 1,
     }),
   ],
+  stats: "minimal",
 };

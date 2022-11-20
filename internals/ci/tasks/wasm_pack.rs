@@ -8,6 +8,7 @@ use std::{env::Args, process::Stdio};
 
 const WASM_PACK_VERSION: &str = "wasm-pack 0.10.2";
 
+#[allow(dead_code)]
 pub(crate) fn check_wasm_pack() -> Result<(), CIError> {
     logln!("check wasm pack");
 
@@ -20,42 +21,35 @@ pub(crate) fn check_wasm_pack() -> Result<(), CIError> {
     Ok(())
 }
 
+pub(crate) fn check_yarn() -> Result<(), CIError> {
+    logln!("check yarn");
+
+    utils::find_command("wasm-pack").ok_or(format!(
+        "yarn is not found. You may have to install it.\n\
+        Please refer to 'https://classic.yarnpkg.com'",
+    ))?;
+
+    Ok(())
+}
+
 pub(crate) fn build_sak_proof_wasm(args: Args) -> Result<(), CIError> {
-    // let source_path = Paths::source()?;
-    // let sak_proof_wasm_path = source_path.join("sak_proof_wasm");
+    let source_path = Paths::source()?;
+    let sak_proof_wasm_path = source_path.join("sak_proof_wasm");
 
-    // let program = "wasm-pack";
+    let program = "yarn";
 
-    // let wasm_pack_version = Kommand::new(program, vec_of_strings!["--version"], None)?
-    //     .current_dir(&sak_proof_wasm_path)
-    //     .output()
-    //     .expect("failed to run");
+    let cli_args = args.collect();
 
-    // let wasm_pack_version = String::from_utf8(wasm_pack_version.stdout)?;
+    let args_1 = vec_of_strings!["run", "build"];
 
-    // if wasm_pack_version.trim() != WASM_PACK_VERSION {
-    //     logln!(
-    //         "Your local wasm-pack is diffrent version than the one we tested, \
-    //         tested: {:?}, yours: {:?}",
-    //         WASM_PACK_VERSION,
-    //         wasm_pack_version,
-    //     );
-    // }
+    let args = [args_1, cli_args].concat();
 
-    // let program = "rustup";
-
-    // let cli_args = args.collect();
-
-    // let args_1 = vec_of_strings!["run", "nightly", "wasm-pack", "build", "--target", "web"];
-
-    // let args = [args_1, cli_args].concat();
-
-    // Kommand::new(program, args, None)?
-    //     .stdout(Stdio::inherit())
-    //     .stderr(Stdio::inherit())
-    //     .current_dir(sak_proof_wasm_path)
-    //     .output()
-    //     .expect("failed to run");
+    Kommand::new(program, args, None)?
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .current_dir(sak_proof_wasm_path)
+        .output()
+        .expect("failed to run");
 
     Ok(())
 }
