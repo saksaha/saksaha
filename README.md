@@ -1,4 +1,4 @@
-** Maintenance halted. This repository is not maintained until a further notice. Please reach out to
+**Maintenance halted. This repository is not maintained until a further notice. Please reach out to
 elden@saksaha.com for more details if you have any questions.**
 
 # Saksaha
