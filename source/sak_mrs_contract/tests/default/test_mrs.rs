@@ -1,8 +1,9 @@
 use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, Storage};
+use sak_ledger::{mock_pos, ConsensusResolver, SakLedger, SakLedgerArgs};
 use sak_mrs::{SakMRS, SakMRSArgs};
 use sak_mrs_contract::request_type;
 use sak_mrs_contract::{MutableRecordStorage, ReserveSlotParams, Slot};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::collections::HashMap;
@@ -26,10 +27,15 @@ fn get_test_mrs_state(slots: Vec<Slot>) -> Storage {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
+async fn test_call_ctr_mrs_fn_execute_rent() {
     let mrs_db_path = {
         let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
         config_dir.join("test").join("mrs")
+    };
+
+    let ledger_path = {
+        let config_dir = sak_dir::get_config_dir("SAKSAHA").unwrap();
+        config_dir.join("ledger")
     };
 
     let mrs = {
@@ -40,8 +46,24 @@ async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
         Arc::new(m)
     };
 
+    let pos: ConsensusResolver = mock_pos();
+
+    let sak_ledger_args = SakLedgerArgs {
+        tx_sync_interval: None,
+        genesis_block: None,
+        block_sync_interval: None,
+        consensus: pos,
+        ledger_path,
+    };
+
+    let ledger: Arc<LedgerAccessor> = {
+        let l = SakLedger::init(sak_ledger_args).await.unwrap();
+
+        Arc::new(Box::new(l))
+    };
+
     let vm: ContractProcessor = {
-        let v = SakVM::init(mrs.clone()).expect("VM should be initiated");
+        let v = SakVM::init(mrs.clone(), ledger.clone()).expect("VM should be initiated");
         Box::new(v)
     };
 
@@ -54,11 +76,11 @@ async fn test_call_ctr_mrs_fn_execute_reserve_slot() {
     let (request, storage) = {
         let req_type = String::from(request_type::RESERVE);
 
-        let reserve_slot_params = ReserveSlotParams {
+        let rent_params = ReserveSlotParams {
             public_key: get_mock_public_key(),
         };
 
-        let args = serde_json::to_vec(&reserve_slot_params).unwrap();
+        let args = serde_json::to_vec(&rent_params).unwrap();
 
         let request = CtrRequest {
             ctr_addr: "ctr_addr".to_string(),

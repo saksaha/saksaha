@@ -27,8 +27,8 @@ sak_task_queue = { path = "../sak_task_queue" }
 async-trait = "0.1.58"
 saksaha = { path = "../../source/saksaha_rs" }
 sak_credential = { path = "../sak_credential" }
-# sak_vm = { path = "../sak_vm" }
 sak_vm_interface = { path = "../sak_vm_interface" }
+sak_store_interface = { path = "../sak_store_interface" }
 
 [dev-dependencies]
 sak_test_utils = { path = "../sak_test_utils" }

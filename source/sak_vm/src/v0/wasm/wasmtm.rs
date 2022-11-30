@@ -2,12 +2,11 @@ use super::linker::make_linker;
 use crate::VMError;
 use sak_contract_std::symbols;
 use sak_logger::{error, info};
-use sak_store_interface::MRSAccessor;
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_vm_interface::wasmtime::{
     Caller, Config, Engine, Instance, Linker, Module, Store, TypedFunc,
 };
 use sak_vm_interface::InstanceState;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 pub(crate) struct Wasmtime {}
@@ -16,6 +15,7 @@ impl Wasmtime {
     pub(crate) fn make_instance(
         wasm: impl AsRef<[u8]>,
         mrs: &Arc<MRSAccessor>,
+        ledger: &Arc<LedgerAccessor>,
     ) -> Result<(Instance, Store<InstanceState>), VMError> {
         let engine = Engine::new(Config::new().wasm_multi_value(true).debug_info(true))?;
 
@@ -37,7 +37,7 @@ impl Wasmtime {
             }
         };
 
-        let linker = make_linker(engine, mrs)?;
+        let linker = make_linker(engine, mrs, ledger)?;
 
         let instance = match linker.instantiate(&mut store, &module) {
             Ok(i) => i,

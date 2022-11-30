@@ -1,4 +1,3 @@
-use sak_contract_std::ContractError;
 use serde::{Deserialize, Serialize};
 
 pub type PublicKey = String;
@@ -9,6 +8,7 @@ pub type EncryptedEphSecret = String;
 
 pub mod request_type {
     pub const RESERVE: &str = "reserve";
+    pub const GET_SLOT: &str = "get_slot";
 }
 
 #[derive(Serialize, Deserialize, Debug)]

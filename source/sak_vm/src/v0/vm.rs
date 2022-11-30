@@ -1,11 +1,9 @@
 use super::wasm::Wasmtime;
 use crate::VMError;
-use async_trait::async_trait;
-use sak_contract_std::{symbols, ContractFn, CtrRequest, Storage};
-use sak_crypto::rand;
-use sak_logger::{error, info};
-use sak_store_interface::{MRSAccessor, Session};
-use sak_vm_interface::wasmtime::{Instance, Memory, Store, TypedFunc};
+use sak_contract_std::{symbols, ContractFn};
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
+use sak_types::CtrRequest;
+use sak_vm_interface::wasmtime::{Instance, Memory, Store};
 use sak_vm_interface::{
     ContractProcess, CtrExecuteFn, CtrInitFn, InstanceState, InvokeReceipt, VMInterfaceError,
 };
@@ -14,6 +12,7 @@ use std::sync::Arc;
 
 pub struct SakVM {
     mrs: Arc<MRSAccessor>,
+    ledger: Arc<LedgerAccessor>,
 }
 
 impl ContractProcess for SakVM {
@@ -23,35 +22,46 @@ impl ContractProcess for SakVM {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError> {
-        println!("333");
+        // let ledger = self.ledger.clone().unwrap();
+
         let res = match ctr_fn {
             ContractFn::Init => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_init(instance, store, memory)
             }
             ContractFn::Execute(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_execute(instance, store, memory, request)
             }
             ContractFn::Update(request) => {
-                let (instance, store, memory) = Self::init_module(contract_wasm, &self.mrs)?;
+                let (instance, store, memory) =
+                    Self::init_module(contract_wasm, &self.mrs, &self.ledger)?;
 
                 self.invoke_update(instance, store, memory, request)
             }
         };
 
-        // println!("res: {:?}", res.as_ref().unwrap().result);
-
         res
+    }
+
+    fn run(&mut self, ledger: Arc<LedgerAccessor>) {
+        self._run(ledger);
     }
 }
 
 impl SakVM {
-    pub fn init(mrs: Arc<MRSAccessor>) -> Result<Self, String> {
-        let vm = SakVM { mrs };
+    pub fn init(mrs: Arc<MRSAccessor>, ledger: Arc<LedgerAccessor>) -> Result<Self, String> {
+        let vm = SakVM { mrs, ledger };
+
         Ok(vm)
+    }
+
+    pub fn _run(&mut self, ledger: Arc<LedgerAccessor>) {
+        self.ledger = ledger;
     }
 
     fn invoke_init(
@@ -78,7 +88,7 @@ impl SakVM {
         }
 
         println!(
-            "[! aaron] result_bytes: {:?}",
+            "[! aaron init] result_bytes: {:?}",
             String::from_utf8_lossy(&receipt_bytes)
         );
 
@@ -99,6 +109,8 @@ impl SakVM {
     ) -> Result<InvokeReceipt, VMError> {
         let contract_fn: CtrExecuteFn =
             { instance.get_typed_func(&mut store, symbols::CTR__EXECUTE)? };
+
+        println!("noah 1111111 request: {:?}", request);
 
         let (request_bytes, request_len) = {
             let str = serde_json::to_value(request)?.to_string();
@@ -133,13 +145,13 @@ impl SakVM {
                 Wasmtime::read_memory(&store, &memory, receipt_ptr as u32, receipt_len as u32)?
         }
 
-        println!("[! aaron] result_bytes: {:02x?}", receipt_bytes);
+        println!("[! aaron execute] result_bytes: {:02x?}", receipt_bytes);
         println!(
-            "[! aaron] result_bytes: {:?}",
+            "[! aaron execute] result_bytes: {:?}",
             String::from_utf8_lossy(&receipt_bytes)
         );
 
-        let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
+        // let receipt: HashMap<String, Vec<u8>> = serde_json::from_slice(&receipt_bytes)?;
 
         // println!("power11: {:?}", receipt);
         // let session_id = format!("{}_{}", ctr_addr, rand());
@@ -206,8 +218,9 @@ impl SakVM {
     fn init_module(
         contract_wasm: impl AsRef<[u8]>,
         mrs: &Arc<MRSAccessor>,
+        ledger: &Arc<LedgerAccessor>,
     ) -> Result<(Instance, Store<InstanceState>, Memory), VMError> {
-        let (instance, mut store) = match Wasmtime::make_instance(contract_wasm, mrs) {
+        let (instance, mut store) = match Wasmtime::make_instance(contract_wasm, mrs, ledger) {
             Ok(r) => r,
             Err(err) => {
                 return Err(format!("Error creating an instance, err: {}", err).into());

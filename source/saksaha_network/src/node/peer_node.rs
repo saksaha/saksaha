@@ -30,7 +30,12 @@ impl PeerNode {
 
         {
             let ledger_event_rx = {
-                let rx = self.machine.ledger.ledger_event_tx.clone().subscribe();
+                let rx = self
+                    .machine
+                    .ledger
+                    .get_ledger_event_tx()
+                    .clone()
+                    .subscribe();
 
                 rx
             };

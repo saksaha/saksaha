@@ -5,7 +5,7 @@ use std::collections::HashMap;
 pub struct Dict<T> {
     _name: String,
     _host_storage: HostStorage,
-    receipt: HashMap<String, Vec<u8>>,
+    data: HashMap<String, Vec<u8>>,
     phantom: Vec<T>,
 }
 
@@ -14,7 +14,7 @@ impl<T> Dict<T> {
         Dict {
             _name,
             _host_storage,
-            receipt: HashMap::<String, Vec<u8>>::new(),
+            data: HashMap::<String, Vec<u8>>::new(),
             phantom: Vec::new(),
         }
     }
@@ -33,10 +33,10 @@ impl<T> Dict<T> {
     pub fn push(&mut self, key: String, value: Vec<u8>) {
         let key = format!("{}_{}", self._name, key);
 
-        self.receipt.insert(key, value);
+        self.data.insert(key, value);
     }
 
-    pub fn receipt(&self) -> HashMap<String, Vec<u8>> {
+    pub fn get_receipt(&self) -> HashMap<String, Vec<u8>> {
         // let res = serde_json::to_vec(&self.receipt)?;
 
         // Ok(res)

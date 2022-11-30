@@ -1,9 +1,11 @@
 use super::utils::{self, TestContext};
 use crate::{
-    rpc::routes::v0::{GetTxRequest, GetTxResponse},
+    ledger::GenesisBlock,
+    rpc::routes::v0::{GetTxRequest, GetTxResponse, QueryCtrRequest},
     tests::SaksahaTestUtils,
 };
 use hyper::{Body, Client, Method, Request, Uri};
+use sak_contract_std::{CtrCallType, CtrRequestData};
 use sak_credential::CredentialProfile;
 use sak_rpc_interface::{JsonRequest, JsonResponse, SendMintTxRequest, SendPourTxRequest};
 use sak_types::{BlockCandidate, Tx, TxCandidate};
@@ -200,91 +202,87 @@ use sak_types::{BlockCandidate, Tx, TxCandidate};
 //     assert!(json_response.result.is_none());
 // }
 
-// #[tokio::test(flavor = "multi_thread")]
-// async fn test_rpc_reqeust_correct_send_pour_tx() {
-//     let test_credential_1 = CredentialProfile::test_1();
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_request_correct_send_pour_tx() {
+    let test_credential_1 = CredentialProfile::test_1();
 
-//     SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
 
-//     let tc_dummy = if let TxCandidate::Pour(c) = sak_types::mock_pour_tc_1() {
-//         c
-//     } else {
-//         panic!("mock tx candidate should be pour tx candidate");
-//     };
+    let tc_dummy = TxCandidate::Pour(c) = sak_types::mock_pour_tc_random().unwrap();
 
-//     let expected_tc_hash = tc_dummy.get_tx_hash().clone();
+    let expected_tc_hash = tc_dummy.get_tx_hash().clone();
 
-//     let TestContext {
-//         rpc,
-//         rpc_socket_addr,
-//         machine,
-//     } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
 
-//     tokio::spawn(async move { rpc.run().await });
+    tokio::spawn(async move { rpc.run().await });
 
-//     let client = Client::new();
+    let client = Client::new();
 
-//     let uri: Uri = {
-//         let u = format!(
-//             "http://localhost:{}/apis/v0/send_pour_tx",
-//             rpc_socket_addr.port()
-//         );
-//         u.parse().expect("URI should be made")
-//     };
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_pour_tx",
+            rpc_socket_addr.port()
+        );
+        u.parse().expect("URI should be made")
+    };
 
-//     let body = {
-//         let send_req = SendPourTxRequest::new(
-//             tc_dummy.created_at,
-//             tc_dummy.data,
-//             tc_dummy.author_sig,
-//             Some(tc_dummy.ctr_addr),
-//             tc_dummy.pi,
-//             tc_dummy.sns,
-//             tc_dummy.cms,
-//             tc_dummy.merkle_rts,
-//         );
+    let body = {
+        let send_req = SendPourTxRequest::new(
+            tc_dummy.created_at,
+            tc_dummy.data,
+            tc_dummy.author_sig,
+            Some(tc_dummy.ctr_addr),
+            tc_dummy.pi,
+            tc_dummy.sns,
+            tc_dummy.cms,
+            tc_dummy.merkle_rts,
+        );
 
-//         let params = serde_json::to_string(&send_req)
-//             .unwrap()
-//             .as_bytes()
-//             .to_vec();
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
 
-//         let json_request = JsonRequest {
-//             jsonrpc: "2.0".to_string(),
-//             method: "send_pour_tx".to_string(),
-//             params: Some(params),
-//             id: "test_1".to_string(),
-//         };
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_pour_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
 
-//         let str = serde_json::to_string(&json_request).unwrap();
+        let str = serde_json::to_string(&json_request).unwrap();
 
-//         Body::from(str)
-//     };
+        Body::from(str)
+    };
 
-//     let req = Request::builder()
-//         .method(Method::POST)
-//         .uri(uri)
-//         .body(body)
-//         .expect("request builder should be made");
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
 
-//     let resp = client.request(req).await.unwrap();
+    let resp = client.request(req).await.unwrap();
 
-//     let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
 
-//     let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
-//     let result_hash = json_response.result.unwrap();
+    let result_hash = json_response.result.unwrap();
 
-//     assert_eq!(expected_tc_hash, result_hash);
+    assert_eq!(expected_tc_hash, result_hash);
 
-//     let is_contain = machine
-//         .ledger
-//         // .dist_ledger
-//         .tx_pool_contains(&expected_tc_hash)
-//         .await;
+    let is_contain = machine
+        .ledger
+        // .dist_ledger
+        .tx_pool_contains(&expected_tc_hash)
+        .await;
 
-//     assert!(is_contain);
-// }
+    assert!(is_contain);
+}
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_rpc_reqeust_wrong_send_pour_tx() {
@@ -486,4 +484,105 @@ async fn test_rpc_reqeust_wrong_send_mint_tx() {
     let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
 
     assert!(json_response.result == None);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_rpc_reqeust_call_mrs_contract() {
+    let test_credential_1 = CredentialProfile::test_1();
+
+    SaksahaTestUtils::init_test(&[&test_credential_1.public_key_str]);
+
+    let tc_dummy = if let TxCandidate::Pour(c) = sak_types::mock_pour_tc_random() {
+        c
+    } else {
+        panic!("mock tx candidate should be pour tx candidate");
+    };
+
+    let expected_tc_hash = tc_dummy.get_tx_hash().clone();
+
+    let TestContext {
+        rpc,
+        rpc_socket_addr,
+        machine,
+    } = utils::make_test_context(test_credential_1.secret, test_credential_1.public_key_str).await;
+
+    // run rpc server
+    tokio::spawn(async move { rpc.run().await });
+
+    let client = Client::new();
+
+    let uri: Uri = {
+        let u = format!(
+            "http://localhost:{}/apis/v0/send_pour_tx",
+            rpc_socket_addr.port()
+        );
+        u.parse().expect("URI should be made")
+    };
+
+    let genesis_block = GenesisBlock::create().unwrap();
+
+    let mrs_ctr_addr = genesis_block.get_mrs_ctr_addr();
+
+    let body = {
+        // the data of pour tx should be a `CtrRequestData`
+        let data = CtrRequestData {
+            req_type: "reserve".to_string(),
+            args: vec![11, 22],
+            ctr_call_type: CtrCallType::Update,
+        };
+
+        let data = serde_json::to_vec(&data).unwrap();
+
+        let send_req = SendPourTxRequest::new(
+            tc_dummy.created_at,
+            data,
+            tc_dummy.author_sig,
+            Some(mrs_ctr_addr),
+            tc_dummy.pi,
+            tc_dummy.sns,
+            tc_dummy.cms,
+            tc_dummy.merkle_rts,
+        );
+
+        let params = serde_json::to_string(&send_req)
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+
+        let json_request = JsonRequest {
+            jsonrpc: "2.0".to_string(),
+            method: "send_pour_tx".to_string(),
+            params: Some(params),
+            id: "test_1".to_string(),
+        };
+
+        let str = serde_json::to_string(&json_request).unwrap();
+
+        Body::from(str)
+    };
+
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(body)
+        .expect("request builder should be made");
+
+    let resp = client.request(req).await.unwrap();
+
+    let b = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+
+    let json_response = serde_json::from_slice::<JsonResponse<String>>(&b).unwrap();
+    println!("json_response: {:?}", json_response);
+
+    let result_hash = json_response.result.unwrap();
+
+    assert_eq!(expected_tc_hash, result_hash);
+
+    // let is_contain = machine
+    //     .ledger
+    //     // .dist_ledger
+    //     .tx_pool_contains(&expected_tc_hash)
+    //     .await;
+
+    // assert!(is_contain);
 }

@@ -18,10 +18,11 @@ use sak_machine::SakMachine;
 use sak_machine::SakMachineArgs;
 use sak_p2p_id::Identity;
 use sak_p2p_peertable::PeerTable;
-use sak_store_interface::{MRSAccessor, MRSInterface};
+use sak_store_interface::{LedgerAccessor, MRSAccessor};
 use sak_vm::SakVM;
 use sak_vm_interface::ContractProcessor;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub(super) struct Routine {
     pub(super) shutdown_manager: ShutdownMng,
@@ -179,24 +180,39 @@ impl Routine {
             Arc::new(Box::new(m))
         };
 
-        let vm: ContractProcessor = {
-            let v = SakVM::init(mrs.clone())?;
-            Box::new(v)
-        };
+        // let vm: Arc<Mutex<ContractProcessor>> = {
+        //     let v = SakVM::init(mrs.clone(), None)?;
 
-        let ledger = {
+        //     Arc::new(Mutex::new(Box::new(v)))
+        // };
+
+        let ledger: Arc<LedgerAccessor> = {
             let l = Ledger::init(
                 &config.p2p.public_key_str,
                 config.blockchain.tx_sync_interval,
                 None,
                 config.blockchain.block_sync_interval,
                 identity.clone(),
-                vm,
+                None,
+                // vm.clone(),
             )
             .await?;
 
-            l
+            Arc::new(Box::new(l))
         };
+
+        info!("here");
+
+        let vm: Arc<ContractProcessor> = {
+            let v = SakVM::init(mrs.clone(), ledger.clone())?;
+
+            Arc::new(Box::new(v))
+        };
+
+        // let mut vm_lock = vm.lock().await;
+        // vm_lock.run(Some(ledger.clone()));
+
+        // let vm = SakVM::init(mrs.clone(), ledger.clone())?;
 
         let machine = {
             let machine_args = SakMachineArgs { ledger, mrs };
@@ -214,7 +230,7 @@ impl Routine {
                 config.node.mine_interval,
                 config.node.node_task_min_interval,
                 config.node.peer_register_interval,
-                p2p_host.get_discovery().clone(),
+                p2p_host.get_discovery(),
             );
 
             ln

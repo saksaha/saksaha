@@ -1,11 +1,10 @@
 use crate::system::SystemHandle;
-use async_trait::async_trait;
 use hyper::{Body, Response};
 use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed, require_some_params, Params,
     RouteState,
 };
-use sak_contract_std::{CtrRequest, CtrRequestData};
+use sak_types::{CtrRequest, CtrRequestData};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

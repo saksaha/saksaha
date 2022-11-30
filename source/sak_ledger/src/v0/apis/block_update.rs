@@ -1,25 +1,26 @@
 use crate::{CtrStateUpdate, LedgerCols, LedgerError, MerkleUpdate, SakLedger};
 use colored::Colorize;
-use sak_contract_std::{ContractFn, CtrCallType, CtrRequest, ERROR_PLACEHOLDER};
+use sak_contract_std::{ContractFn, ERROR_PLACEHOLDER};
 use sak_crypto::hasher::MiMC;
 use sak_crypto::{Bls12, MerkleTree, Proof, ScalarExt};
 use sak_ledger_cfg::CM_TREE_DEPTH;
 use sak_ledger_testing::DUMMY_SN;
 use sak_logger::{debug, info, warn};
 use sak_proof::CoinProof;
+use sak_store_interface::LedgerInterface;
 use sak_types::{
-    Block, BlockCandidate, CmIdx, MintTxCandidate, PourTxCandidate, Sn, Tx, TxCandidate, TxCtrOp,
-    TxHash,
+    Block, BlockCandidate, CmIdx, CtrCallType, CtrRequest, MintTxCandidate, PourTxCandidate, Sn,
+    Tx, TxCandidate, TxCtrOp, TxHash,
 };
 
 impl SakLedger {
-    pub async fn insert_genesis_block(
+    pub async fn _insert_genesis_block(
         &self,
         genesis_block: BlockCandidate,
     ) -> Result<Option<String>, LedgerError> {
         let persisted_gen_block_hash = if let Some(b) = match self.get_block_by_height(&0).await {
             Ok(b) => b,
-            Err(err) => return Err(err.into()),
+            Err(err) => return Err(err),
         } {
             let block_hash = b.get_block_hash().to_string();
 
@@ -42,7 +43,7 @@ impl SakLedger {
         Ok(persisted_gen_block_hash)
     }
 
-    pub async fn write_block(
+    pub async fn _write_block(
         &self,
         bc: Option<BlockCandidate>,
     ) -> Result<Option<String>, LedgerError> {
@@ -166,7 +167,7 @@ impl SakLedger {
         Ok(Some(block_hash))
     }
 
-    pub async fn write_blocks(
+    pub async fn _write_blocks(
         &self,
         mut blocks: Vec<(Block, Vec<Tx>)>,
     ) -> Result<Vec<String>, LedgerError> {
@@ -205,7 +206,7 @@ impl SakLedger {
         Ok(block_hashes)
     }
 
-    pub(crate) fn verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
+    pub(crate) fn _verify_merkle_rt(&self, merkle_rt: &[u8; 32]) -> bool {
         let dummy_merkle_rt = sak_ledger_testing::mock_rt_1().unwrap();
 
         if merkle_rt == &dummy_merkle_rt {
@@ -222,7 +223,7 @@ impl SakLedger {
         }
     }
 
-    pub(crate) fn verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
+    pub(crate) fn _verify_sn(&self, sn: &Sn) -> Result<bool, LedgerError> {
         if sn == &DUMMY_SN {
             Ok(true)
         } else {
@@ -236,7 +237,7 @@ impl SakLedger {
         }
     }
 
-    pub(crate) fn verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
+    pub(crate) fn _verify_proof(&self, tc: &PourTxCandidate) -> Result<bool, LedgerError> {
         let hasher = MiMC::new();
 
         let mut public_inputs = vec![];
@@ -275,7 +276,7 @@ impl SakLedger {
         Ok(verification_result)
     }
 
-    pub(crate) fn filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
+    pub(crate) fn _filter_tx_candidates(&self, bc: &mut BlockCandidate) -> Result<(), LedgerError> {
         bc.tx_candidates.retain(|tx_candidate| match tx_candidate {
             TxCandidate::Mint(_tc) => {
                 return true;
@@ -308,14 +309,14 @@ impl SakLedger {
                     }
                 };
 
-                return true;
+                true
             }
         });
 
         Ok(())
     }
 
-    async fn process_ctr_state_update(
+    pub(crate) async fn _process_ctr_state_update(
         &self,
         ctr_addr: &String,
         data: &[u8],
@@ -324,9 +325,17 @@ impl SakLedger {
     ) -> Result<(), LedgerError> {
         match tx_ctr_op {
             TxCtrOp::ContractDeploy => {
+                // let receipt = self
+                //     .contract_processor.lock().await
+                //     .as_ref()
+                //     .ok_or("contract_processor should be present")?
+                //     .invoke(ctr_addr, data, ContractFn::Init)?;
+
                 let receipt = self
                     .contract_processor
-                    .invoke(ctr_addr, &data, ContractFn::Init)?;
+                    .as_ref()
+                    .ok_or("contract_processor should be present")?
+                    .invoke(ctr_addr, data, ContractFn::Init)?;
 
                 let updated_ctr_state = receipt
                     .updated_ctr_state
@@ -338,9 +347,6 @@ impl SakLedger {
                     let key = format!("{}_{}", ctr_addr, field);
 
                     ctr_state_update.insert(key.clone(), value.clone());
-
-                    println!("[! aaron] insert !!!");
-                    println!("[! aaron] key: {:?}, value: {:?}", key, value);
                 }
             }
 
@@ -348,13 +354,13 @@ impl SakLedger {
                 let req = CtrRequest::parse(ctr_addr, data)?;
 
                 match req.ctr_call_type {
-                    CtrCallType::Query => {
+                    CtrCallType::Execute => {
                         warn!(
-                            "Tx may contain contract 'execute' request, \
-                            but not 'query'"
+                            "Tx may contain contract 'update' request, \
+                            but not 'execute'"
                         );
                     }
-                    CtrCallType::Execute => {
+                    CtrCallType::Update => {
                         let new_state = match ctr_state_update.get(ctr_addr) {
                             Some(_) => {
                                 let ctr_wasm = self
@@ -363,23 +369,21 @@ impl SakLedger {
                                     .await?
                                     .ok_or("ctr data (wasm) should exist")?;
 
-                                let ctr_fn = ContractFn::Execute(req);
+                                let ctr_fn = ContractFn::Update(req);
 
-                                // let receipt = self
-                                //     .contract_processor
-                                //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)
-                                //     .await?;
+                                let receipt = self
+                                    .contract_processor
+                                    .as_ref()
+                                    .ok_or("contract_processor should be present")?
+                                    .invoke(ctr_addr, &ctr_wasm, ctr_fn)?;
 
-                                // receipt.updated_storage.ok_or("State needs to be updated")?
-                                vec![]
+                                receipt.result
+                                // receipt
+                                //     .updated_ctr_state
+                                //     .ok_or("State needs to be updated")?
+                                // vec![]
                             }
-                            None => {
-                                self.execute_ctr(
-                                    // ctr_addr,
-                                    req,
-                                )
-                                .await?
-                            }
+                            None => self.execute_ctr(req).await?,
                         };
 
                         let maybe_error_placehorder = match &new_state.get(0..6) {
@@ -389,7 +393,10 @@ impl SakLedger {
                             }
                         };
 
+                        // let key = format!("{}_{}", ctr_addr, new_state);
+
                         if maybe_error_placehorder != ERROR_PLACEHOLDER {
+                            // new_state is the `receipt` from invoked contract
                             ctr_state_update.insert(ctr_addr.clone(), new_state.clone());
                         }
                     }
@@ -403,7 +410,7 @@ impl SakLedger {
         Ok(())
     }
 
-    async fn handle_mint_tx_candidate(
+    pub(crate) async fn _handle_mint_tx_candidate(
         &self,
         tc: &MintTxCandidate,
         ctr_state_update: &mut CtrStateUpdate,
@@ -424,7 +431,7 @@ impl SakLedger {
         Ok(cm_count)
     }
 
-    async fn handle_pour_tx_candidate(
+    pub(crate) async fn _handle_pour_tx_candidate(
         &self,
         tc: &PourTxCandidate,
         ctr_state_update: &mut CtrStateUpdate,
@@ -445,7 +452,7 @@ impl SakLedger {
         Ok(cm_count)
     }
 
-    async fn process_merkle_update(
+    pub(crate) async fn _process_merkle_update(
         &self,
         merkle_update: &mut MerkleUpdate,
         cms: &Vec<[u8; 32]>,

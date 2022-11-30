@@ -1,10 +1,11 @@
 use crate::LedgerError;
 use crate::SakLedger;
 use sak_contract_std::ContractFn;
-use sak_contract_std::CtrRequest;
+// use sak_contract_std::CtrRequest;
+use sak_types::CtrRequest;
 
 impl SakLedger {
-    pub async fn execute_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerError> {
+    pub async fn _execute_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(&req.ctr_addr)
@@ -17,6 +18,8 @@ impl SakLedger {
 
         let receipt = self
             .contract_processor
+            .as_ref()
+            .ok_or("contract_processor should be present")?
             .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
         let result = receipt.result;
@@ -24,7 +27,7 @@ impl SakLedger {
         Ok(result)
     }
 
-    pub async fn update_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerError> {
+    pub async fn _update_ctr(&self, req: CtrRequest) -> Result<Vec<u8>, LedgerError> {
         let ctr_wasm = self
             .ledger_db
             .get_ctr_data_by_ctr_addr(&req.ctr_addr)
@@ -37,7 +40,14 @@ impl SakLedger {
 
         let receipt = self
             .contract_processor
+            .as_ref()
+            .ok_or("contract_processor should be present")?
             .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
+        // let receipt = self
+        //     .contract_processor.lock().await
+        //     .as_ref()
+        //     .ok_or("contract_processor should be present")?
+        //     .invoke(&ctr_addr, &ctr_wasm, ctr_fn)?;
 
         let _ctr_state_receipt = receipt
             .updated_ctr_state

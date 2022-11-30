@@ -4,8 +4,6 @@ use hyper_rpc_router::{
     make_error_response, make_success_response, require_params_parsed, require_some_params, Params,
     RouteState,
 };
-use sak_crypto::encode_hex;
-use sak_logger::debug;
 use sak_rpc_interface::{SendMintTxRequest, SendPourTxRequest};
 use sak_types::{MintTxCandidate, PourTxCandidate, Tx, TxCandidate};
 use serde::{Deserialize, Serialize};
@@ -31,13 +29,7 @@ pub(in crate::rpc) async fn send_mint_tx(
         rb.s,
     ));
 
-    match sys_handle
-        .machine
-        .ledger
-        // .dist_ledger
-        .send_tx(tx_candidate)
-        .await
-    {
+    match sys_handle.machine.ledger.send_tx(tx_candidate).await {
         // Ok(_) => {
         Ok(tx_hash) => {
             // return make_success_response(route_state, "success");

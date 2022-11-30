@@ -1,6 +1,8 @@
-use crate::{InstanceState, InvokeReceipt, VMInterfaceError};
-use async_trait::async_trait;
-use sak_contract_std::{ContractFn, CtrRequest, Storage};
+use std::sync::Arc;
+
+use crate::{InvokeReceipt, VMInterfaceError};
+use sak_contract_std::ContractFn;
+use sak_store_interface::LedgerAccessor;
 
 pub type ContractProcessor = Box<dyn ContractProcess + Send + Sync>;
 
@@ -19,4 +21,6 @@ pub trait ContractProcess {
         contract_wasm: &[u8],
         ctr_fn: ContractFn,
     ) -> Result<InvokeReceipt, VMInterfaceError>;
+
+    fn run(&mut self, ledger: Arc<LedgerAccessor>);
 }

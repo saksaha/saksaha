@@ -52,7 +52,7 @@ pub(crate) fn _derive_mrs_store(input: TokenStream) -> TokenStream {
                 let mut map = std::collections::HashMap::new();
 
                 #(
-                    map.extend(self.#field_name2.receipt());
+                    map.extend(self.#field_name2.get_receipt());
                 )*
 
                 map
@@ -106,7 +106,7 @@ pub(crate) fn _derive_ctr_state_store(input: TokenStream) -> TokenStream {
                 let mut map = std::collections::HashMap::new();
 
                 #(
-                    map.extend(self.#field_name2.receipt());
+                    map.extend(self.#field_name2.get_receipt());
                 )*
 
                 map
