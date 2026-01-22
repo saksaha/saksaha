@@ -1,60 +1,38 @@
-**Maintenance halted. This repository is not maintained until a further notice. Please reach out to
-eldeniyenden@gmail.com for more details if you have any questions.**
+# Saksaha: Anonymized Distributed Ledger & ZK-VM
 
-# Saksaha
+**Saksaha** is a privacy-centric distributed ledger designed to execute
+user-defined logic in a verifiable yet completely private manner. While previous
+privacy blockchains focus solely on value transfer, Saksaha enables **arbitrary
+state transitions** to be pseudonymized through a programmable **Virtual
+Machine**.
 
-Saksaha is a decentralized computing platform and it aims to provide verifiable ways to process
-data on the Internet without sacrificing privacy.
+## Motivation
 
-## How to install
+Saksaha was born from the need to bridge the gap between programmable smart
+contracts and absolute transactional privacy. The core technology is heavily
+inspired by the foundational work in **Zerocash (2014)** by Eli Ben-Sasson et
+al., focusing on decentralized anonymous computations.
 
-### Build from source
+## System Highlights
 
-#### Download the source code.
+1. A custom P2P networking stack from the ground up, implementing a hybrid
+   TCP/UDP architecture to ensure both reliable state synchronization and
+   low-latency peer-to-peer communication..
+2. A programmable execution layer powered by a WebAssembly (WASM) virtual
+   machine, enabling deterministic and sandboxed execution of user-defined
+   logic.
+3. Saksaha transaction contains no metadata regarding the sender, receiver, or
+   the amount being transferred. It instead consists of a zero-knowledge proof
+   to allow users to claim ownership of an asset.
+4. A unique data layer where users are allocated space without revealing their
+   identity or the location of their stored state. The specific index or
+   "address" of a user's data allocation is computed locally by the user
 
-```bash
-git clone https://github.com/saksaha/saksaha
-```
+## References
 
-#### Build
+- [Zerocash](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6956581):
+  Decentralized Anonymous Payments from Bitcoin (Ben-Sasson et al., 2014)
 
-```bash
-./ci build
-```
+## License
 
-## Development
-
-This mono repository contains multiple components that can be developed
-independent of each other. In order to run `saksaha-network` in development,
-execute the following in the project directory. Refer to the documentation for
-more details.
-
-```bash
-./ci dev
-```
-
-## Test
-
-#### Run all tests
-
-Run all tests. In the project root, execute the following.
-
-```bash
-./ci test
-```
-
-#### Run specific tests
-
-Run tests in a specific module or run a single test. We use `cargo` to build
-and run test cases. Check out its documentation for more detail.
-
-```bash
-./ci test --package [package_name] test_name
-./ci test [module_name]::
-```
-
-e.g. Run all the tests in the package **saksaha_network** under module **node**.
-
-```bash
-./ci test --package saksaha_network node::
-```
+This project is licensed under the MIT License.
