@@ -1,4 +1,4 @@
-# Saksaha: Anonymized Distributed Ledger & ZK-VM
+# Saksaha: Anonymized Distributed Ledger with Programmability
 
 **Saksaha** is a privacy-centric distributed ledger designed to execute
 user-defined logic in a verifiable yet completely private manner. While previous
